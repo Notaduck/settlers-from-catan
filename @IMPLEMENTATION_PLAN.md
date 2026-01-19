@@ -17,7 +17,7 @@
 - [x] Frontend consumes `game_over` payload and renders breakdown from payload (not inferred fields) and disables actions. Files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/GameOver.tsx`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/PlayerPanel/PlayerPanel.tsx`; Go tests: none; Playwright: `frontend/tests/victory.spec.ts`.
 
 ## PRIORITY 4: ROBBER FLOW
-- [ ] Initialize and progress RobberPhase on roll 7 (discard -> move -> steal), gating turn progression until completion. Files: `backend/internal/game/dice.go`, `backend/internal/game/robber.go`, `backend/internal/game/state_machine.go`; Go tests: `backend/internal/game/robber_test.go`, `backend/internal/game/dice_test.go`; Playwright: `frontend/tests/robber.spec.ts`.
+- [x] Initialize and progress RobberPhase on roll 7 (discard -> move -> steal), gating turn progression until completion. Files: `backend/internal/game/dice.go`, `backend/internal/game/robber.go`, `backend/internal/game/state_machine.go`; Go tests: `backend/internal/game/robber_test.go`, `backend/internal/game/dice_test.go`; Playwright: `frontend/tests/robber.spec.ts`.
 - [ ] Wire discard/move/steal handlers and UI, including robber-hex click support and steal selection flow without invalid MoveRobber calls. Files: `backend/internal/handlers/handlers.go`, `frontend/src/context/GameContext.tsx`, `frontend/src/components/Board/Board.tsx`, `frontend/src/components/Game/DiscardModal.tsx`, `frontend/src/components/Game/StealModal.tsx`, `frontend/src/components/Board/HexTile.tsx`; Go tests: handler coverage in `backend/internal/handlers/handlers_test.go`; Playwright: `frontend/tests/robber.spec.ts`.
 
 ## PRIORITY 5: TRADING
@@ -40,7 +40,7 @@
 - Robber steal flow currently sends `move_robber` without a hex; plan assumes we will allow a separate steal step without re-moving the robber (either by tolerating same-hex moves or adding a dedicated handler) to avoid proto churn.
 - Port `Location` values in `backend/internal/game/ports.go` appear to be hard-coded vertex IDs; verify they match `generateVertices` output before wiring UI highlights.
 - Validation (this iteration):
-  - `make test-backend` fails in existing game tests: `TestResourceDistribution_SettlementGetsOneResource`, `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`, `TestDiscardCards`.
+  - `make test-backend` fails in existing game tests: `TestResourceDistribution_SettlementGetsOneResource`, `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`.
   - `make lint` fails due to pre-existing frontend eslint issues in `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/tests/robber.spec.ts`, `frontend/tests/trading.spec.ts`.
   - `make build` fails due to pre-existing TypeScript errors across `frontend/src/components/*`, `frontend/src/context/GameContext.tsx`, `frontend/src/gen/proto/catan/v1/types.ts`.
   - `make e2e` skipped (servers not running).

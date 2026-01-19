@@ -40,6 +40,7 @@ func TestMoveRobber(t *testing.T) {
 	if state.Board.RobberHex.Q != newHex.Q || state.Board.RobberHex.R != newHex.R {
 		t.Errorf("Robber not moved correctly")
 	}
+	state.RobberPhase = &pb.RobberPhase{MovePendingPlayerId: ptr("p1")}
 	// Same hex
 	state.Board.RobberHex = newHex
 	state.RobberPhase.MovePendingPlayerId = ptr("p1")
@@ -51,6 +52,36 @@ func TestMoveRobber(t *testing.T) {
 	state.RobberPhase.MovePendingPlayerId = ptr("p1")
 	if err := MoveRobber(state, "p2", newHex); err == nil {
 		t.Error("Should fail if not current player")
+	}
+}
+
+func TestMoveRobber_RequiresDiscards(t *testing.T) {
+	robberHex := &pb.HexCoord{Q: 0, R: 0}
+	newHex := &pb.HexCoord{Q: 1, R: 1}
+	state := &pb.GameState{
+		Board: &pb.BoardState{
+			Hexes:     []*pb.Hex{{Coord: robberHex}, {Coord: newHex}},
+			RobberHex: robberHex,
+		},
+		Players: []*pb.PlayerState{{Id: "p1", Resources: &pb.ResourceCount{Wood: 1}}},
+		RobberPhase: &pb.RobberPhase{
+			DiscardPending:      []string{"p1"},
+			DiscardRequired:     map[string]int32{"p1": 1},
+			MovePendingPlayerId: ptr("p1"),
+		},
+	}
+
+	if err := MoveRobber(state, "p1", newHex); err == nil {
+		t.Fatal("Expected move to fail before discards complete")
+	}
+	if err := DiscardCards(state, "p1", &pb.ResourceCount{Wood: 1}); err != nil {
+		t.Fatalf("Unexpected discard error: %v", err)
+	}
+	if err := MoveRobber(state, "p1", newHex); err != nil {
+		t.Fatalf("Expected move to succeed after discards: %v", err)
+	}
+	if state.RobberPhase != nil {
+		t.Errorf("Expected robber phase to clear with no victims")
 	}
 }
 
@@ -80,15 +111,46 @@ func TestStealFromPlayer(t *testing.T) {
 	}
 	// Victim has no more cards
 	state.Players[1].Resources.Wood = 0
+	state.RobberPhase = &pb.RobberPhase{StealPendingPlayerId: ptr("thief")}
 	state.RobberPhase.StealPendingPlayerId = ptr("thief")
 	if _, err := StealFromPlayer(state, "thief", "vic"); err == nil {
 		t.Error("Should fail when victim empty")
 	}
 	// Wrong player id
 	state.Players[1].Resources.Wood = 1
+	state.RobberPhase = &pb.RobberPhase{StealPendingPlayerId: ptr("thief")}
 	state.RobberPhase.StealPendingPlayerId = ptr("thief")
 	if _, err := StealFromPlayer(state, "nope", "vic"); err == nil {
 		t.Error("Should fail with bad thief id")
+	}
+}
+
+func TestMoveRobber_SetsStealPending(t *testing.T) {
+	robberHex := &pb.HexCoord{Q: 0, R: 0}
+	newHex := &pb.HexCoord{Q: 1, R: 1}
+	state := &pb.GameState{
+		Board: &pb.BoardState{
+			Hexes:     []*pb.Hex{{Coord: robberHex}, {Coord: newHex}},
+			RobberHex: robberHex,
+			Vertices: []*pb.Vertex{
+				makeRobberVertex("vic", []*pb.HexCoord{newHex}),
+			},
+		},
+		Players: []*pb.PlayerState{{Id: "thief"}, {Id: "vic"}},
+		RobberPhase: &pb.RobberPhase{
+			MovePendingPlayerId: ptr("thief"),
+			DiscardRequired:     map[string]int32{},
+		},
+	}
+
+	if err := MoveRobber(state, "thief", newHex); err != nil {
+		t.Fatalf("Unexpected move error: %v", err)
+	}
+	if state.RobberPhase == nil || state.RobberPhase.StealPendingPlayerId == nil {
+		t.Fatal("Expected steal pending after move")
+	}
+	if *state.RobberPhase.StealPendingPlayerId != "thief" {
+		t.Errorf("Expected steal pending for thief")
 	}
 }
 
@@ -114,6 +176,32 @@ func TestStealFromPlayer_NotAdjacent(t *testing.T) {
 	}
 }
 
+func TestStealFromPlayer_ClearsRobberPhase(t *testing.T) {
+	robberHex := &pb.HexCoord{Q: 0, R: 0}
+	adjHex := &pb.HexCoord{Q: 0, R: 0}
+	state := &pb.GameState{
+		Board: &pb.BoardState{
+			Hexes:     []*pb.Hex{{Coord: robberHex}},
+			RobberHex: robberHex,
+			Vertices: []*pb.Vertex{
+				makeRobberVertex("vic", []*pb.HexCoord{adjHex}),
+			},
+		},
+		Players: []*pb.PlayerState{
+			{Id: "thief", Resources: &pb.ResourceCount{}},
+			{Id: "vic", Resources: &pb.ResourceCount{Wood: 1}},
+		},
+		RobberPhase: &pb.RobberPhase{StealPendingPlayerId: ptr("thief")},
+	}
+
+	if _, err := StealFromPlayer(state, "thief", "vic"); err != nil {
+		t.Fatalf("Unexpected steal error: %v", err)
+	}
+	if state.RobberPhase != nil {
+		t.Errorf("Expected robber phase to clear after steal")
+	}
+}
+
 func TestDiscardCards(t *testing.T) {
 	state := &pb.GameState{
 		Players: []*pb.PlayerState{
@@ -129,8 +217,8 @@ func TestDiscardCards(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error: %v", err)
 	}
-	if countTotalResources(state.Players[0].Resources) != 2 {
-		t.Errorf("Player should have 2 cards left, got %d", countTotalResources(state.Players[0].Resources))
+	if countTotalResources(state.Players[0].Resources) != 3 {
+		t.Errorf("Player should have 3 cards left, got %d", countTotalResources(state.Players[0].Resources))
 	}
 	if len(state.RobberPhase.DiscardPending) != 0 {
 		t.Errorf("DiscardPending should be empty")

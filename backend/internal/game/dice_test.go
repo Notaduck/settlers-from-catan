@@ -117,6 +117,36 @@ func TestRollDice_SevenTriggersRobber(t *testing.T) {
 	}
 }
 
+func TestRollDice_SevenInitializesRobberPhase(t *testing.T) {
+	state := createPlayingGameState(2)
+	state.Players[0].Resources = &pb.ResourceCount{Wood: 8}
+	state.Players[1].Resources = &pb.ResourceCount{Wood: 4, Brick: 4}
+
+	playerID := state.Players[0].Id
+
+	_, err := PerformDiceRollWithValues(state, playerID, 2, 5)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if state.RobberPhase == nil {
+		t.Fatal("Expected robber phase to be initialized")
+	}
+	if state.RobberPhase.MovePendingPlayerId == nil || *state.RobberPhase.MovePendingPlayerId != playerID {
+		t.Fatalf("Expected move pending player to be %s", playerID)
+	}
+	if len(state.RobberPhase.DiscardPending) != 2 {
+		t.Fatalf("Expected 2 pending discards, got %d", len(state.RobberPhase.DiscardPending))
+	}
+	if state.RobberPhase.DiscardRequired[playerID] != 4 {
+		t.Errorf("Expected player 1 discard 4, got %d", state.RobberPhase.DiscardRequired[playerID])
+	}
+	otherID := state.Players[1].Id
+	if state.RobberPhase.DiscardRequired[otherID] != 4 {
+		t.Errorf("Expected player 2 discard 4, got %d", state.RobberPhase.DiscardRequired[otherID])
+	}
+}
+
 func TestRollDice_NotDuringSetup(t *testing.T) {
 	state := createPlayingGameState(2)
 	state.Status = pb.GameStatus_GAME_STATUS_SETUP

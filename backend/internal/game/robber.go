@@ -75,6 +75,9 @@ func MoveRobber(state *pb.GameState, playerID string, hex *pb.HexCoord) error {
 	if state.RobberPhase == nil {
 		return errors.New("not in robber phase")
 	}
+	if len(state.RobberPhase.DiscardPending) > 0 {
+		return errors.New("pending discards must complete first")
+	}
 	if state.RobberPhase.MovePendingPlayerId == nil || *state.RobberPhase.MovePendingPlayerId != playerID {
 		return errors.New("not player's turn to move robber")
 	}
@@ -98,6 +101,12 @@ func MoveRobber(state *pb.GameState, playerID string, hex *pb.HexCoord) error {
 	// Move robber
 	state.Board.RobberHex = hex
 	state.RobberPhase.MovePendingPlayerId = nil
+	adjacentVictims := getRobberAdjacentPlayers(state, playerID)
+	if len(adjacentVictims) == 0 {
+		state.RobberPhase = nil
+		return nil
+	}
+	state.RobberPhase.StealPendingPlayerId = &playerID
 	return nil
 }
 
@@ -167,6 +176,7 @@ func StealFromPlayer(state *pb.GameState, thiefID, victimID string, chooser ...f
 		thief.Resources.Ore++
 	}
 	state.RobberPhase.StealPendingPlayerId = nil
+	finalizeRobberPhase(state)
 	return stolen, nil
 }
 
@@ -195,4 +205,44 @@ func playerIsAdjacentToRobberHex(state *pb.GameState, playerID string) bool {
 		}
 	}
 	return false
+}
+
+func getRobberAdjacentPlayers(state *pb.GameState, excludeID string) []string {
+	robHex := state.Board.RobberHex
+	if robHex == nil {
+		return nil
+	}
+	players := make(map[string]struct{})
+	for _, v := range state.Board.Vertices {
+		if v.Building == nil || v.Building.OwnerId == excludeID {
+			continue
+		}
+		for _, h := range v.AdjacentHexes {
+			if h.Q == robHex.Q && h.R == robHex.R {
+				players[v.Building.OwnerId] = struct{}{}
+				break
+			}
+		}
+	}
+	result := make([]string, 0, len(players))
+	for id := range players {
+		result = append(result, id)
+	}
+	return result
+}
+
+func finalizeRobberPhase(state *pb.GameState) {
+	if state == nil || state.RobberPhase == nil {
+		return
+	}
+	if len(state.RobberPhase.DiscardPending) > 0 {
+		return
+	}
+	if state.RobberPhase.MovePendingPlayerId != nil {
+		return
+	}
+	if state.RobberPhase.StealPendingPlayerId != nil {
+		return
+	}
+	state.RobberPhase = nil
 }

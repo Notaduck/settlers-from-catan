@@ -66,6 +66,7 @@ func PerformDiceRollWithValues(state *pb.GameState, playerID string, die1, die2 
 	if total == 7 {
 		result.RobberActivated = true
 		result.PlayersToDiscard = calculatePlayersToDiscard(state)
+		initializeRobberPhase(state, playerID, result.PlayersToDiscard)
 		state.TurnPhase = pb.TurnPhase_TURN_PHASE_BUILD // Skip trade, go to build (robber handling)
 	} else {
 		// Distribute resources
@@ -92,6 +93,25 @@ func calculatePlayersToDiscard(state *pb.GameState) []PlayerDiscard {
 	}
 
 	return result
+}
+
+func initializeRobberPhase(state *pb.GameState, playerID string, discards []PlayerDiscard) {
+	if state == nil {
+		return
+	}
+	movePlayerID := playerID
+	phase := &pb.RobberPhase{
+		DiscardRequired:     map[string]int32{},
+		MovePendingPlayerId: &movePlayerID,
+	}
+	for _, pd := range discards {
+		if pd.DiscardCount <= 0 {
+			continue
+		}
+		phase.DiscardPending = append(phase.DiscardPending, pd.PlayerID)
+		phase.DiscardRequired[pd.PlayerID] = int32(pd.DiscardCount)
+	}
+	state.RobberPhase = phase
 }
 
 // countTotalResources returns the total number of resource cards a player has

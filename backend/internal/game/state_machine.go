@@ -115,6 +115,9 @@ func EndTurn(state *pb.GameState, playerID string) error {
 	if state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
 		return ErrWrongPhase
 	}
+	if state.RobberPhase != nil {
+		return ErrWrongPhase
+	}
 	currentPlayerIdx := state.CurrentTurn
 	if currentPlayerIdx < 0 || int(currentPlayerIdx) >= len(state.Players) {
 		return ErrNotYourTurn
