@@ -39,6 +39,9 @@ make typecheck
 # Linting (ALWAYS run)
 make lint
 
+# Verify the projects build
+make build
+
 # E2E tests - SKIP if servers not running. Note in plan and continue.
 # Do NOT start servers yourself. E2E will be validated separately.
 ```
