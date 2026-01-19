@@ -61,3 +61,16 @@ applyTo: '**'
 **All backend features must have table-driven Go unit tests (backend/internal/game/*_test.go).**
 **All Playwright E2E flows must be in dedicated specs (frontend/tests/*.spec.ts), covering all user-facing tasks.**
 **Every step should be implemented as a standalone, single-commit change for easy review.**
+
+---
+
+**2026-01-19: Full plan/spec/code audit performed. All feature requirements from the following specs are covered by the above prioritized task list:**
+- interactive-board
+- setup-phase-ui
+- victory-flow
+- robber-flow
+- trading
+- ports
+- development-cards
+- longest-road
+No discrepancies or missing tasks were found. File, test, and E2E mappings were verified against the current codebase and proto files.**
