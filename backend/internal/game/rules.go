@@ -185,33 +185,92 @@ func ResourceCountToMap(rc *pb.ResourceCount) map[pb.TileResource]int {
 // CheckVictory evaluates if the current player meets victory conditions after a point-gaining action.
 // Returns (victory, winnerID) - only for the active player on their turn.
 func CheckVictory(state *pb.GameState) (bool, string) {
-	if state == nil || state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
+	if state == nil {
 		return false, ""
+	}
+	if state.Status != pb.GameStatus_GAME_STATUS_PLAYING && state.Status != pb.GameStatus_GAME_STATUS_FINISHED {
+		return false, ""
+	}
+	winnerID, ok := DetermineWinner(state)
+	if !ok {
+		return false, ""
+	}
+	return true, winnerID
+}
+
+// DetermineWinner checks if the active player meets victory conditions.
+func DetermineWinner(state *pb.GameState) (string, bool) {
+	if state == nil {
+		return "", false
 	}
 	currentIdx := state.CurrentTurn
 	if currentIdx < 0 || int(currentIdx) >= len(state.Players) {
-		return false, ""
+		return "", false
 	}
 	player := state.Players[currentIdx]
-	// Compute VP sources
-	settlements, cities := 0, 0
-	for _, v := range state.Board.Vertices {
-		if v.Building != nil && v.Building.OwnerId == player.Id {
-			if v.Building.Type == pb.BuildingType_BUILDING_TYPE_SETTLEMENT {
-				settlements++
-			} else if v.Building.Type == pb.BuildingType_BUILDING_TYPE_CITY {
-				cities++
-			}
+	totalVP := CalculatePlayerVictoryPoints(state, player.Id)
+	if IsVictorious(totalVP) {
+		return player.Id, true
+	}
+	return "", false
+}
+
+// CalculatePlayerVictoryPoints computes total VP for a player in the current state.
+func CalculatePlayerVictoryPoints(state *pb.GameState, playerID string) int {
+	if state == nil {
+		return 0
+	}
+	var player *pb.PlayerState
+	for _, p := range state.Players {
+		if p.Id == playerID {
+			player = p
+			break
 		}
 	}
-
-	hasLongestRoad := state.GetLongestRoadPlayerId() == player.Id
-	hasLargestArmy := state.GetLargestArmyPlayerId() == player.Id
-	// TODO: Count hidden VP cards: if system for player dev card hands exists, count dev cards of type VICTORY_POINT in hand
-	vpCards := int(player.GetVictoryPointCards())
-	totalVP := CalculateVictoryPoints(settlements, cities, hasLongestRoad, hasLargestArmy, vpCards)
-	if IsVictorious(totalVP) {
-		return true, player.Id
+	if player == nil {
+		return 0
 	}
-	return false, ""
+	settlements, cities := countPlayerBuildings(state, playerID)
+	hasLongestRoad := state.GetLongestRoadPlayerId() == playerID
+	hasLargestArmy := state.GetLargestArmyPlayerId() == playerID
+	vpCards := int(player.GetVictoryPointCards())
+	return CalculateVictoryPoints(settlements, cities, hasLongestRoad, hasLargestArmy, vpCards)
+}
+
+func countPlayerBuildings(state *pb.GameState, playerID string) (int, int) {
+	if state == nil || state.Board == nil {
+		return 0, 0
+	}
+	settlements, cities := 0, 0
+	for _, v := range state.Board.Vertices {
+		if v.Building == nil || v.Building.OwnerId != playerID {
+			continue
+		}
+		switch v.Building.Type {
+		case pb.BuildingType_BUILDING_TYPE_SETTLEMENT:
+			settlements++
+		case pb.BuildingType_BUILDING_TYPE_CITY:
+			cities++
+		}
+	}
+	return settlements, cities
+}
+
+// BuildGameOverPayload builds the final scores payload for game over.
+func BuildGameOverPayload(state *pb.GameState, winnerID string) *pb.GameOverPayload {
+	if state == nil {
+		return &pb.GameOverPayload{WinnerId: winnerID}
+	}
+	scores := make([]*pb.PlayerScore, 0, len(state.GetPlayers()))
+	for _, player := range state.GetPlayers() {
+		points := CalculatePlayerVictoryPoints(state, player.Id)
+		scores = append(scores, &pb.PlayerScore{
+			PlayerId: player.Id,
+			Points:   int32(points),
+		})
+	}
+	return &pb.GameOverPayload{
+		WinnerId: winnerID,
+		Scores:   scores,
+	}
 }

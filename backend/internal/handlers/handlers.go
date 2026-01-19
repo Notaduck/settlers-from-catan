@@ -353,6 +353,12 @@ func (h *Handler) handleBuildStructure(client *hub.Client, payload []byte) {
 		h.broadcastServerMessage(client.GameID, serverKind, serverPayload)
 	}
 	h.broadcastGameStateProto(client.GameID, state)
+	if state.Status == game.GameStatusFinished {
+		if winnerID, ok := game.DetermineWinner(state); ok {
+			gameOverPayload := game.BuildGameOverPayload(state, winnerID)
+			h.broadcastServerMessage(client.GameID, "gameOver", gameOverPayload)
+		}
+	}
 }
 
 // handleEndTurn advances to the next player.

@@ -125,11 +125,14 @@ func TestCheckVictory_GameEndsOnWin(t *testing.T) {
 		Status:      pb.GameStatus_GAME_STATUS_PLAYING,
 		CurrentTurn: 0,
 	}
-	// Simulate win: 5 settlements and 1 dev card VP
-	for i := 0; i < 5; i++ {
-		board.Vertices = append(board.Vertices, &pb.Vertex{Id: "p1:" + strconv.Itoa(i), Building: &pb.Building{OwnerId: "p1", Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT}})
+	// Simulate win: 3 settlements (3 VP), 2 cities (4 VP), 3 VP cards (3 VP) = 10 VP
+	for i := 0; i < 3; i++ {
+		board.Vertices = append(board.Vertices, &pb.Vertex{Id: "p1:S" + strconv.Itoa(i), Building: &pb.Building{OwnerId: "p1", Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT}})
 	}
-	state.Players[0].VictoryPointCards = 1 // Add 1 VP dev card for 10 VP total
+	for i := 0; i < 2; i++ {
+		board.Vertices = append(board.Vertices, &pb.Vertex{Id: "p1:C" + strconv.Itoa(i), Building: &pb.Building{OwnerId: "p1", Type: pb.BuildingType_BUILDING_TYPE_CITY}})
+	}
+	state.Players[0].VictoryPointCards = 3
 	victory, _ := CheckVictory(state)
 	if !victory {
 		t.Fatalf("Player should be victorious at 10 VP (including dev card)")
@@ -146,14 +149,32 @@ func TestCheckVictory_GameEndsOnWin(t *testing.T) {
 
 // Test: GameOverPayload contains correct winner and scores (spec: Confirm winner and all scores included on game over)
 func TestGameOverPayload_CorrectScoresAndWinner(t *testing.T) {
-	payload := &pb.GameOverPayload{
-		WinnerId: "p2",
-		Scores: []*pb.PlayerScore{
-			{PlayerId: "p1", Points: 8},
-			{PlayerId: "p2", Points: 11},
-			{PlayerId: "p3", Points: 3},
-		},
+	board := &pb.BoardState{Vertices: []*pb.Vertex{}}
+	addBuilding := func(playerId string, buildingType pb.BuildingType, n int) {
+		for i := 0; i < n; i++ {
+			board.Vertices = append(board.Vertices, &pb.Vertex{
+				Id:       playerId + ":" + strconv.Itoa(i),
+				Building: &pb.Building{OwnerId: playerId, Type: buildingType},
+			})
+		}
 	}
+	addBuilding("p1", pb.BuildingType_BUILDING_TYPE_SETTLEMENT, 4) // 4 VP
+	addBuilding("p2", pb.BuildingType_BUILDING_TYPE_CITY, 3)       // 6 VP
+	addBuilding("p3", pb.BuildingType_BUILDING_TYPE_SETTLEMENT, 3) // 3 VP
+	addBuilding("p2", pb.BuildingType_BUILDING_TYPE_SETTLEMENT, 3) // 3 VP (total 9)
+
+	state := &pb.GameState{
+		Players: []*pb.PlayerState{
+			{Id: "p1", Name: "Alice"},
+			{Id: "p2", Name: "Bob", VictoryPointCards: 2},
+			{Id: "p3", Name: "Chris"},
+		},
+		Board:       board,
+		Status:      pb.GameStatus_GAME_STATUS_FINISHED,
+		CurrentTurn: 1,
+	}
+
+	payload := BuildGameOverPayload(state, "p2")
 	if payload.WinnerId != "p2" {
 		t.Fatalf("Winner id in payload should be p2, got %s", payload.WinnerId)
 	}
@@ -164,8 +185,8 @@ func TestGameOverPayload_CorrectScoresAndWinner(t *testing.T) {
 	if foundScores["p2"] != 11 {
 		t.Fatalf("Score for winner should be 11, got %d", foundScores["p2"])
 	}
-	if foundScores["p1"] != 8 {
-		t.Fatalf("Score for p1 should be 8, got %d", foundScores["p1"])
+	if foundScores["p1"] != 4 {
+		t.Fatalf("Score for p1 should be 4, got %d", foundScores["p1"])
 	}
 	if foundScores["p3"] != 3 {
 		t.Fatalf("Score for p3 should be 3, got %d", foundScores["p3"])

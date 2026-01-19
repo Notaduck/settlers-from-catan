@@ -13,7 +13,7 @@
 - [x] Setup banner, turn indicator, placement instruction, and resource toast implemented. Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`; Go tests: none (state machine tests already cover setup); Playwright: `frontend/tests/setup-phase.spec.ts` (blocked by WS handlers above).
 
 ## PRIORITY 3: VICTORY FLOW
-- [ ] Add authoritative victory detection + `game_over` broadcast with score breakdown, and prevent actions after FINISHED. Files: `backend/internal/game/commands.go`, `backend/internal/game/rules.go`, `backend/internal/game/longestroad.go`, `backend/internal/handlers/handlers.go`; Go tests: extend `backend/internal/game/victory_test.go`; Playwright: `frontend/tests/victory.spec.ts`.
+- [x] Add authoritative victory detection + `game_over` broadcast with score breakdown, and prevent actions after FINISHED. Files: `backend/internal/game/rules.go`, `backend/internal/handlers/handlers.go`; Go tests: extend `backend/internal/game/victory_test.go`; Playwright: `frontend/tests/victory.spec.ts`.
 - [ ] Frontend consumes `game_over` payload and renders breakdown from payload (not inferred fields) and disables actions. Files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/GameOver.tsx`, `frontend/src/components/Game/Game.tsx`; Go tests: none; Playwright: `frontend/tests/victory.spec.ts`.
 
 ## PRIORITY 4: ROBBER FLOW
@@ -40,7 +40,7 @@
 - Robber steal flow currently sends `move_robber` without a hex; plan assumes we will allow a separate steal step without re-moving the robber (either by tolerating same-hex moves or adding a dedicated handler) to avoid proto churn.
 - Port `Location` values in `backend/internal/game/ports.go` appear to be hard-coded vertex IDs; verify they match `generateVertices` output before wiring UI highlights.
 - Validation (this iteration):
-  - `make test-backend` fails in existing game tests: `TestResourceDistribution_SettlementGetsOneResource`, `TestResourceDistribution_MultiplePlayersReceive`, `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`, `TestDiscardCards`, `TestCheckVictory_GameEndsOnWin`.
+  - `make test-backend` fails in existing game tests: `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`, `TestDiscardCards`.
   - `make lint` fails due to pre-existing frontend eslint issues in `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/tests/robber.spec.ts`, `frontend/tests/trading.spec.ts`.
   - `make build` fails due to pre-existing TypeScript errors across `frontend/src/components/*`, `frontend/src/context/GameContext.tsx`, `frontend/src/gen/proto/catan/v1/types.ts`.
   - `make e2e` skipped (servers not running).
