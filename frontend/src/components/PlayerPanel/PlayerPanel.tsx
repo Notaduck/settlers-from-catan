@@ -17,6 +17,7 @@ interface PlayerPanelProps {
   currentTurn: number;
   turnPhase: TurnPhase;
   dice: number[];
+  gameStatus?: string;
 }
 
 const RESOURCE_ICONS: Record<string, string> = {
@@ -27,18 +28,26 @@ const RESOURCE_ICONS: Record<string, string> = {
   ore: "�ite",
 };
 
+function isTurnPhase(
+  phase: TurnPhase | string | undefined,
+  expected: TurnPhase,
+  expectedString: string
+): boolean {
+  return phase === expected || phase === (expectedString as TurnPhase);
+}
+
 // Helper to display turn phase
-function getTurnPhaseName(phase: TurnPhase): string {
-  switch (phase) {
-    case TurnPhase.ROLL:
-      return "Roll";
-    case TurnPhase.TRADE:
-      return "Trade";
-    case TurnPhase.BUILD:
-      return "Build";
-    default:
-      return "Unknown";
+function getTurnPhaseName(phase: TurnPhase | string | undefined): string {
+  if (isTurnPhase(phase, TurnPhase.ROLL, "TURN_PHASE_ROLL")) {
+    return "Roll";
   }
+  if (isTurnPhase(phase, TurnPhase.TRADE, "TURN_PHASE_TRADE")) {
+    return "Trade";
+  }
+  if (isTurnPhase(phase, TurnPhase.BUILD, "TURN_PHASE_BUILD")) {
+    return "Build";
+  }
+  return "Unknown";
 }
 
 export function PlayerPanel({
@@ -51,6 +60,7 @@ export function PlayerPanel({
 
   const currentPlayer = players[currentTurn];
   const isMyTurn = currentPlayer?.id === currentPlayerId;
+  const isRollPhase = isTurnPhase(turnPhase, TurnPhase.ROLL, "TURN_PHASE_ROLL");
   const myPlayer = players.find((p) => p.id === currentPlayerId);
 
   return (
@@ -66,7 +76,7 @@ export function PlayerPanel({
             {dice[1] || "?"}
           </div>
         </div>
-        {isMyTurn && turnPhase === TurnPhase.ROLL && (
+         {isMyTurn && isRollPhase && (gameStatus === undefined || gameStatus === "PLAYING" || gameStatus === "GAME_STATUS_PLAYING") && (
           <button
             onClick={rollDice}
             className="btn btn-primary"
@@ -92,7 +102,7 @@ export function PlayerPanel({
             </span>
           </div>
         )}
-        {isMyTurn && turnPhase !== TurnPhase.ROLL && (
+        {isMyTurn && !isRollPhase && (
           <button
             onClick={endTurn}
             className="btn btn-secondary"

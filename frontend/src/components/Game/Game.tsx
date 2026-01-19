@@ -260,7 +260,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-          {isSetup && (
+          {isSetup && gameState.status === GameStatus.SETUP && (
             <div className="setup-phase-panel">
               <div
                 className="setup-phase-banner"
@@ -286,7 +286,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               )}
             </div>
           )}
-          {resourceGainText && (
+           {resourceGainText && gameState.status === GameStatus.SETUP && (
             <div
               className="setup-resource-toast"
               data-cy="setup-resource-toast"
@@ -294,7 +294,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               {resourceGainText}
             </div>
           )}
-          {placementModeLabel && (
+           {placementModeLabel && ((isSetup && gameState.status === GameStatus.SETUP) || (gameState.status === GameStatus.PLAYING)) && (
             <div className="placement-mode" data-cy="placement-mode">
               {placementModeLabel}
             </div>
@@ -319,6 +319,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               currentTurn={gameState.currentTurn}
               turnPhase={gameState.turnPhase}
               dice={gameState.dice}
+              gameStatus={gameState.status}
             />
           </div>
         </div>

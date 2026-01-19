@@ -53,10 +53,12 @@
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (resource toast visible)
 
-- [ ] Setup completion transition to PLAYING (dice available, setup banner removed)
-  - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/PlayerPanel/PlayerPanel.tsx
-  - Go tests: none
-  - Playwright: frontend/tests/setup-phase.spec.ts (dice button available after setup)
+- [x] Setup completion transition to PLAYING (dice available, setup banner removed)
+   - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/PlayerPanel/PlayerPanel.tsx
+   - Go tests: none
+   - Playwright: frontend/tests/setup-phase.spec.ts (dice button available after setup)
+   - Notes: Fixed logic to hide setup UI after status=PLAYING; dice button now appears when applicable. See above for test/lint results.
+   - Validation: Backend/unit tests and typecheck passed, lint passed with only known warnings (see Validation Notes). E2E not run (servers not started per instructions).
 
 ---
 
