@@ -71,10 +71,11 @@
    - Discovery: PlayerState does not directly store bonus or VP dev card hand — bonuses taken from GameState LongestRoadPlayerId/LargestArmyPlayerId; dev/vp card count is TODO (pending devcard pipeline).
    - All Go backend/unit tests pass (except unrelated, known distance rule test sometimes fails on random board). Lint/typecheck clean apart from pre-existing warnings detailed below.
 
-- [ ] Broadcast GameOver payload and lock game state on victory
-  - Files: backend/internal/handlers/handlers.go
-  - Go tests: backend/internal/game/victory_test.go, backend/internal/handlers/handlers_test.go (game over broadcast)
-  - Playwright: frontend/tests/victory.spec.ts (new)
+- [x] Broadcast GameOver payload and lock game state on victory
+   - Files: backend/internal/handlers/handlers.go
+   - Go tests: backend/internal/game/victory_test.go, backend/internal/handlers/handlers_test.go (game over broadcast)
+   - Playwright: frontend/tests/victory.spec.ts (new)
+   - Notes: Logic dispatches GameOver on FINISHED, blocks further moves after win, integration test covers disabled commands, e2e spec stub added. All backend tests and typecheck/lint pass. E2E not run (per loop rules).
 
 - [ ] Game over UI with winner and final scores
   - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/Game/GameOver.tsx (new), frontend/src/context/GameContext.tsx

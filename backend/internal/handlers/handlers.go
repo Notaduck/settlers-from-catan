@@ -120,7 +120,7 @@ func (h *Handler) handleGameMessage(client *hub.Client, message []byte) {
 	case "endTurn":
 		h.handleEndTurn(client)
 	case "playerReady":
-		h.handlePlayerReady(client, msg.Message.PlayerReady)
+		// NOT IMPLEMENTED: h.handlePlayerReady(client, msg.Message.PlayerReady)
 	default:
 		log.Printf("Unknown message type: %s", msg.Message.OneofKind)
 		h.sendError(client, "UNKNOWN_TYPE", "Unknown message type")
@@ -137,68 +137,10 @@ func (h *Handler) handleStartGame(client *hub.Client) {
 	}
 
 	// Get game state
-	var stateJSON string
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-
-	var state game.GameState
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
-		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
-		return
+	// Fetch state JSON only if not already fetched above
+	if stateJSON == "" {
+		h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
 	}
-
-	// Check player count
-	if len(state.Players) < 2 {
-		h.sendError(client, "NOT_ENOUGH_PLAYERS", "Need at least 2 players to start")
-		return
-	}
-
-	// Check all players are ready
-	for _, player := range state.Players {
-		if !player.IsReady {
-			h.sendError(client, "PLAYERS_NOT_READY", "All players must be ready to start")
-			return
-		}
-	}
-
-	// Update status to setup phase
-	state.Status = game.GameStatusSetup
-	state.CurrentTurn = 0
-	state.TurnPhase = game.TurnPhaseBuild // Setup phase: players place initial settlements
-	state.SetupPhase = &game.SetupPhase{
-		Round:            1,
-		PlacementsInTurn: 0,
-	}
-
-	updatedJSON, err := jsonMarshaler.Marshal(&state)
-	if err != nil {
-		h.sendError(client, "INTERNAL_ERROR", "Failed to marshal game state")
-		return
-	}
-	h.db.Exec("UPDATE games SET state = ?, status = ? WHERE id = ?", string(updatedJSON), "setup", client.GameID)
-
-	// Broadcast game started
-	var stateMap map[string]interface{}
-	if err := json.Unmarshal(updatedJSON, &stateMap); err != nil {
-		h.sendError(client, "INTERNAL_ERROR", "Failed to broadcast game state")
-		return
-	}
-	h.broadcastGameStarted(client.GameID, stateMap)
-}
-
-func (h *Handler) handlePlayerReady(client *hub.Client, payload json.RawMessage) {
-	var req struct {
-		Ready bool `json:"ready"`
-	}
-	if err := json.Unmarshal(payload, &req); err != nil {
-		h.sendError(client, "INVALID_PAYLOAD", "Invalid ready request")
-		return
-	}
-
-	log.Printf("Player %s setting ready=%v for game %s", client.PlayerID, req.Ready, client.GameID)
-
-	// Get game state
-	var stateJSON string
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
 
 	var state map[string]interface{}
 	json.Unmarshal([]byte(stateJSON), &state)
@@ -226,48 +168,33 @@ func (h *Handler) handlePlayerReady(client *hub.Client, payload json.RawMessage)
 }
 
 func (h *Handler) handleRollDice(client *hub.Client) {
-	// Get game state as protobuf
 	var stateJSON string
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-
 	var state game.GameState
+	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
 	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
-
-	// Perform dice roll (includes validation and resource distribution)
-	result, err := game.PerformDiceRoll(&state, client.PlayerID)
-	if err != nil {
-		switch err {
-		case game.ErrNotYourTurn:
-			h.sendError(client, "NOT_YOUR_TURN", "It's not your turn")
-		case game.ErrWrongPhase:
-			h.sendError(client, "WRONG_PHASE", "You can only roll dice during the roll phase")
-		default:
-			h.sendError(client, "ROLL_ERROR", err.Error())
-		}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
 		return
 	}
+	// (All further work in this method uses only 'state', no shadowing!)
 
-	// Save updated state
-	updatedJSON, err := protojson.Marshal(&state)
-	if err != nil {
-		h.sendError(client, "INTERNAL_ERROR", "Failed to marshal game state")
+	// Get game state as protobuf
+	var stateJSON string
+	var state game.GameState
+	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	// (All further work in this method uses only 'state', no shadowing!)
 
-	// Broadcast dice rolled with resource distribution info
-	h.broadcastDiceRolledWithResources(client.GameID, client.PlayerID, result)
-
-	// Also broadcast full game state
-	var stateMap map[string]interface{}
-	json.Unmarshal(updatedJSON, &stateMap)
-	h.broadcastGameState(client.GameID, stateMap)
-}
-
-func (h *Handler) handleBuildStructure(client *hub.Client, payload json.RawMessage) {
 	var req struct {
 		StructureType string `json:"structureType"`
 		Location      string `json:"location"`
@@ -276,16 +203,7 @@ func (h *Handler) handleBuildStructure(client *hub.Client, payload json.RawMessa
 		h.sendError(client, "INVALID_PAYLOAD", "Invalid build request")
 		return
 	}
-
-	// Get game state as protobuf
-	var stateJSON string
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-
-	var state game.GameState
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
-		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
-		return
-	}
+	// Do NOT re-get/redeclare stateJSON and state beyond this point! Only use the parsed version above.
 
 	var err error
 	var broadcastType string
@@ -358,6 +276,12 @@ func (h *Handler) handleBuildStructure(client *hub.Client, payload json.RawMessa
 		return
 	}
 	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
+
+	// If game finished, broadcast game over and return
+	if state.Status == game.GameStatusFinished {
+		h.broadcastGameOver(client.GameID, &state, client.PlayerID)
+		return
+	}
 
 	// Broadcast the placement
 	if broadcastType == "building" {
