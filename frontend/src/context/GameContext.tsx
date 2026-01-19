@@ -11,7 +11,7 @@ import type {
   ServerMessage,
   ClientMessage,
 } from "@/types";
-import { StructureType } from "@/types";
+import { GameStatus, StructureType, TurnPhase } from "@/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
 
 // Game context state
@@ -21,6 +21,8 @@ interface GameContextState {
   isConnected: boolean;
   error: string | null;
 }
+
+type PlacementMode = "settlement" | "road" | "build";
 
 // Actions for the reducer
 type GameAction =
@@ -89,6 +91,7 @@ interface GameContextValue extends GameContextState {
   endTurn: () => void;
   startGame: () => void;
   setReady: (ready: boolean) => void;
+  placementMode: PlacementMode | null;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -185,6 +188,8 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     [sendMessage]
   );
 
+  const placementMode = getPlacementMode(state.gameState, state.currentPlayerId);
+
   const value: GameContextValue = {
     ...state,
     isConnected,
@@ -197,6 +202,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     endTurn,
     startGame,
     setReady,
+    placementMode,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
@@ -208,4 +214,52 @@ export function useGame() {
     throw new Error("useGame must be used within a GameProvider");
   }
   return context;
+}
+
+function isStatus(
+  status: GameStatus | string | undefined,
+  expected: GameStatus,
+  expectedString: string
+): boolean {
+  return status === expected || status === (expectedString as GameStatus);
+}
+
+function isTurnPhase(
+  phase: TurnPhase | string | undefined,
+  expected: TurnPhase,
+  expectedString: string
+): boolean {
+  return phase === expected || phase === (expectedString as TurnPhase);
+}
+
+function getPlacementMode(
+  gameState: GameState | null,
+  currentPlayerId: string | null
+): PlacementMode | null {
+  if (!gameState || !currentPlayerId) {
+    return null;
+  }
+
+  const currentPlayer = gameState.players[gameState.currentTurn ?? 0];
+  if (!currentPlayer || currentPlayer.id !== currentPlayerId) {
+    return null;
+  }
+
+  if (isStatus(gameState.status, GameStatus.SETUP, "GAME_STATUS_SETUP")) {
+    const placementsInTurn = gameState.setupPhase?.placementsInTurn ?? 0;
+    return placementsInTurn === 0 ? "settlement" : "road";
+  }
+
+  if (
+    isStatus(gameState.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING") &&
+    isTurnPhase(
+      gameState.turnPhase,
+      TurnPhase.BUILD,
+      "TURN_PHASE_BUILD"
+    )
+  ) {
+    return "build";
+  }
+
+  return null;
 }

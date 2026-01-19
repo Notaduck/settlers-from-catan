@@ -29,6 +29,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
     startGame,
     setReady,
     currentPlayerId,
+    placementMode,
   } = useGame();
 
   useEffect(() => {
@@ -58,6 +59,19 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const isWaiting =
     gameState?.status === GameStatus.WAITING ||
     gameState?.status === ("GAME_STATUS_WAITING" as unknown as GameStatus);
+
+  const placementModeLabel = useMemo(() => {
+    switch (placementMode) {
+      case "settlement":
+        return "Place Settlement";
+      case "road":
+        return "Place Road";
+      case "build":
+        return "Build";
+      default:
+        return null;
+    }
+  }, [placementMode]);
 
   if (error) {
     return (
@@ -189,15 +203,22 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-          {gameState.board && (
-            <Board board={gameState.board} players={gameState.players} />
+          {placementModeLabel && (
+            <div className="placement-mode" data-cy="placement-mode">
+              {placementModeLabel}
+            </div>
           )}
-          <PlayerPanel
-            players={gameState.players}
-            currentTurn={gameState.currentTurn}
-            turnPhase={gameState.turnPhase}
-            dice={gameState.dice}
-          />
+          <div className="game-board-content">
+            {gameState.board && (
+              <Board board={gameState.board} players={gameState.players} />
+            )}
+            <PlayerPanel
+              players={gameState.players}
+              currentTurn={gameState.currentTurn}
+              turnPhase={gameState.turnPhase}
+              dice={gameState.dice}
+            />
+          </div>
         </div>
       )}
     </div>

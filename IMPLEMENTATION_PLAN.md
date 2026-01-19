@@ -19,7 +19,7 @@
   - Go tests: backend/internal/handlers/handlers_test.go (startGame sets setup_phase), backend/internal/game/state_machine_test.go (if new helper)
   - Playwright: none
 
-- [ ] Add placement mode indicator for current player (settlement vs road vs build) with `data-cy="placement-mode"`
+- [x] Add placement mode indicator for current player (settlement vs road vs build) with `data-cy="placement-mode"`
   - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/Game/Game.css, frontend/src/context/GameContext.tsx (derived placement mode)
   - Go tests: none
   - Playwright: frontend/tests/interactive-board.spec.ts (assert placement mode)

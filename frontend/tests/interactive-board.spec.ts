@@ -130,4 +130,22 @@ test.describe("Interactive Board", () => {
 
     await guestPage.close();
   });
+
+  test("shows placement mode for setup turn", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    const placementMode = hostPage.locator("[data-cy='placement-mode']");
+    await expect(placementMode).toBeVisible({ timeout: 30000 });
+    await expect(placementMode).toContainText("Place Settlement");
+
+    await guestPage.close();
+  });
 });

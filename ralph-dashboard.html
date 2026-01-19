@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ralph Dashboard - Settlers from Catan</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --green: #238636;
+      --green-bg: #23863620;
+      --yellow: #d29922;
+      --yellow-bg: #d2992220;
+      --blue: #58a6ff;
+      --blue-bg: #58a6ff20;
+      --red: #f85149;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .header h1::before {
+      content: '🔄';
+      font-size: 28px;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .stat-card h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: 600;
+    }
+    
+    .stat-card.completed .value { color: var(--green); }
+    .stat-card.in-progress .value { color: var(--yellow); }
+    .stat-card.pending .value { color: var(--text-muted); }
+    
+    .progress-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .progress-bar h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .bar-container {
+      height: 24px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+    }
+    
+    .bar-completed {
+      background: var(--green);
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    
+    .bar-in-progress {
+      background: var(--yellow);
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    
+    .progress-text {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    .current-task {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .current-task h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--yellow);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .current-task h3::before {
+      content: '⚡';
+    }
+    
+    .current-task .task-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .current-task .task-details {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    .phases {
+      display: grid;
+      gap: 16px;
+    }
+    
+    .phase {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .phase-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .phase-header:hover {
+      background: var(--border);
+    }
+    
+    .phase-header h3 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .phase-progress {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    .phase-tasks {
+      padding: 8px;
+      display: none;
+    }
+    
+    .phase.expanded .phase-tasks {
+      display: block;
+    }
+    
+    .task {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .task:last-child {
+      margin-bottom: 0;
+    }
+    
+    .task.completed {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+    
+    .task.in-progress {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+    }
+    
+    .task.pending {
+      color: var(--text-muted);
+    }
+    
+    .task-icon {
+      flex-shrink: 0;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .task.completed .task-icon::before { content: '✓'; }
+    .task.in-progress .task-icon::before { content: '◐'; }
+    .task.pending .task-icon::before { content: '○'; }
+    
+    .task-content {
+      flex: 1;
+    }
+    
+    .task-files {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+    
+    .refresh-notice {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    
+    .error {
+      background: var(--red);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .chevron {
+      transition: transform 0.2s;
+    }
+    
+    .phase.expanded .chevron {
+      transform: rotate(90deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Ralph Dashboard</h1>
+    <div class="status">
+      <div class="status-dot"></div>
+      <span id="last-update">Updating...</span>
+    </div>
+  </div>
+  
+  <div id="error" class="error" style="display: none;"></div>
+  
+  <div class="stats">
+    <div class="stat-card completed">
+      <h3>Completed</h3>
+      <div class="value" id="stat-completed">0</div>
+    </div>
+    <div class="stat-card in-progress">
+      <h3>In Progress</h3>
+      <div class="value" id="stat-in-progress">0</div>
+    </div>
+    <div class="stat-card pending">
+      <h3>Pending</h3>
+      <div class="value" id="stat-pending">0</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Tasks</h3>
+      <div class="value" id="stat-total">0</div>
+    </div>
+  </div>
+  
+  <div class="progress-bar">
+    <h3>Overall Progress</h3>
+    <div class="bar-container">
+      <div class="bar-completed" id="bar-completed" style="width: 0%"></div>
+      <div class="bar-in-progress" id="bar-in-progress" style="width: 0%"></div>
+    </div>
+    <div class="progress-text" id="progress-text">Loading...</div>
+  </div>
+  
+  <div id="current-task" class="current-task" style="display: none;">
+    <h3>Currently Working On</h3>
+    <div class="task-title" id="current-task-title"></div>
+    <div class="task-details" id="current-task-details"></div>
+  </div>
+  
+  <div class="phases" id="phases"></div>
+  
+  <div class="refresh-notice">
+    Auto-refreshes every 5 seconds • <a href="IMPLEMENTATION_PLAN.md" style="color: var(--blue);">View Raw Plan</a>
+  </div>
+
+  <script>
+    // Parse IMPLEMENTATION_PLAN.md and extract tasks
+    function parsePlan(markdown) {
+      const phases = [];
+      let currentPhase = null;
+      let currentTask = null;
+      
+      const lines = markdown.split('\n');
+      
+      for (const line of lines) {
+        // Phase header (## Phase N: Name)
+        const phaseMatch = line.match(/^## Phase (\d+)[:\s]+(.+)/i);
+        if (phaseMatch) {
+          if (currentPhase) phases.push(currentPhase);
+          currentPhase = {
+            number: phaseMatch[1],
+            name: phaseMatch[2].trim(),
+            tasks: []
+          };
+          continue;
+        }
+        
+        // Also match ### headers as sub-phases
+        const subPhaseMatch = line.match(/^### (\d+\.\d+)\s+(.+)/);
+        if (subPhaseMatch && currentPhase) {
+          currentTask = {
+            id: subPhaseMatch[1],
+            title: subPhaseMatch[2].replace(/\*\*/g, '').trim(),
+            status: 'pending',
+            files: [],
+            details: []
+          };
+          currentPhase.tasks.push(currentTask);
+          continue;
+        }
+        
+        // Task line (- [ ] or - [x] or 🔄)
+        const taskMatch = line.match(/^- \[([ x])\]\s+\*\*(.+?)\*\*/);
+        if (taskMatch && currentPhase) {
+          currentTask = {
+            id: `${currentPhase.number}.${currentPhase.tasks.length + 1}`,
+            title: taskMatch[2].trim(),
+            status: taskMatch[1] === 'x' ? 'completed' : 'pending',
+            files: [],
+            details: []
+          };
+          currentPhase.tasks.push(currentTask);
+          continue;
+        }
+        
+        // Check for 🔄 in-progress marker
+        if (line.includes('🔄') && currentTask) {
+          currentTask.status = 'in-progress';
+        }
+        
+        // File references
+        if (currentTask && line.match(/^\s+- Files?:/i)) {
+          currentTask.files.push(line.replace(/^\s+- Files?:\s*/i, '').trim());
+        }
+        
+        // E2E or Unit test references
+        if (currentTask && line.match(/^\s+- (E2E|Unit|Tests?):/i)) {
+          currentTask.details.push(line.trim());
+        }
+      }
+      
+      if (currentPhase) phases.push(currentPhase);
+      
+      return phases;
+    }
+    
+    function renderDashboard(phases) {
+      let completed = 0, inProgress = 0, pending = 0;
+      let currentTaskData = null;
+      
+      // Count tasks
+      phases.forEach(phase => {
+        phase.tasks.forEach(task => {
+          if (task.status === 'completed') completed++;
+          else if (task.status === 'in-progress') {
+            inProgress++;
+            currentTaskData = { ...task, phase: phase.name };
+          }
+          else pending++;
+        });
+      });
+      
+      const total = completed + inProgress + pending;
+      
+      // Update stats
+      document.getElementById('stat-completed').textContent = completed;
+      document.getElementById('stat-in-progress').textContent = inProgress;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-total').textContent = total;
+      
+      // Update progress bar
+      const completedPct = total ? (completed / total * 100) : 0;
+      const inProgressPct = total ? (inProgress / total * 100) : 0;
+      document.getElementById('bar-completed').style.width = `${completedPct}%`;
+      document.getElementById('bar-in-progress').style.width = `${inProgressPct}%`;
+      document.getElementById('progress-text').textContent = 
+        `${completed} of ${total} tasks completed (${Math.round(completedPct)}%)`;
+      
+      // Update current task
+      const currentTaskEl = document.getElementById('current-task');
+      if (currentTaskData) {
+        currentTaskEl.style.display = 'block';
+        document.getElementById('current-task-title').textContent = currentTaskData.title;
+        document.getElementById('current-task-details').textContent = 
+          `Phase: ${currentTaskData.phase}` + 
+          (currentTaskData.files.length ? ` • Files: ${currentTaskData.files.join(', ')}` : '');
+      } else if (pending > 0) {
+        // Show next task
+        let nextTask = null;
+        for (const phase of phases) {
+          for (const task of phase.tasks) {
+            if (task.status === 'pending') {
+              nextTask = { ...task, phase: phase.name };
+              break;
+            }
+          }
+          if (nextTask) break;
+        }
+        if (nextTask) {
+          currentTaskEl.style.display = 'block';
+          document.querySelector('.current-task h3').innerHTML = '⏭️ Up Next';
+          document.getElementById('current-task-title').textContent = nextTask.title;
+          document.getElementById('current-task-details').textContent = `Phase: ${nextTask.phase}`;
+        }
+      } else {
+        currentTaskEl.style.display = 'none';
+      }
+      
+      // Render phases
+      const phasesEl = document.getElementById('phases');
+      phasesEl.innerHTML = phases.map((phase, i) => {
+        const phaseCompleted = phase.tasks.filter(t => t.status === 'completed').length;
+        const phaseTotal = phase.tasks.length;
+        const isExpanded = phase.tasks.some(t => t.status === 'in-progress') || 
+                          (phaseCompleted < phaseTotal && phases.slice(0, i).every(p => 
+                            p.tasks.every(t => t.status === 'completed')));
+        
+        return `
+          <div class="phase ${isExpanded ? 'expanded' : ''}" data-phase="${i}">
+            <div class="phase-header" onclick="togglePhase(${i})">
+              <h3>
+                <span class="chevron">▶</span>
+                Phase ${phase.number}: ${phase.name}
+              </h3>
+              <span class="phase-progress">${phaseCompleted}/${phaseTotal}</span>
+            </div>
+            <div class="phase-tasks">
+              ${phase.tasks.map(task => `
+                <div class="task ${task.status}">
+                  <span class="task-icon"></span>
+                  <div class="task-content">
+                    <div>${task.title}</div>
+                    ${task.files.length ? `<div class="task-files">${task.files.join(', ')}</div>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function togglePhase(index) {
+      const phase = document.querySelector(`[data-phase="${index}"]`);
+      phase.classList.toggle('expanded');
+    }
+    
+    async function loadPlan() {
+      try {
+        // Try fetching from local server (if running make dev)
+        let response = await fetch('/IMPLEMENTATION_PLAN.md').catch(() => null);
+        
+        // Fallback to relative path
+        if (!response || !response.ok) {
+          response = await fetch('./IMPLEMENTATION_PLAN.md');
+        }
+        
+        if (!response.ok) throw new Error('Could not load IMPLEMENTATION_PLAN.md');
+        
+        const markdown = await response.text();
+        const phases = parsePlan(markdown);
+        renderDashboard(phases);
+        
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('last-update').textContent = 
+          `Updated ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        document.getElementById('error').textContent = 
+          `Error loading plan: ${err.message}. Make sure to serve this file via HTTP (e.g., npx serve .)`;
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+    
+    // Initial load
+    loadPlan();
+    
+    // Auto-refresh every 5 seconds
+    setInterval(loadPlan, 5000);
+  </script>
+</body>
+</html>
