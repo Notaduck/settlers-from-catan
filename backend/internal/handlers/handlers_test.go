@@ -9,7 +9,10 @@ import (
 	"testing"
 
 	"settlers_from_catan/internal/db"
+	"settlers_from_catan/internal/game"
 	"settlers_from_catan/internal/hub"
+
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func setupTestHandler(t *testing.T) (*Handler, func()) {
@@ -346,6 +349,96 @@ func TestStartGame_RequiresAllReady(t *testing.T) {
 		if ok && isReady {
 			t.Error("Players should not be ready by default")
 		}
+	}
+}
+
+func TestStartGame_InitializesSetupPhase(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	createBody := bytes.NewBuffer([]byte(`{"playerName": "Alice"}`))
+	createReq := httptest.NewRequest(http.MethodPost, "/api/games", createBody)
+	createReq.Header.Set("Content-Type", "application/json")
+	createW := httptest.NewRecorder()
+	handler.HandleCreateGame(createW, createReq)
+
+	var createResponse map[string]string
+	if err := json.NewDecoder(createW.Body).Decode(&createResponse); err != nil {
+		t.Fatalf("Failed to decode create response: %v", err)
+	}
+
+	gameID := createResponse["gameId"]
+	hostID := createResponse["playerId"]
+	gameCode := createResponse["code"]
+
+	joinBody := bytes.NewBuffer([]byte(`{"playerName": "Bob"}`))
+	joinReq := httptest.NewRequest(http.MethodPost, "/api/games/"+gameCode+"/join", joinBody)
+	joinReq.Header.Set("Content-Type", "application/json")
+	joinW := httptest.NewRecorder()
+	handler.HandleGameRoutes(joinW, joinReq)
+
+	if joinW.Code != http.StatusOK {
+		t.Fatalf("Expected join status 200, got %d: %s", joinW.Code, joinW.Body.String())
+	}
+
+	var stateJSON string
+	if err := handler.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+		t.Fatalf("Failed to get game state: %v", err)
+	}
+
+	var state game.GameState
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+		t.Fatalf("Failed to unmarshal game state: %v", err)
+	}
+
+	for _, player := range state.Players {
+		player.IsReady = true
+	}
+
+	updatedJSON, err := jsonMarshaler.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Failed to marshal updated state: %v", err)
+	}
+	handler.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), gameID)
+
+	client := &hub.Client{PlayerID: hostID, GameID: gameID}
+	handler.handleStartGame(client)
+
+	var startedJSON string
+	if err := handler.db.Get(&startedJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+		t.Fatalf("Failed to get started game state: %v", err)
+	}
+
+	var startedState game.GameState
+	if err := protojson.Unmarshal([]byte(startedJSON), &startedState); err != nil {
+		t.Fatalf("Failed to unmarshal started game state: %v", err)
+	}
+
+	if startedState.Status != game.GameStatusSetup {
+		t.Errorf("Expected status setup, got %v", startedState.Status)
+	}
+	if startedState.TurnPhase != game.TurnPhaseBuild {
+		t.Errorf("Expected turn phase build, got %v", startedState.TurnPhase)
+	}
+	if startedState.CurrentTurn != 0 {
+		t.Errorf("Expected current turn 0, got %d", startedState.CurrentTurn)
+	}
+	if startedState.SetupPhase == nil {
+		t.Fatal("Expected setup phase to be initialized")
+	}
+	if startedState.SetupPhase.Round != 1 {
+		t.Errorf("Expected setup round 1, got %d", startedState.SetupPhase.Round)
+	}
+	if startedState.SetupPhase.PlacementsInTurn != 0 {
+		t.Errorf("Expected placements_in_turn 0, got %d", startedState.SetupPhase.PlacementsInTurn)
+	}
+
+	var status string
+	if err := handler.db.Get(&status, "SELECT status FROM games WHERE id = ?", gameID); err != nil {
+		t.Fatalf("Failed to get game status: %v", err)
+	}
+	if status != "setup" {
+		t.Errorf("Expected status column 'setup', got %s", status)
 	}
 }
 

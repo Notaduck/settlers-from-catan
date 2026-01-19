@@ -140,36 +140,49 @@ func (h *Handler) handleStartGame(client *hub.Client) {
 	var stateJSON string
 	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
 
-	var state map[string]interface{}
-	json.Unmarshal([]byte(stateJSON), &state)
+	var state game.GameState
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
+		return
+	}
 
 	// Check player count
-	players, _ := state["players"].([]interface{})
-	if len(players) < 2 {
+	if len(state.Players) < 2 {
 		h.sendError(client, "NOT_ENOUGH_PLAYERS", "Need at least 2 players to start")
 		return
 	}
 
 	// Check all players are ready
-	for _, p := range players {
-		player := p.(map[string]interface{})
-		isReady, _ := player["isReady"].(bool)
-		if !isReady {
+	for _, player := range state.Players {
+		if !player.IsReady {
 			h.sendError(client, "PLAYERS_NOT_READY", "All players must be ready to start")
 			return
 		}
 	}
 
 	// Update status to setup phase
-	state["status"] = "GAME_STATUS_SETUP"
-	state["currentTurn"] = 0
-	state["turnPhase"] = "TURN_PHASE_BUILD" // Setup phase: players place initial settlements
+	state.Status = game.GameStatusSetup
+	state.CurrentTurn = 0
+	state.TurnPhase = game.TurnPhaseBuild // Setup phase: players place initial settlements
+	state.SetupPhase = &game.SetupPhase{
+		Round:            1,
+		PlacementsInTurn: 0,
+	}
 
-	updatedJSON, _ := json.Marshal(state)
+	updatedJSON, err := jsonMarshaler.Marshal(&state)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to marshal game state")
+		return
+	}
 	h.db.Exec("UPDATE games SET state = ?, status = ? WHERE id = ?", string(updatedJSON), "setup", client.GameID)
 
 	// Broadcast game started
-	h.broadcastGameStarted(client.GameID, state)
+	var stateMap map[string]interface{}
+	if err := json.Unmarshal(updatedJSON, &stateMap); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to broadcast game state")
+		return
+	}
+	h.broadcastGameStarted(client.GameID, stateMap)
 }
 
 func (h *Handler) handlePlayerReady(client *hub.Client, payload json.RawMessage) {

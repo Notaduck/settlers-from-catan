@@ -14,7 +14,7 @@
   - Go tests: none
   - Playwright: frontend/tests/interactive-board.spec.ts (existing)
 
-- [ ] Initialize setup phase state when the game starts (ensure setup_phase exists and turn order advances)
+- [x] Initialize setup phase state when the game starts (ensure setup_phase exists and turn order advances)
   - Files: backend/internal/handlers/handlers.go (startGame uses protobuf update), backend/internal/game/state_machine.go (helper if needed)
   - Go tests: backend/internal/handlers/handlers_test.go (startGame sets setup_phase), backend/internal/game/state_machine_test.go (if new helper)
   - Playwright: none
@@ -182,4 +182,13 @@
 ## Discovered Issues / Risks
 
 - Board graph currently produces more than 54 vertices / 72 edges (see TODOs in backend/internal/game/board_test.go); affects placement correctness and longest road.
-- WebSocket handlers mix JSON maps and protobuf state (startGame/endTurn use map); new GameState fields (setup_phase, pending trades, robber state) can be dropped unless handlers use protobuf updates.
+- WebSocket handlers mix JSON maps and protobuf state (endTurn/playerReady use map); new GameState fields (pending trades, robber state) can be dropped unless handlers use protobuf updates.
+
+## Validation Notes
+
+- `make test-backend` passed.
+- `make typecheck` passed.
+- `make lint` passed with existing warnings:
+  - `frontend/src/components/Game/Game.tsx` has `react-hooks/exhaustive-deps` warnings.
+  - `proto/buf.yaml` warns about deprecated DEFAULT category.
+- `make e2e` not run (servers not started per instructions).
