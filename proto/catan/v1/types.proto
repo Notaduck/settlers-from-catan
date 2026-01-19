@@ -163,6 +163,7 @@ message GameState {
   optional string largest_army_player_id = 10;
   optional SetupPhase setup_phase = 11; // Present during setup status
   optional RobberPhase robber_phase = 12; // Present during robber actions
+  repeated TradeOffer pending_trades = 13;
 }
 
 // Tracks the Robber phase state, including pending discards and steps.

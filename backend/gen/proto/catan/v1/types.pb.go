@@ -1128,6 +1128,7 @@ type GameState struct {
 	LargestArmyPlayerId *string                `protobuf:"bytes,10,opt,name=largest_army_player_id,json=largestArmyPlayerId,proto3,oneof" json:"largest_army_player_id,omitempty"`
 	SetupPhase          *SetupPhase            `protobuf:"bytes,11,opt,name=setup_phase,json=setupPhase,proto3,oneof" json:"setup_phase,omitempty"`    // Present during setup status
 	RobberPhase         *RobberPhase           `protobuf:"bytes,12,opt,name=robber_phase,json=robberPhase,proto3,oneof" json:"robber_phase,omitempty"` // Present during robber actions
+	PendingTrades       []*TradeOffer          `protobuf:"bytes,13,rep,name=pending_trades,json=pendingTrades,proto3" json:"pending_trades,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1242,6 +1243,13 @@ func (x *GameState) GetSetupPhase() *SetupPhase {
 func (x *GameState) GetRobberPhase() *RobberPhase {
 	if x != nil {
 		return x.RobberPhase
+	}
+	return nil
+}
+
+func (x *GameState) GetPendingTrades() []*TradeOffer {
+	if x != nil {
+		return x.PendingTrades
 	}
 	return nil
 }
@@ -1860,7 +1868,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\bvertices\x18\x02 \x03(\v2\x10.catan.v1.VertexR\bvertices\x12$\n" +
 	"\x05edges\x18\x03 \x03(\v2\x0e.catan.v1.EdgeR\x05edges\x121\n" +
 	"\n" +
-	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\"\xeb\x04\n" +
+	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\"\xa8\x05\n" +
 	"\tGameState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12*\n" +
@@ -1876,7 +1884,8 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	" \x01(\tH\x01R\x13largestArmyPlayerId\x88\x01\x01\x12:\n" +
 	"\vsetup_phase\x18\v \x01(\v2\x14.catan.v1.SetupPhaseH\x02R\n" +
 	"setupPhase\x88\x01\x01\x12=\n" +
-	"\frobber_phase\x18\f \x01(\v2\x15.catan.v1.RobberPhaseH\x03R\vrobberPhase\x88\x01\x01B\x19\n" +
+	"\frobber_phase\x18\f \x01(\v2\x15.catan.v1.RobberPhaseH\x03R\vrobberPhase\x88\x01\x01\x12;\n" +
+	"\x0epending_trades\x18\r \x03(\v2\x14.catan.v1.TradeOfferR\rpendingTradesB\x19\n" +
 	"\x17_longest_road_player_idB\x19\n" +
 	"\x17_largest_army_player_idB\x0e\n" +
 	"\f_setup_phaseB\x0f\n" +
@@ -2056,19 +2065,20 @@ var file_catan_v1_types_proto_depIdxs = []int32{
 	4,  // 15: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
 	21, // 16: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
 	19, // 17: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
-	28, // 18: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
-	15, // 19: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
-	15, // 20: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
-	8,  // 21: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
-	26, // 22: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
-	6,  // 23: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
-	4,  // 24: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
-	26, // 25: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	20, // 18: catan.v1.GameState.pending_trades:type_name -> catan.v1.TradeOffer
+	28, // 19: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
+	15, // 20: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
+	15, // 21: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
+	8,  // 22: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
+	26, // 23: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
+	6,  // 24: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
+	4,  // 25: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
+	26, // 26: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_catan_v1_types_proto_init() }

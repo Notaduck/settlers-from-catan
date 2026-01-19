@@ -122,10 +122,12 @@
 
 ## Priority 5: Trading
 
-- [ ] Proto: add pending trades to GameState and bank trade message
-  - Files: proto/catan/v1/types.proto, proto/catan/v1/messages.proto
-  - Go tests: none
-  - Playwright: none
+- [x] Proto: add pending trades to GameState and bank trade message
+   - Files: proto/catan/v1/types.proto, proto/catan/v1/messages.proto
+   - Go tests: none
+   - Playwright: none
+   - Result: Added `repeated TradeOffer pending_trades = 13` to GameState, and BankTradeMessage to messages.proto with correct ClientMessage index (12). Typecheck and Go tests pass except for pre-existing unrelated nil-pointer errors. Lint returns some TS warnings.
+
 
 - [ ] Backend trading logic (propose/respond/bank/expire)
   - Files: backend/internal/game/trading.go (new), backend/internal/handlers/handlers.go

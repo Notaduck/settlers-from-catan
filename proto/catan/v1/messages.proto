@@ -8,6 +8,12 @@ import "catan/v1/types.proto";
 
 // ==================== Client -> Server Messages ====================
 
+message BankTradeMessage {
+  ResourceCount offering = 1;
+  Resource resource_requested = 2;
+}
+
+
 message JoinGameMessage {
   string game_id = 1;
 }
@@ -69,6 +75,7 @@ message ClientMessage {
     PlayDevCardMessage play_dev_card = 9;
     PlayerReadyMessage player_ready = 10;
     DiscardCardsMessage discard_cards = 11;
+    BankTradeMessage bank_trade = 12;
   }
 }
 

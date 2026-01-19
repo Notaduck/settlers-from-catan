@@ -15,13 +15,26 @@ import { TradeOffer } from "./types";
 import { BuildingType } from "./types";
 import { PlayerState } from "./types";
 import { GameState } from "./types";
-import { Resource } from "./types";
 import { DevCardType } from "./types";
 import { HexCoord } from "./types";
-import { ResourceCount } from "./types";
 import { StructureType } from "./types";
+import { Resource } from "./types";
+import { ResourceCount } from "./types";
 // ==================== Client -> Server Messages ====================
 
+/**
+ * @generated from protobuf message catan.v1.BankTradeMessage
+ */
+export interface BankTradeMessage {
+    /**
+     * @generated from protobuf field: catan.v1.ResourceCount offering = 1
+     */
+    offering?: ResourceCount;
+    /**
+     * @generated from protobuf field: catan.v1.Resource resource_requested = 2
+     */
+    resourceRequested: Resource;
+}
 /**
  * @generated from protobuf message catan.v1.JoinGameMessage
  */
@@ -216,6 +229,12 @@ export interface ClientMessage {
          * @generated from protobuf field: catan.v1.DiscardCardsMessage discard_cards = 11
          */
         discardCards: DiscardCardsMessage;
+    } | {
+        oneofKind: "bankTrade";
+        /**
+         * @generated from protobuf field: catan.v1.BankTradeMessage bank_trade = 12
+         */
+        bankTrade: BankTradeMessage;
     } | {
         oneofKind: undefined;
     };
@@ -548,6 +567,60 @@ export interface ServerMessage {
         oneofKind: undefined;
     };
 }
+// @generated message type with reflection information, may provide speed optimized methods
+class BankTradeMessage$Type extends MessageType<BankTradeMessage> {
+    constructor() {
+        super("catan.v1.BankTradeMessage", [
+            { no: 1, name: "offering", kind: "message", T: () => ResourceCount },
+            { no: 2, name: "resource_requested", kind: "enum", T: () => ["catan.v1.Resource", Resource, "RESOURCE_"] }
+        ]);
+    }
+    create(value?: PartialMessage<BankTradeMessage>): BankTradeMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.resourceRequested = 0;
+        if (value !== undefined)
+            reflectionMergePartial<BankTradeMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BankTradeMessage): BankTradeMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* catan.v1.ResourceCount offering */ 1:
+                    message.offering = ResourceCount.internalBinaryRead(reader, reader.uint32(), options, message.offering);
+                    break;
+                case /* catan.v1.Resource resource_requested */ 2:
+                    message.resourceRequested = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BankTradeMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* catan.v1.ResourceCount offering = 1; */
+        if (message.offering)
+            ResourceCount.internalBinaryWrite(message.offering, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.Resource resource_requested = 2; */
+        if (message.resourceRequested !== 0)
+            writer.tag(2, WireType.Varint).int32(message.resourceRequested);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.BankTradeMessage
+ */
+export const BankTradeMessage = new BankTradeMessage$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class JoinGameMessage$Type extends MessageType<JoinGameMessage> {
     constructor() {
@@ -1109,7 +1182,8 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
             { no: 8, name: "end_turn", kind: "message", oneof: "message", T: () => EndTurnMessage },
             { no: 9, name: "play_dev_card", kind: "message", oneof: "message", T: () => PlayDevCardMessage },
             { no: 10, name: "player_ready", kind: "message", oneof: "message", T: () => PlayerReadyMessage },
-            { no: 11, name: "discard_cards", kind: "message", oneof: "message", T: () => DiscardCardsMessage }
+            { no: 11, name: "discard_cards", kind: "message", oneof: "message", T: () => DiscardCardsMessage },
+            { no: 12, name: "bank_trade", kind: "message", oneof: "message", T: () => BankTradeMessage }
         ]);
     }
     create(value?: PartialMessage<ClientMessage>): ClientMessage {
@@ -1190,6 +1264,12 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
                         discardCards: DiscardCardsMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).discardCards)
                     };
                     break;
+                case /* catan.v1.BankTradeMessage bank_trade */ 12:
+                    message.message = {
+                        oneofKind: "bankTrade",
+                        bankTrade: BankTradeMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).bankTrade)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1235,6 +1315,9 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
         /* catan.v1.DiscardCardsMessage discard_cards = 11; */
         if (message.message.oneofKind === "discardCards")
             DiscardCardsMessage.internalBinaryWrite(message.message.discardCards, writer.tag(11, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.BankTradeMessage bank_trade = 12; */
+        if (message.message.oneofKind === "bankTrade")
+            BankTradeMessage.internalBinaryWrite(message.message.bankTrade, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

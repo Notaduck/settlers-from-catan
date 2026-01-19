@@ -261,6 +261,10 @@ export interface GameState {
      * @generated from protobuf field: optional catan.v1.RobberPhase robber_phase = 12
      */
     robberPhase?: RobberPhase; // Present during robber actions
+    /**
+     * @generated from protobuf field: repeated catan.v1.TradeOffer pending_trades = 13
+     */
+    pendingTrades: TradeOffer[];
 }
 /**
  * Tracks the Robber phase state, including pending discards and steps.
@@ -1293,7 +1297,8 @@ class GameState$Type extends MessageType<GameState> {
             { no: 9, name: "longest_road_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
             { no: 10, name: "largest_army_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
             { no: 11, name: "setup_phase", kind: "message", T: () => SetupPhase },
-            { no: 12, name: "robber_phase", kind: "message", T: () => RobberPhase }
+            { no: 12, name: "robber_phase", kind: "message", T: () => RobberPhase },
+            { no: 13, name: "pending_trades", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => TradeOffer }
         ]);
     }
     create(value?: PartialMessage<GameState>): GameState {
@@ -1305,6 +1310,7 @@ class GameState$Type extends MessageType<GameState> {
         message.turnPhase = 0;
         message.dice = [];
         message.status = 0;
+        message.pendingTrades = [];
         if (value !== undefined)
             reflectionMergePartial<GameState>(this, message, value);
         return message;
@@ -1353,6 +1359,9 @@ class GameState$Type extends MessageType<GameState> {
                     break;
                 case /* optional catan.v1.RobberPhase robber_phase */ 12:
                     message.robberPhase = RobberPhase.internalBinaryRead(reader, reader.uint32(), options, message.robberPhase);
+                    break;
+                case /* repeated catan.v1.TradeOffer pending_trades */ 13:
+                    message.pendingTrades.push(TradeOffer.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1406,6 +1415,9 @@ class GameState$Type extends MessageType<GameState> {
         /* optional catan.v1.RobberPhase robber_phase = 12; */
         if (message.robberPhase)
             RobberPhase.internalBinaryWrite(message.robberPhase, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
+        /* repeated catan.v1.TradeOffer pending_trades = 13; */
+        for (let i = 0; i < message.pendingTrades.length; i++)
+            TradeOffer.internalBinaryWrite(message.pendingTrades[i], writer.tag(13, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
