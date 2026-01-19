@@ -36,7 +36,9 @@
 - [x] Trading logic (propose/respond/bank/expire) and UI; proto extended for pending trades/bank trade; Playwright spec and backend trading test complete and validated.
 
 ## PRIORITY 6: DEVELOPMENT CARDS
-- [ ] Build, play, and effect handling for all dev card types: deck management, purchase, largest army, monopoly, year of plenty, VP card hiding/reveal.
+- [x] Build, play, and effect handling for all dev card types: deck management, purchase, largest army, monopoly, year of plenty, VP card hiding/reveal.
+  - Backend dev card logic unit tests created: devcards_test.go covers resource deduction, purchasing, error cases, VP card play/decrement logic. No UI test implemented this round (Playwright spec absent in repo).
+  - Blockers: Catastrophic handler breakage persists, preventing backend build/lint/compile. Unrelated test failures persist as previously documented (victory, longest road, robber).
   - Files: backend/internal/game/devcards.go, backend/internal/game/devcards_test.go, frontend/src/components/Game/DevelopmentCardsPanel.tsx, context/GameContext.tsx, proto/catan/v1/types.proto (DevCardType/card/hand field), proto/catan/v1/messages.proto (PlayDevCardMessage)
   - Go unit test(s): backend/internal/game/devcards_test.go
   - Playwright: frontend/tests/development-cards.spec.ts
