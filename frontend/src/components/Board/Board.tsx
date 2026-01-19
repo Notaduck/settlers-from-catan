@@ -19,7 +19,6 @@ interface BoardProps {
   onBuildSettlement?: (vertexId: string) => void;
   onBuildRoad?: (edgeId: string) => void;
   isRobberMoveMode?: boolean;
-  currentRobberHex?: { q: number; r: number };
   onSelectRobberHex?: (hex: { coord?: { q: number; r: number } }) => void;
 }
 
@@ -153,6 +152,8 @@ export function Board({
   validEdgeIds,
   onBuildSettlement,
   onBuildRoad,
+  isRobberMoveMode,
+  onSelectRobberHex,
 }: BoardProps) {
   // Filter hexes with valid coords
   const validHexes = board.hexes.filter((hex) => isValidCoord(hex.coord));

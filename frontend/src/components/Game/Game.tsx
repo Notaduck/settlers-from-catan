@@ -64,6 +64,18 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const [discardClosed, setDiscardClosed] = useState(false);
   const [stealClosed, setStealClosed] = useState(false);
 
+  useEffect(() => {
+    if (isRobberDiscardRequired) {
+      setDiscardClosed(false);
+    }
+  }, [isRobberDiscardRequired]);
+
+  useEffect(() => {
+    if (isRobberStealRequired) {
+      setStealClosed(false);
+    }
+  }, [isRobberStealRequired]);
+
 
   useEffect(() => {
     connect();
@@ -428,7 +440,6 @@ export function Game({ gameCode, onLeave }: GameProps) {
                  onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
                  onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
                  isRobberMoveMode={isRobberMoveRequired}
-                 currentRobberHex={gameState.board.robberHex}
                  onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
                    sendRobberMove(hex.coord);
                  } : undefined}

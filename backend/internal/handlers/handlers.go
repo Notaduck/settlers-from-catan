@@ -537,18 +537,49 @@ func (h *Handler) handleMoveRobber(client *hub.Client, payload []byte) {
 		h.sendError(client, "GAME_OVER", "Game already finished")
 		return
 	}
+	if req.GetHex() == nil {
+		victimID := req.GetVictimId()
+		if victimID == "" {
+			h.sendError(client, "MOVE_ROBBER_ERROR", "victim required for steal")
+			return
+		}
+		stolenResource, err := game.StealFromPlayer(&state, client.PlayerID, victimID)
+		if err != nil {
+			h.sendError(client, "MOVE_ROBBER_ERROR", err.Error())
+			return
+		}
+		if err := h.saveGameState(client.GameID, &state); err != nil {
+			h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+			return
+		}
+		robberPayload := &catanv1.RobberMovedPayload{
+			PlayerId:       client.PlayerID,
+			Hex:            state.Board.GetRobberHex(),
+			VictimId:       &victimID,
+			StolenResource: &stolenResource,
+		}
+		h.broadcastServerMessage(client.GameID, "robberMoved", robberPayload)
+		h.broadcastGameStateProto(client.GameID, &state)
+		return
+	}
+
 	if err := game.MoveRobber(&state, client.PlayerID, req.GetHex()); err != nil {
 		h.sendError(client, "MOVE_ROBBER_ERROR", err.Error())
 		return
 	}
-	var stolenResource catanv1.Resource
-	victimId := ""
+	var (
+		stolenResource *catanv1.Resource
+		victimID       *string
+	)
 	if req.VictimId != nil && *req.VictimId != "" {
-		victimId = *req.VictimId
-		res, err := game.StealFromPlayer(&state, client.PlayerID, victimId)
-		if err == nil {
-			stolenResource = res
+		id := *req.VictimId
+		res, err := game.StealFromPlayer(&state, client.PlayerID, id)
+		if err != nil {
+			h.sendError(client, "MOVE_ROBBER_ERROR", err.Error())
+			return
 		}
+		victimID = &id
+		stolenResource = &res
 	}
 	if err := h.saveGameState(client.GameID, &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
@@ -557,8 +588,8 @@ func (h *Handler) handleMoveRobber(client *hub.Client, payload []byte) {
 	robberPayload := &catanv1.RobberMovedPayload{
 		PlayerId:       client.PlayerID,
 		Hex:            req.GetHex(),
-		VictimId:       &victimId,
-		StolenResource: &stolenResource,
+		VictimId:       victimID,
+		StolenResource: stolenResource,
 	}
 	h.broadcastServerMessage(client.GameID, "robberMoved", robberPayload)
 	h.broadcastGameStateProto(client.GameID, &state)

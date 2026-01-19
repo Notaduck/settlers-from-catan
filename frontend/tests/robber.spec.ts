@@ -8,9 +8,8 @@ test.describe('Robber Phase UI', () => {
     // This requires backend seeding/mocking, assume api is present
     await page.goto('/');
     // Join as Player 1
-    await page.getByTestId('create-game-btn').click();
-    await page.getByPlaceholder('Your name').fill('Alice');
-    await page.getByTestId('submit-player-name').click();
+    await page.locator('[data-cy="player-name-input"]').fill('Alice');
+    await page.locator('[data-cy="create-game-btn"]').click();
     // Fast-forward/start game, grant >7 cards, roll 7 - assumed via backend shortcut or API
     await page.evaluate(async () => {
       // These should be available if backend supports e2e hooks
@@ -18,17 +17,16 @@ test.describe('Robber Phase UI', () => {
       window.__test?.forceRoll?.(7);
     });
     await page.getByText('Discard', { exact: false, timeout: 4000 });
-    const modal = page.getByTestId('discard-modal');
+    const modal = page.locator('[data-cy="discard-modal"]');
     await expect(modal).toBeVisible();
     // Discard cards (adjust inputs accordingly)
-    const sumToDiscard = await modal.locator('[data-cy^="discard-card-"]').count();
     // Click enough to reach the required (assume 6 for test)
     for (let i = 0; i < 6; ++i) {
       // Pick the first plus button
       await modal.locator('[data-cy^="discard-card-"] button:last-child').first().click();
     }
     // Submit
-    await modal.getByTestId('discard-submit').click();
+    await modal.locator('[data-cy="discard-submit"]').click();
     await expect(modal).toBeHidden();
   });
 
@@ -58,13 +56,13 @@ test.describe('Robber Phase UI', () => {
       window.__test?.jumpToRobberSteal?.([{'id': 'p2', 'name': 'Bob'}, {'id': 'p3', 'name': 'Cathy'}]);
     });
     // Modal appears
-    const steal = page.getByTestId('steal-modal');
+    const steal = page.locator('[data-cy="steal-modal"]');
     await expect(steal).toBeVisible({ timeout: 4000 });
     // Both candidate buttons should be present
-    await expect(steal.getByTestId('steal-player-p2')).toBeVisible();
-    await expect(steal.getByTestId('steal-player-p3')).toBeVisible();
+    await expect(steal.locator('[data-cy="steal-player-p2"]')).toBeVisible();
+    await expect(steal.locator('[data-cy="steal-player-p3"]')).toBeVisible();
     // Pick one
-    await steal.getByTestId('steal-player-p2').click();
+    await steal.locator('[data-cy="steal-player-p2"]').click();
     await expect(steal).toBeHidden();
   });
 });

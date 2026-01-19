@@ -16,6 +16,7 @@ import (
 
 	catanv1 "settlers_from_catan/gen/proto/catan/v1"
 	"settlers_from_catan/internal/db"
+	"settlers_from_catan/internal/game"
 	"settlers_from_catan/internal/hub"
 )
 
@@ -113,6 +114,114 @@ func TestHandleJoinGame_BroadcastsGameState(t *testing.T) {
 	joinGameViaHTTP(t, server.URL, createResp.GetCode(), "Guest")
 
 	readGameState(t, conn, 2)
+}
+
+func TestHandleMoveRobber_AllowsStealWithoutHex(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	h := hub.NewHub()
+	go h.Run()
+
+	handler := NewHandler(database, h)
+
+	gameID := "game-robber"
+	code := "ROB001"
+	thiefID := "p1"
+	victimID := "p2"
+	state := game.NewGameState(gameID, code, []string{"Thief", "Victim"}, []string{thiefID, victimID})
+	if state.Board == nil || state.Board.RobberHex == nil {
+		t.Fatal("expected robber hex in board state")
+	}
+
+	var victimVertex *catanv1.Vertex
+	for _, vertex := range state.Board.Vertices {
+		for _, hex := range vertex.AdjacentHexes {
+			if hex.Q == state.Board.RobberHex.Q && hex.R == state.Board.RobberHex.R {
+				victimVertex = vertex
+				break
+			}
+		}
+		if victimVertex != nil {
+			break
+		}
+	}
+	if victimVertex == nil {
+		t.Fatal("expected vertex adjacent to robber hex")
+	}
+	victimVertex.Building = &catanv1.Building{
+		OwnerId: victimID,
+		Type:    catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+	}
+
+	for _, player := range state.Players {
+		if player.Id == victimID {
+			player.Resources = &catanv1.ResourceCount{Wood: 1}
+		} else if player.Id == thiefID {
+			player.Resources = &catanv1.ResourceCount{}
+		}
+	}
+
+	state.RobberPhase = &catanv1.RobberPhase{
+		StealPendingPlayerId: &thiefID,
+	}
+
+	stateJSON, err := marshalOptions.Marshal(state)
+	if err != nil {
+		t.Fatalf("failed to marshal state: %v", err)
+	}
+	if _, err := database.Exec(
+		"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+		gameID,
+		code,
+		string(stateJSON),
+		"playing",
+	); err != nil {
+		t.Fatalf("failed to insert game state: %v", err)
+	}
+
+	client := hub.NewClient(h, &websocket.Conn{}, thiefID, gameID)
+	h.Register(client)
+
+	payload, err := protojson.Marshal(&catanv1.MoveRobberMessage{
+		VictimId: &victimID,
+	})
+	if err != nil {
+		t.Fatalf("failed to marshal move robber payload: %v", err)
+	}
+
+	handler.handleMoveRobber(client, payload)
+
+	var updatedStateJSON string
+	if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+		t.Fatalf("failed to load updated state: %v", err)
+	}
+	var updatedState catanv1.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+		t.Fatalf("failed to parse updated state: %v", err)
+	}
+
+	var updatedVictim, updatedThief *catanv1.PlayerState
+	for _, player := range updatedState.Players {
+		switch player.Id {
+		case victimID:
+			updatedVictim = player
+		case thiefID:
+			updatedThief = player
+		}
+	}
+	if updatedVictim == nil || updatedThief == nil {
+		t.Fatalf("missing updated player states")
+	}
+	if updatedVictim.Resources.GetWood() != 0 {
+		t.Fatalf("expected victim wood to be 0, got %d", updatedVictim.Resources.GetWood())
+	}
+	if updatedThief.Resources.GetWood() != 1 {
+		t.Fatalf("expected thief wood to be 1, got %d", updatedThief.Resources.GetWood())
+	}
+	if updatedState.RobberPhase != nil {
+		t.Fatalf("expected robber phase to clear after steal")
+	}
 }
 
 func setupTestDB(t *testing.T) (*sqlx.DB, func()) {
