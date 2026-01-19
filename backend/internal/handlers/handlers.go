@@ -1,10 +1,19 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	catanv1 "settlers_from_catan/gen/proto/catan/v1"
 	"settlers_from_catan/internal/game"
@@ -12,20 +21,125 @@ import (
 )
 
 type Handler struct {
-	hub *hub.Hub
-	db  *sqlx.DB
+	hub      *hub.Hub
+	db       *sqlx.DB
+	upgrader websocket.Upgrader
+}
+
+var marshalOptions = protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: true}
+var unmarshalOptions = protojson.UnmarshalOptions{DiscardUnknown: true}
+
+// NewHandler builds a handler with DB + hub wired.
+func NewHandler(db *sqlx.DB, hub *hub.Hub) *Handler {
+	return &Handler{
+		db:  db,
+		hub: hub,
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	}
 }
 
 // sendError sends an error payload to the client and logs it.
 func (h *Handler) sendError(client *hub.Client, code, message string) {
 	log.Printf("Error [%s]: %s", code, message)
-	// NOOP: In production this would send a websocket/server message
+	payload := &catanv1.ErrorPayload{
+		Code:    code,
+		Message: message,
+	}
+	h.sendServerMessage(client, "error", payload)
 }
 
-// broadcastGameStateProto broadcasts the game state. (Stub)
+func (h *Handler) sendServerMessage(client *hub.Client, kind string, payload proto.Message) {
+	data, err := marshalServerMessage(kind, payload)
+	if err != nil {
+		log.Printf("Failed to marshal server message: %v", err)
+		return
+	}
+	client.Send(data)
+}
+
+func (h *Handler) broadcastServerMessage(gameID, kind string, payload proto.Message) {
+	data, err := marshalServerMessage(kind, payload)
+	if err != nil {
+		log.Printf("Failed to marshal broadcast: %v", err)
+		return
+	}
+	h.hub.BroadcastToGame(gameID, data)
+}
+
+// broadcastGameStateProto broadcasts the game state.
 func (h *Handler) broadcastGameStateProto(gameID string, state *game.GameState) {
-	log.Printf("[STUB] broadcastGameStateProto for gameID %s", gameID)
-	// NOOP: In production this would serialize state and send to all clients in game
+	payload := &catanv1.GameStatePayload{State: state}
+	h.broadcastServerMessage(gameID, "gameState", payload)
+}
+
+func marshalServerMessage(kind string, payload proto.Message) ([]byte, error) {
+	var payloadMap map[string]any
+	if payload != nil {
+		data, err := marshalOptions.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(data, &payloadMap); err != nil {
+			return nil, err
+		}
+	}
+	message := map[string]any{
+		"message": map[string]any{
+			"oneofKind": kind,
+			kind:        payloadMap,
+		},
+	}
+	return json.Marshal(message)
+}
+
+func (h *Handler) loadGameState(gameID string) (*game.GameState, error) {
+	var stateJSON string
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+		return nil, err
+	}
+	var state game.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
+
+func (h *Handler) saveGameState(gameID string, state *game.GameState) error {
+	updatedJSON, err := marshalOptions.Marshal(state)
+	if err != nil {
+		return err
+	}
+	_, err = h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), gameID)
+	return err
+}
+
+func (h *Handler) handleClientMessage(client *hub.Client, raw []byte) {
+	var msg clientEnvelope
+	if err := json.Unmarshal(raw, &msg); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse client message")
+		return
+	}
+
+	switch msg.Message.OneofKind {
+	case "proposeTrade":
+		h.handleProposeTrade(client, msg.payloadBytes(msg.Message.ProposeTrade))
+	case "respondTrade":
+		h.handleRespondTrade(client, msg.payloadBytes(msg.Message.RespondTrade))
+	case "discardCards":
+		h.handleDiscardCards(client, msg.payloadBytes(msg.Message.DiscardCards))
+	case "moveRobber":
+		h.handleMoveRobber(client, msg.payloadBytes(msg.Message.MoveRobber))
+	case "bankTrade":
+		h.handleBankTrade(client, msg.payloadBytes(msg.Message.BankTrade))
+	default:
+		h.sendError(client, "UNSUPPORTED_MESSAGE", "Unsupported message type")
+	}
 }
 
 // --- Trading handlers ---
@@ -39,8 +153,11 @@ func (h *Handler) handleProposeTrade(client *hub.Client, payload []byte) {
 
 	var stateJSON string
 	var state game.GameState
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
@@ -56,18 +173,15 @@ func (h *Handler) handleProposeTrade(client *hub.Client, payload []byte) {
 		return
 	}
 	// Save updated state
-	updatedJSON, _ := protojson.Marshal(&state)
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
-	// Broadcast new trade
-	msg := catanv1.ServerMessage{
-		Message: &catanv1.ServerMessage_TradeProposed{
-			TradeProposed: &catanv1.TradeProposedPayload{
-				Trade: state.GetPendingTrades()[len(state.GetPendingTrades())-1], // last added trade
-			},
-		},
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
 	}
-	data, _ := protojson.Marshal(&msg)
-	h.hub.BroadcastToGame(client.GameID, data)
+	// Broadcast new trade
+	tradePayload := &catanv1.TradeProposedPayload{
+		Trade: state.GetPendingTrades()[len(state.GetPendingTrades())-1], // last added trade
+	}
+	h.broadcastServerMessage(client.GameID, "tradeProposed", tradePayload)
 	// Always broadcast updated game state for robust sync
 	h.broadcastGameStateProto(client.GameID, &state)
 }
@@ -82,8 +196,11 @@ func (h *Handler) handleRespondTrade(client *hub.Client, payload []byte) {
 
 	var stateJSON string
 	var state game.GameState
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
@@ -98,19 +215,16 @@ func (h *Handler) handleRespondTrade(client *hub.Client, payload []byte) {
 		h.sendError(client, "TRADE_RESPOND_ERROR", err.Error())
 		return
 	}
-	updatedJSON, _ := protojson.Marshal(&state)
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
-	msg := catanv1.ServerMessage{
-		Message: &catanv1.ServerMessage_TradeResolved{
-			TradeResolved: &catanv1.TradeResolvedPayload{
-				TradeId:    req.GetTradeId(),
-				Accepted:   req.GetAccept(),
-				AcceptedBy: &client.PlayerID,
-			},
-		},
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
 	}
-	data, _ := protojson.Marshal(&msg)
-	h.hub.BroadcastToGame(client.GameID, data)
+	resolvedPayload := &catanv1.TradeResolvedPayload{
+		TradeId:    req.GetTradeId(),
+		Accepted:   req.GetAccept(),
+		AcceptedBy: &client.PlayerID,
+	}
+	h.broadcastServerMessage(client.GameID, "tradeResolved", resolvedPayload)
 	h.broadcastGameStateProto(client.GameID, &state)
 }
 
@@ -123,8 +237,11 @@ func (h *Handler) handleDiscardCards(client *hub.Client, payload []byte) {
 	}
 	var stateJSON string
 	var state game.GameState
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
@@ -136,18 +253,15 @@ func (h *Handler) handleDiscardCards(client *hub.Client, payload []byte) {
 		h.sendError(client, "DISCARD_ERROR", err.Error())
 		return
 	}
-	updatedJSON, _ := protojson.Marshal(&state)
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
-	msg := catanv1.ServerMessage{
-		Message: &catanv1.ServerMessage_DiscardedCards{
-			DiscardedCards: &catanv1.DiscardedCardsPayload{
-				PlayerId:  client.PlayerID,
-				Resources: req.GetResources(),
-			},
-		},
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
 	}
-	data, _ := protojson.Marshal(&msg)
-	h.hub.BroadcastToGame(client.GameID, data)
+	discardedPayload := &catanv1.DiscardedCardsPayload{
+		PlayerId:  client.PlayerID,
+		Resources: req.GetResources(),
+	}
+	h.broadcastServerMessage(client.GameID, "discardedCards", discardedPayload)
 	h.broadcastGameStateProto(client.GameID, &state)
 }
 
@@ -160,8 +274,11 @@ func (h *Handler) handleMoveRobber(client *hub.Client, payload []byte) {
 	}
 	var stateJSON string
 	var state game.GameState
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
@@ -182,20 +299,17 @@ func (h *Handler) handleMoveRobber(client *hub.Client, payload []byte) {
 			stolenResource = res
 		}
 	}
-	updatedJSON, _ := protojson.Marshal(&state)
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
-	msg := catanv1.ServerMessage{
-		Message: &catanv1.ServerMessage_RobberMoved{
-			RobberMoved: &catanv1.RobberMovedPayload{
-				PlayerId:       client.PlayerID,
-				Hex:            req.GetHex(),
-				VictimId:       &victimId,
-				StolenResource: &stolenResource,
-			},
-		},
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
 	}
-	data, _ := protojson.Marshal(&msg)
-	h.hub.BroadcastToGame(client.GameID, data)
+	robberPayload := &catanv1.RobberMovedPayload{
+		PlayerId:       client.PlayerID,
+		Hex:            req.GetHex(),
+		VictimId:       &victimId,
+		StolenResource: &stolenResource,
+	}
+	h.broadcastServerMessage(client.GameID, "robberMoved", robberPayload)
 	h.broadcastGameStateProto(client.GameID, &state)
 }
 
@@ -209,8 +323,11 @@ func (h *Handler) handleBankTrade(client *hub.Client, payload []byte) {
 
 	var stateJSON string
 	var state game.GameState
-	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
-	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
 		return
 	}
@@ -224,8 +341,392 @@ func (h *Handler) handleBankTrade(client *hub.Client, payload []byte) {
 		h.sendError(client, "BANK_TRADE_ERROR", err.Error())
 		return
 	}
-	updatedJSON, _ := protojson.Marshal(&state)
-	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
 	// No special payload; just broadcast updated state
 	h.broadcastGameStateProto(client.GameID, &state)
+}
+
+// HandleCreateGame handles POST /api/games to create a new game.
+func (h *Handler) HandleCreateGame(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var req catanv1.CreateGameRequest
+	if err := unmarshalOptions.Unmarshal(body, &req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	playerName := strings.TrimSpace(req.GetPlayerName())
+	if playerName == "" {
+		http.Error(w, "Player name is required", http.StatusBadRequest)
+		return
+	}
+
+	gameID := uuid.NewString()
+	playerID := uuid.NewString()
+	sessionToken := uuid.NewString()
+
+	code, err := h.generateUniqueCode(6)
+	if err != nil {
+		http.Error(w, "Failed to generate game code", http.StatusInternalServerError)
+		return
+	}
+
+	state := game.NewGameState(gameID, code, []string{playerName}, []string{playerID})
+	stateJSON, err := marshalOptions.Marshal(state)
+	if err != nil {
+		http.Error(w, "Failed to create game state", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := h.db.Exec(
+		"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+		gameID,
+		code,
+		string(stateJSON),
+		state.Status.String(),
+	); err != nil {
+		http.Error(w, "Failed to create game", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := h.db.Exec(
+		"INSERT INTO players (id, game_id, name, color, session_token, is_host, connected) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		playerID,
+		gameID,
+		playerName,
+		state.Players[0].Color.String(),
+		sessionToken,
+		1,
+		0,
+	); err != nil {
+		http.Error(w, "Failed to create player", http.StatusInternalServerError)
+		return
+	}
+
+	resp := &catanv1.CreateGameResponse{
+		GameId:       gameID,
+		Code:         code,
+		SessionToken: sessionToken,
+		PlayerId:     playerID,
+	}
+
+	data, err := marshalOptions.Marshal(resp)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+}
+
+// HandleGameRoutes handles /api/games/{code} and /api/games/{code}/join.
+func (h *Handler) HandleGameRoutes(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/games/")
+	path = strings.Trim(path, "/")
+	if path == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	parts := strings.Split(path, "/")
+	code := strings.ToUpper(parts[0])
+
+	if len(parts) == 1 {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		h.handleGameInfo(w, r, code)
+		return
+	}
+
+	if len(parts) == 2 && parts[1] == "join" {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		h.handleJoinGame(w, r, code)
+		return
+	}
+
+	http.NotFound(w, r)
+}
+
+// HandleWebSocket handles websocket connections for a game.
+func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Missing session token", http.StatusUnauthorized)
+		return
+	}
+
+	var playerRow struct {
+		ID     string `db:"id"`
+		GameID string `db:"game_id"`
+	}
+	if err := h.db.Get(&playerRow, "SELECT id, game_id FROM players WHERE session_token = ?", token); err != nil {
+		http.Error(w, "Invalid session token", http.StatusUnauthorized)
+		return
+	}
+
+	conn, err := h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("Failed to upgrade websocket: %v", err)
+		return
+	}
+
+	state, err := h.loadGameState(playerRow.GameID)
+	if err != nil {
+		conn.Close()
+		log.Printf("Failed to load game state: %v", err)
+		return
+	}
+	playerFound := false
+	for _, player := range state.Players {
+		if player.Id == playerRow.ID {
+			playerFound = true
+			player.Connected = true
+			break
+		}
+	}
+	if !playerFound {
+		conn.Close()
+		log.Printf("Player not found in game state")
+		return
+	}
+	if err := h.saveGameState(playerRow.GameID, state); err != nil {
+		conn.Close()
+		log.Printf("Failed to persist game state: %v", err)
+		return
+	}
+	_, _ = h.db.Exec("UPDATE players SET connected = 1, last_seen = CURRENT_TIMESTAMP WHERE id = ?", playerRow.ID)
+
+	client := hub.NewClient(h.hub, conn, playerRow.ID, playerRow.GameID)
+	client.OnMessage = func(message []byte) {
+		h.handleClientMessage(client, message)
+	}
+	h.hub.Register(client)
+
+	go client.WritePump()
+	go client.ReadPump()
+
+	h.broadcastGameStateProto(playerRow.GameID, state)
+}
+
+func (h *Handler) handleJoinGame(w http.ResponseWriter, r *http.Request, code string) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Failed to read request body")
+		return
+	}
+	var req catanv1.JoinGameRequest
+	if err := unmarshalOptions.Unmarshal(body, &req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	playerName := strings.TrimSpace(req.GetPlayerName())
+	if playerName == "" {
+		writeJSONError(w, http.StatusBadRequest, "Player name is required")
+		return
+	}
+
+	var gameRow struct {
+		ID    string `db:"id"`
+		State string `db:"state"`
+	}
+	if err := h.db.Get(&gameRow, "SELECT id, state FROM games WHERE code = ?", code); err != nil {
+		writeJSONError(w, http.StatusNotFound, "Game not found")
+		return
+	}
+
+	var state game.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to load game state")
+		return
+	}
+	if len(state.Players) >= game.GetMaxPlayers() {
+		writeJSONError(w, http.StatusBadRequest, "Game is full")
+		return
+	}
+
+	playerID := uuid.NewString()
+	sessionToken := uuid.NewString()
+	color := nextPlayerColor(len(state.Players))
+	state.Players = append(state.Players, &catanv1.PlayerState{
+		Id:            playerID,
+		Name:          playerName,
+		Color:         color,
+		Resources:     &catanv1.ResourceCount{},
+		DevCardCount:  0,
+		KnightsPlayed: 0,
+		VictoryPoints: 0,
+		Connected:     false,
+		IsReady:       false,
+		IsHost:        false,
+	})
+
+	stateJSON, err := marshalOptions.Marshal(&state)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to update game")
+		return
+	}
+	if _, err := h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(stateJSON), gameRow.ID); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to update game")
+		return
+	}
+	if _, err := h.db.Exec(
+		"INSERT INTO players (id, game_id, name, color, session_token, is_host, connected) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		playerID,
+		gameRow.ID,
+		playerName,
+		color.String(),
+		sessionToken,
+		0,
+		0,
+	); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to create player")
+		return
+	}
+
+	resp := &catanv1.JoinGameResponse{
+		GameId:       gameRow.ID,
+		SessionToken: sessionToken,
+		PlayerId:     playerID,
+		Players:      toPlayerInfos(state.Players),
+	}
+	data, err := marshalOptions.Marshal(resp)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to encode response")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+
+	h.broadcastGameStateProto(gameRow.ID, &state)
+}
+
+func (h *Handler) handleGameInfo(w http.ResponseWriter, r *http.Request, code string) {
+	var gameRow struct {
+		ID     string `db:"id"`
+		Status string `db:"status"`
+		State  string `db:"state"`
+	}
+	if err := h.db.Get(&gameRow, "SELECT id, status, state FROM games WHERE code = ?", code); err != nil {
+		writeJSONError(w, http.StatusNotFound, "Game not found")
+		return
+	}
+	var state game.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to load game state")
+		return
+	}
+
+	resp := &catanv1.GameInfoResponse{
+		Code:        code,
+		Status:      state.Status,
+		PlayerCount: int32(len(state.Players)),
+		Players:     toPlayerInfos(state.Players),
+	}
+	data, err := marshalOptions.Marshal(resp)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to encode response")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+}
+
+func (h *Handler) generateUniqueCode(length int) (string, error) {
+	for i := 0; i < 5; i++ {
+		code, err := generateGameCode(length)
+		if err != nil {
+			return "", err
+		}
+		var count int
+		if err := h.db.Get(&count, "SELECT COUNT(*) FROM games WHERE code = ?", code); err != nil {
+			return "", err
+		}
+		if count == 0 {
+			return code, nil
+		}
+	}
+	return "", fmt.Errorf("failed to generate unique code")
+}
+
+func generateGameCode(length int) (string, error) {
+	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	buffer := make([]byte, length)
+	if _, err := rand.Read(buffer); err != nil {
+		return "", err
+	}
+	for i, b := range buffer {
+		buffer[i] = alphabet[int(b)%len(alphabet)]
+	}
+	return string(buffer), nil
+}
+
+func nextPlayerColor(index int) catanv1.PlayerColor {
+	colors := []catanv1.PlayerColor{
+		catanv1.PlayerColor_PLAYER_COLOR_RED,
+		catanv1.PlayerColor_PLAYER_COLOR_BLUE,
+		catanv1.PlayerColor_PLAYER_COLOR_GREEN,
+		catanv1.PlayerColor_PLAYER_COLOR_ORANGE,
+	}
+	return colors[index%len(colors)]
+}
+
+func toPlayerInfos(players []*catanv1.PlayerState) []*catanv1.PlayerInfo {
+	infos := make([]*catanv1.PlayerInfo, 0, len(players))
+	for _, player := range players {
+		infos = append(infos, &catanv1.PlayerInfo{
+			Id:    player.Id,
+			Name:  player.Name,
+			Color: player.Color,
+		})
+	}
+	return infos
+}
+
+func writeJSONError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+type clientEnvelope struct {
+	Message struct {
+		OneofKind    string                       `json:"oneofKind"`
+		ProposeTrade *catanv1.ProposeTradeMessage `json:"proposeTrade,omitempty"`
+		RespondTrade *catanv1.RespondTradeMessage `json:"respondTrade,omitempty"`
+		DiscardCards *catanv1.DiscardCardsMessage `json:"discardCards,omitempty"`
+		MoveRobber   *catanv1.MoveRobberMessage   `json:"moveRobber,omitempty"`
+		BankTrade    *catanv1.BankTradeMessage    `json:"bankTrade,omitempty"`
+	} `json:"message"`
+}
+
+func (e clientEnvelope) payloadBytes(payload proto.Message) []byte {
+	if payload == nil {
+		return nil
+	}
+	data, err := marshalOptions.Marshal(payload)
+	if err != nil {
+		return nil
+	}
+	return data
 }
