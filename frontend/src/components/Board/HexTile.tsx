@@ -7,6 +7,8 @@ interface HexTileProps {
   y: number;
   size: number;
   hasRobber: boolean;
+  isRobberMoveSelectable?: boolean;
+  onSelectRobberHex?: (hex: Hex) => void;
 }
 
 // Color mapping for tile resources
@@ -43,7 +45,7 @@ function getHexPoints(size: number): string {
   return points.join(" ");
 }
 
-export function HexTile({ hex, x, y, size, hasRobber }: HexTileProps) {
+export function HexTile({ hex, x, y, size, hasRobber, isRobberMoveSelectable, onSelectRobberHex }: HexTileProps) {
   const color = RESOURCE_COLORS[hex.resource];
   const resourceName = RESOURCE_NAMES[hex.resource];
   const points = getHexPoints(size * 0.95);
@@ -55,8 +57,20 @@ export function HexTile({ hex, x, y, size, hasRobber }: HexTileProps) {
   // Create a hex ID from coordinates
   const hexId = hex.coord ? `hex-${hex.coord.q}-${hex.coord.r}` : "hex-unknown";
 
+  const handleClick = () => {
+    if (isRobberMoveSelectable && onSelectRobberHex) {
+      onSelectRobberHex(hex);
+    }
+  };
+
   return (
-    <g transform={`translate(${x}, ${y})`} className="hex-tile" data-cy={hexId}>
+    <g
+      transform={`translate(${x}, ${y})`}
+      className={"hex-tile" + (isRobberMoveSelectable ? " robber-move-selectable" : "")}
+      data-cy={isRobberMoveSelectable ? `robber-hex-${hex.coord?.q}-${hex.coord?.r}` : hexId}
+      onClick={isRobberMoveSelectable ? handleClick : undefined}
+      style={isRobberMoveSelectable ? { cursor: "pointer", outline: "2px solid #c41e3a" } : undefined}
+    >
       {/* Hex background */}
       <polygon
         points={points}

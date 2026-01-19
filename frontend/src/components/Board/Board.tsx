@@ -18,6 +18,9 @@ interface BoardProps {
   validEdgeIds?: Set<string>;
   onBuildSettlement?: (vertexId: string) => void;
   onBuildRoad?: (edgeId: string) => void;
+  isRobberMoveMode?: boolean;
+  currentRobberHex?: { q: number; r: number };
+  onSelectRobberHex?: (hex: { coord?: { q: number; r: number } }) => void;
 }
 
 // Hex size in pixels
@@ -236,22 +239,26 @@ export function Board({
         data-cy="board-svg"
       >
         <g transform={`translate(${offsetX}, ${offsetY})`}>
-          {validHexes.map((hex) => {
-            const coord = hex.coord!;
-            const pos = hexToPixel(coord, HEX_SIZE);
-            const isRobber =
-              robberHex && coord.q === robberHex.q && coord.r === robberHex.r;
-            return (
-              <HexTile
-                key={`${coord.q},${coord.r}`}
-                hex={hex}
-                x={pos.x}
-                y={pos.y}
-                size={HEX_SIZE}
-                hasRobber={isRobber || false}
-              />
-            );
-          })}
+           {validHexes.map((hex) => {
+              const coord = hex.coord!;
+              const pos = hexToPixel(coord, HEX_SIZE);
+              const isRobber =
+                robberHex && coord.q === robberHex.q && coord.r === robberHex.r;
+              const isSelectable =
+                isRobberMoveMode && (!isRobber); // Cannot re-select current robber position
+              return (
+                <HexTile
+                  key={`${coord.q},${coord.r}`}
+                  hex={hex}
+                  x={pos.x}
+                  y={pos.y}
+                  size={HEX_SIZE}
+                  hasRobber={isRobber || false}
+                  isRobberMoveSelectable={!!isSelectable}
+                  onSelectRobberHex={isSelectable ? onSelectRobberHex : undefined}
+                />
+              );
+            })}
           {edgePositions.map(({ edge, v1, v2 }) => {
             const roadOwnerId = edge.road?.ownerId;
             const ownerColor = roadOwnerId

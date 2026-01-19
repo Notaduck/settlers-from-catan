@@ -1,4 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DiscardModal } from "./DiscardModal";
+import { StealModal } from "./StealModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
@@ -36,7 +38,22 @@ export function Game({ gameCode, onLeave }: GameProps) {
     build,
     resourceGain,
     clearResourceGain,
+    // Robber UI
+    isRobberDiscardRequired,
+    robberDiscardAmount,
+    robberDiscardMax,
+    sendRobberDiscard,
+    isRobberMoveRequired,
+    sendRobberMove,
+    isRobberStealRequired,
+    sendRobberSteal,
+    robberStealCandidates,
   } = useGame();
+
+  // UI state (for modal closing)
+  const [discardClosed, setDiscardClosed] = useState(false);
+  const [stealClosed, setStealClosed] = useState(false);
+
 
   useEffect(() => {
     connect();
@@ -169,6 +186,24 @@ export function Game({ gameCode, onLeave }: GameProps) {
 
   return (
     <div className="game" data-cy="game">
+      {/* Robber Discard Modal */}
+      {isRobberDiscardRequired && !discardClosed && (
+        <DiscardModal
+          requiredCount={robberDiscardAmount}
+          maxAvailable={robberDiscardMax || { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 }}
+          onDiscard={toDiscard => { sendRobberDiscard(toDiscard); setDiscardClosed(true); }}
+          onClose={() => setDiscardClosed(true)}
+        />
+      )}
+      {/* Robber Steal Modal */}
+      {isRobberStealRequired && !stealClosed && (
+        <StealModal
+          candidates={robberStealCandidates}
+          onSteal={victimId => { sendRobberSteal(victimId); setStealClosed(true); }}
+          onCancel={() => setStealClosed(true)}
+        />
+      )}
+
       {isGameOver && (
         <GameOver
           gameState={gameState}
@@ -311,20 +346,21 @@ export function Game({ gameCode, onLeave }: GameProps) {
             </div>
           )}
           <div className="game-board-content">
-            {gameState.board && (
-              <Board
-                board={gameState.board}
-                players={gameState.players}
-                validVertexIds={placementState.validVertexIds}
-                validEdgeIds={placementState.validEdgeIds}
-                onBuildSettlement={(vertexId) =>
-                  build(StructureType.SETTLEMENT, vertexId)
-                }
-                onBuildRoad={(edgeId) =>
-                  build(StructureType.ROAD, edgeId)
-                }
-              />
-            )}
+             {gameState.board && (
+               <Board
+                 board={gameState.board}
+                 players={gameState.players}
+                 validVertexIds={placementState.validVertexIds}
+                 validEdgeIds={placementState.validEdgeIds}
+                 onBuildSettlement={(vertexId) => build(StructureType.SETTLEMENT, vertexId)}
+                 onBuildRoad={(edgeId) => build(StructureType.ROAD, edgeId)}
+                 isRobberMoveMode={isRobberMoveRequired}
+                 currentRobberHex={gameState.board.robberHex}
+                 onSelectRobberHex={isRobberMoveRequired ? (hex) => {
+                   sendRobberMove(hex.coord);
+                 } : undefined}
+               />
+             )}
             <PlayerPanel
               players={gameState.players}
               currentTurn={gameState.currentTurn}

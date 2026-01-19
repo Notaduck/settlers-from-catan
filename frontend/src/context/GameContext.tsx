@@ -117,7 +117,18 @@ interface GameContextValue extends GameContextState {
   clearResourceGain: () => void;
   placementMode: PlacementMode | null;
   placementState: PlacementState;
+  // --- Robber UI ---
+  isRobberDiscardRequired: boolean;
+  robberDiscardAmount: number;
+  robberDiscardMax: ResourceCount | null;
+  isRobberMoveRequired: boolean;
+  isRobberStealRequired: boolean;
+  sendRobberDiscard: (toDiscard: ResourceCount) => void;
+  sendRobberMove: (hex: any, victimId?: string) => void;
+  sendRobberSteal: (victimId: string) => void;
+  robberStealCandidates: { id: string; name: string; avatarUrl?: string }[];
 }
+
 
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -223,6 +234,83 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     [state.gameState, state.currentPlayerId]
   );
 
+  // --- Robber Phase Derivation ---
+  const robberPhase = state.gameState?.robberPhase;
+  const playerId = state.currentPlayerId ?? "";
+
+  // Discard
+  const isRobberDiscardRequired = !!(
+    robberPhase && robberPhase.discardPending?.includes(playerId)
+  );
+  const robberDiscardAmount = robberPhase?.discardRequired?.[playerId] ?? 0;
+  const robberDiscardMax = useMemo(() => {
+    if (!state.gameState?.players || !playerId) return null;
+    return state.gameState.players.find(p => p.id === playerId)?.resources ?? null;
+  }, [state.gameState?.players, playerId]);
+
+  // Move
+  const isRobberMoveRequired = !!(
+    robberPhase && robberPhase.movePendingPlayerId === playerId
+  );
+
+  // Steal
+  const isRobberStealRequired = !!(
+    robberPhase && robberPhase.stealPendingPlayerId === playerId
+  );
+
+  // Candidates for StealModal
+  const robberStealCandidates = useMemo(() => {
+    // Find hex where robber just moved to (usually board.robberHex)
+    const board = state.gameState?.board;
+    if (!board || !board.robberHex) return [];
+    // Victim: any player (ID not currentPlayerId) with a building on adjacent vertex
+    const adjacentPlayers = new Set<string>();
+    (board.vertices ?? []).forEach((v) => {
+      if (
+        v.building &&
+        v.building.ownerId !== playerId &&
+        v.adjacentHexes?.some(
+          h => h.q === board.robberHex.q && h.r === board.robberHex.r
+        )
+      ) {
+        adjacentPlayers.add(v.building.ownerId);
+      }
+    });
+    // Map to player objects
+    return (state.gameState?.players ?? [])
+      .filter(p => adjacentPlayers.has(p.id))
+      .map(p => ({ id: p.id, name: p.name }));
+  }, [state.gameState?.board, state.gameState?.players, playerId]);
+
+  // Handlers
+  const sendRobberDiscard = useCallback((toDiscard: ResourceCount) => {
+    sendMessage({
+      message: {
+        oneofKind: "discardCards",
+        discardCards: { resources: toDiscard },
+      },
+    } as ClientMessage);
+  }, [sendMessage]);
+
+  const sendRobberMove = useCallback((hex, victimId) => {
+    sendMessage({
+      message: {
+        oneofKind: "moveRobber",
+        moveRobber: { hex, victimId },
+      },
+    } as ClientMessage);
+  }, [sendMessage]);
+
+  const sendRobberSteal = useCallback((victimId) => {
+    // For the UI: call moveRobber with undefined hex (should be ignored on handler), but set victimId.
+    sendMessage({
+      message: {
+        oneofKind: "moveRobber",
+        moveRobber: { victimId },
+      },
+    } as ClientMessage);
+  }, [sendMessage]);
+
   const value: GameContextValue = {
     ...state,
     isConnected,
@@ -239,6 +327,15 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     clearResourceGain,
     placementMode,
     placementState,
+    isRobberDiscardRequired,
+    robberDiscardAmount,
+    robberDiscardMax,
+    isRobberMoveRequired,
+    isRobberStealRequired,
+    sendRobberDiscard,
+    sendRobberMove,
+    sendRobberSteal,
+    robberStealCandidates,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
