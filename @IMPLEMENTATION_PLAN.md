@@ -19,7 +19,10 @@
 
 ---
 
-## Previous/Upcoming Work
+## BLOCKER 2026-01-19: SOURCE FILE CORRUPTION — backend/internal/handlers/handlers.go
+
+Trading handler methods were written, but catastrophic file loss/corruption destroyed all package imports, types, and non-trading code in handlers.go. Restoration of file from backup required before any websocket handler work can be integrated or validated. Skipping to next priority task per ground rule 5.
+
 
 - Continue implementing trading WebSocket handlers and Playwright E2E as next priority, per plan.
 

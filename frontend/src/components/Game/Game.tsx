@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { DiscardModal } from "./DiscardModal";
 import { StealModal } from "./StealModal";
+import { BankTradeModal } from "./BankTradeModal";
+import { ProposeTradeModal } from "./ProposeTradeModal";
+import { IncomingTradeModal } from "./IncomingTradeModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
@@ -24,6 +27,12 @@ interface GameProps {
 }
 
 export function Game({ gameCode, onLeave }: GameProps) {
+  // Trading modals
+  const [showBankTrade, setShowBankTrade] = useState(false);
+  const [showProposeTrade, setShowProposeTrade] = useState(false);
+  const [showIncomingTrade, setShowIncomingTrade] = useState(false);
+  // Simulated offer for stub incoming modal demo:
+  const [incomingTrade, setIncomingTrade] = useState<{from: string; offer: Record<string,number>; request: Record<string,number>}|null>(null);
   const {
     connect,
     disconnect,
@@ -186,6 +195,39 @@ export function Game({ gameCode, onLeave }: GameProps) {
 
   return (
     <div className="game" data-cy="game">
+      {/* BANK TRADE MODAL */}
+      <BankTradeModal
+        open={showBankTrade}
+        onClose={() => setShowBankTrade(false)}
+        onSubmit={(offering, requested) => {
+          // TODO: Hook up to trade send
+          setShowBankTrade(false);
+        }}
+        resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
+      />
+      {/* PROPOSE TRADE MODAL */}
+      <ProposeTradeModal
+        open={showProposeTrade}
+        onClose={() => setShowProposeTrade(false)}
+        onSubmit={(offer, request, toPlayerId) => {
+          // TODO: Hook up to trade send
+          setShowProposeTrade(false);
+          // For demo: simulate incoming trade right away
+          setIncomingTrade({from:currentPlayer?.name||'Player',offer,request});
+          setShowIncomingTrade(true);
+        }}
+        players={players}
+        myResources={currentPlayer?.resources ?? {}}
+      />
+      {/* INCOMING TRADE MODAL (stub/demo, always shows same test offer) */}
+      <IncomingTradeModal
+        open={showIncomingTrade}
+        onAccept={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
+        onDecline={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
+        fromPlayer={incomingTrade?.from || 'Other'}
+        offer={incomingTrade?.offer || {wood:1}}
+        request={incomingTrade?.request || {brick:1}}
+      />
       {/* Robber Discard Modal */}
       {isRobberDiscardRequired && !discardClosed && (
         <DiscardModal
@@ -306,8 +348,28 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-          {isSetup && gameState.status === GameStatus.SETUP && (
+           {(isSetup && gameState.status === GameStatus.SETUP) && (
             <div className="setup-phase-panel">
+              {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
+              {gameState.status === GameStatus.PLAYING && gameState.turnPhase === "TURN_PHASE_TRADE" && currentPlayer?.id === currentPlayerId && (
+                <div className="trade-phase-control">
+                  <button
+                    className="btn btn-secondary"
+                    data-cy="trade-phase-btn"
+                    onClick={() => setShowBankTrade(true)}
+                  >
+                    Trade with Bank
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    data-cy="propose-trade-btn"
+                    onClick={() => setShowProposeTrade(true)}
+                  >
+                    Propose Trade
+                  </button>
+                </div>
+              )}
+
               <div
                 className="setup-phase-banner"
                 data-cy="setup-phase-banner"
@@ -342,10 +404,12 @@ export function Game({ gameCode, onLeave }: GameProps) {
           )}
            {placementModeLabel && ((isSetup && gameState.status === GameStatus.SETUP) || (gameState.status === GameStatus.PLAYING)) && (
             <div className="placement-mode" data-cy="placement-mode">
+              {/* (Placement and trading UI are independent; both can be present) */}
               {placementModeLabel}
             </div>
           )}
-          <div className="game-board-content">
+           <div className="game-board-content">
+             {/* ---- END TRADING ---- */}
              {gameState.board && (
                <Board
                  board={gameState.board}
