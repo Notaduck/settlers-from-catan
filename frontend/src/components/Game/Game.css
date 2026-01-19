@@ -201,6 +201,12 @@
   font-size: 0.95rem;
 }
 
+.setup-instruction {
+  color: #e7ecff;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .game-board-content {
   display: flex;
   flex-direction: row;

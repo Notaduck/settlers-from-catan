@@ -80,6 +80,17 @@ export function Game({ gameCode, onLeave }: GameProps) {
 
   const setupRound = gameState.setupPhase?.round ?? 1;
   const currentTurnPlayer = players[gameState.currentTurn ?? 0];
+  const setupInstruction = useMemo(() => {
+    if (!isSetup || !gameState.setupPhase) {
+      return null;
+    }
+
+    const placementsInTurn = gameState.setupPhase.placementsInTurn ?? 0;
+    const placementCount = setupRound >= 2 ? 2 : 1;
+    const label = placementsInTurn === 0 ? "Settlement" : "Road";
+
+    return `Place ${label} (${placementCount}/2)`;
+  }, [isSetup, gameState.setupPhase, setupRound]);
 
   if (error) {
     return (
@@ -227,6 +238,14 @@ export function Game({ gameCode, onLeave }: GameProps) {
                   ? `Current Turn: ${currentTurnPlayer.name}`
                   : "Current Turn: --"}
               </div>
+              {setupInstruction && (
+                <div
+                  className="setup-instruction"
+                  data-cy="setup-instruction"
+                >
+                  {setupInstruction}
+                </div>
+              )}
             </div>
           )}
           {placementModeLabel && (

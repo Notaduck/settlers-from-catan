@@ -43,7 +43,7 @@
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (new, uses data-cy setup-phase-banner, setup-turn-indicator)
 
-- [ ] Setup instructions and placement counts (settlement 1/2, road 1/2)
+- [x] Setup instructions and placement counts (settlement 1/2, road 1/2)
   - Files: frontend/src/components/Game/Game.tsx
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (uses data-cy setup-instruction)

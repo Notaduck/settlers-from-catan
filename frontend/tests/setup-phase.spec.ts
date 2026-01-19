@@ -126,6 +126,11 @@ test.describe("Setup Phase UI", () => {
     await expect(turnIndicator).toBeVisible({ timeout: 30000 });
     await expect(turnIndicator).toContainText("Host");
 
+    const instruction = hostPage.locator("[data-cy='setup-instruction']");
+    await expect(instruction).toBeVisible({ timeout: 30000 });
+    await expect(instruction).toContainText("Place Settlement");
+    await expect(instruction).toContainText("1/2");
+
     await guestPage.close();
   });
 });
