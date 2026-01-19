@@ -25,7 +25,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     return localStorage.getItem("sessionToken");
   }, []);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(function connectInternal() {
     // Don't connect if already connected or connecting
     if (
       wsRef.current?.readyState === WebSocket.OPEN ||
@@ -61,7 +61,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         // Attempt reconnection after 3 seconds
         reconnectTimeoutRef.current = window.setTimeout(() => {
           if (getSessionToken()) {
-            connect();
+            connectInternal();
           }
         }, 3000);
       };

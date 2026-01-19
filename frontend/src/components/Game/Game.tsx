@@ -189,7 +189,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-          {gameState.board && <Board board={gameState.board} />}
+          {gameState.board && (
+            <Board board={gameState.board} players={gameState.players} />
+          )}
           <PlayerPanel
             players={gameState.players}
             currentTurn={gameState.currentTurn}

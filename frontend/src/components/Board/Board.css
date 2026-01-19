@@ -30,3 +30,35 @@
 .robber {
   pointer-events: none;
 }
+
+.vertex-dot {
+  fill: rgba(255, 255, 255, 0.7);
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 1;
+}
+
+.vertex-settlement,
+.vertex-city rect {
+  stroke-linejoin: round;
+}
+
+.edge {
+  pointer-events: stroke;
+}
+
+.edge-line {
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.edge--empty:hover .edge-line {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 5;
+}
+
+.edge-road {
+  stroke-width: 7;
+  stroke-linecap: round;
+}
