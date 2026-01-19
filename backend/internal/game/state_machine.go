@@ -22,6 +22,10 @@ var (
 	ErrRoadMustConnectToSetup   = errors.New("road must connect to just-placed settlement")
 	ErrMaxSettlementsReached    = errors.New("maximum settlements reached")
 	ErrMaxRoadsReached          = errors.New("maximum roads reached")
+	ErrPlayerNotFound           = errors.New("player not found")
+	ErrNotHost                  = errors.New("only host can start the game")
+	ErrPlayersNotReady          = errors.New("all players must be ready")
+	ErrNotEnoughPlayers         = errors.New("not enough players to start")
 )
 
 // GetSetupTurnIndex returns the player index for a given turn number (0-indexed)
@@ -60,6 +64,74 @@ func TransitionToPlaying(state *pb.GameState) {
 	state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
 	state.CurrentTurn = 0
 	state.SetupPhase = nil
+}
+
+// SetPlayerReady updates a player's ready status in the lobby.
+func SetPlayerReady(state *pb.GameState, playerID string, ready bool) error {
+	if state.Status != pb.GameStatus_GAME_STATUS_WAITING {
+		return ErrWrongPhase
+	}
+	player := getPlayerByID(state, playerID)
+	if player == nil {
+		return ErrPlayerNotFound
+	}
+	player.IsReady = ready
+	return nil
+}
+
+// StartGame transitions the game from waiting to setup if requirements are met.
+func StartGame(state *pb.GameState, playerID string) error {
+	if state.Status != pb.GameStatus_GAME_STATUS_WAITING {
+		return ErrWrongPhase
+	}
+	player := getPlayerByID(state, playerID)
+	if player == nil {
+		return ErrPlayerNotFound
+	}
+	if !player.IsHost {
+		return ErrNotHost
+	}
+	if len(state.Players) < GetMinPlayers() {
+		return ErrNotEnoughPlayers
+	}
+	for _, p := range state.Players {
+		if !p.IsReady {
+			return ErrPlayersNotReady
+		}
+	}
+
+	state.Status = pb.GameStatus_GAME_STATUS_SETUP
+	state.SetupPhase = &pb.SetupPhase{
+		Round:            1,
+		PlacementsInTurn: 0,
+	}
+	state.CurrentTurn = 0
+	state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
+	return nil
+}
+
+// EndTurn advances to the next player's turn.
+func EndTurn(state *pb.GameState, playerID string) error {
+	if state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
+		return ErrWrongPhase
+	}
+	currentPlayerIdx := state.CurrentTurn
+	if currentPlayerIdx < 0 || int(currentPlayerIdx) >= len(state.Players) {
+		return ErrNotYourTurn
+	}
+	if state.Players[currentPlayerIdx].Id != playerID {
+		return ErrNotYourTurn
+	}
+	if state.TurnPhase == pb.TurnPhase_TURN_PHASE_ROLL {
+		return ErrWrongPhase
+	}
+	if len(state.Players) == 0 {
+		return ErrNotEnoughPlayers
+	}
+	state.CurrentTurn = (state.CurrentTurn + 1) % int32(len(state.Players))
+	state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
+	state.Dice = []int32{0, 0}
+	return nil
 }
 
 // PlaceSetupSettlement places a settlement during setup phase (no resource cost)

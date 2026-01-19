@@ -4,7 +4,7 @@
 
 ## BLOCKERS / FOUNDATIONAL (Unblocks all E2E + gameplay)
 - [x] Implement HTTP/WS handler layer (missing `NewHandler`, `HandleWebSocket`, `HandleCreateGame`, `HandleGameRoutes`) with DB persistence and hub broadcast wiring. Files: `backend/internal/handlers/handlers.go`, `backend/internal/handlers/handlers_test.go`, `backend/internal/hub/client.go`, `backend/cmd/server/main.go`; Go tests: `backend/internal/handlers/handlers_test.go` (real DB + WS hub assertions); Playwright: `frontend/tests/game-flow.spec.ts`.
-- [ ] Add WS routing for core messages (ready/start/roll/build/end-turn) and broadcast authoritative `game_state` for every state change. Files: `backend/internal/handlers/handlers.go`, `backend/internal/game/commands.go`, `backend/internal/game/dice.go`, `backend/internal/game/state_machine.go`; Go tests: `backend/internal/game/commands_test.go`, `backend/internal/game/dice_test.go`; Playwright: `frontend/tests/game-flow.spec.ts`, `frontend/tests/interactive-board.spec.ts`, `frontend/tests/setup-phase.spec.ts`.
+- [x] Add WS routing for core messages (ready/start/roll/build/end-turn) and broadcast authoritative `game_state` for every state change. Files: `backend/internal/handlers/handlers.go`, `backend/internal/game/state_machine.go`; Go tests: `backend/internal/game/state_machine_test.go`.
 
 ## PRIORITY 1: INTERACTIVE BOARD
 - [x] Vertex/edge rendering, placement highlighting, and `data-cy` attributes implemented on the board UI. Files: `frontend/src/components/Board/Board.tsx`, `frontend/src/components/Board/Edge.tsx`, `frontend/src/components/Board/Vertex.tsx`; Go tests: none (backend vertex/edge logic already covered); Playwright: `frontend/tests/interactive-board.spec.ts` (blocked by WS handlers above).
@@ -40,6 +40,7 @@
 - Robber steal flow currently sends `move_robber` without a hex; plan assumes we will allow a separate steal step without re-moving the robber (either by tolerating same-hex moves or adding a dedicated handler) to avoid proto churn.
 - Port `Location` values in `backend/internal/game/ports.go` appear to be hard-coded vertex IDs; verify they match `generateVertices` output before wiring UI highlights.
 - Validation (this iteration):
-  - `make test-backend` fails in existing game tests: `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`, `TestDiscardCards`, `TestCheckVictory_GameEndsOnWin`.
+  - `make test-backend` fails in existing game tests: `TestResourceDistribution_SettlementGetsOneResource`, `TestResourceDistribution_MultiplePlayersReceive`, `TestOpponentSettlementBlocksRoad`, `TestTieKeepsCurrentHolder`, `TestPlayerGainsPortAccess`, `TestGetBestTradeRatio_GenericPort`, `TestGetBestTradeRatio_SpecificPort`, `TestDiscardCards`, `TestCheckVictory_GameEndsOnWin`.
   - `make lint` fails due to pre-existing frontend eslint issues in `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/tests/robber.spec.ts`, `frontend/tests/trading.spec.ts`.
   - `make build` fails due to pre-existing TypeScript errors across `frontend/src/components/*`, `frontend/src/context/GameContext.tsx`, `frontend/src/gen/proto/catan/v1/types.ts`.
+  - `make e2e` skipped (servers not running).

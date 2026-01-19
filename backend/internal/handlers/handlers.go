@@ -127,6 +127,16 @@ func (h *Handler) handleClientMessage(client *hub.Client, raw []byte) {
 	}
 
 	switch msg.Message.OneofKind {
+	case "playerReady":
+		h.handlePlayerReady(client, msg.payloadBytes(msg.Message.PlayerReady))
+	case "startGame":
+		h.handleStartGame(client, msg.payloadBytes(msg.Message.StartGame))
+	case "rollDice":
+		h.handleRollDice(client, msg.payloadBytes(msg.Message.RollDice))
+	case "buildStructure":
+		h.handleBuildStructure(client, msg.payloadBytes(msg.Message.BuildStructure))
+	case "endTurn":
+		h.handleEndTurn(client, msg.payloadBytes(msg.Message.EndTurn))
 	case "proposeTrade":
 		h.handleProposeTrade(client, msg.payloadBytes(msg.Message.ProposeTrade))
 	case "respondTrade":
@@ -140,6 +150,241 @@ func (h *Handler) handleClientMessage(client *hub.Client, raw []byte) {
 	default:
 		h.sendError(client, "UNSUPPORTED_MESSAGE", "Unsupported message type")
 	}
+}
+
+// handlePlayerReady handles a player's ready toggle in the lobby.
+func (h *Handler) handlePlayerReady(client *hub.Client, payload []byte) {
+	var req catanv1.PlayerReadyMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse player ready request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.SetPlayerReady(state, client.PlayerID, req.GetReady()); err != nil {
+		h.sendError(client, "READY_ERROR", err.Error())
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+	readyPayload := &catanv1.PlayerReadyChangedPayload{
+		PlayerId: client.PlayerID,
+		IsReady:  req.GetReady(),
+	}
+	h.broadcastServerMessage(client.GameID, "playerReadyChanged", readyPayload)
+	h.broadcastGameStateProto(client.GameID, state)
+}
+
+// handleStartGame handles the host starting the game.
+func (h *Handler) handleStartGame(client *hub.Client, payload []byte) {
+	var req catanv1.StartGameMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse start game request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.StartGame(state, client.PlayerID); err != nil {
+		h.sendError(client, "START_GAME_ERROR", err.Error())
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+	startedPayload := &catanv1.GameStartedPayload{
+		State: state,
+	}
+	h.broadcastServerMessage(client.GameID, "gameStarted", startedPayload)
+	h.broadcastGameStateProto(client.GameID, state)
+}
+
+// handleRollDice handles dice rolls during a player's turn.
+func (h *Handler) handleRollDice(client *hub.Client, payload []byte) {
+	var req catanv1.RollDiceMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse roll dice request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	result, err := game.PerformDiceRoll(state, client.PlayerID)
+	if err != nil {
+		h.sendError(client, "ROLL_DICE_ERROR", err.Error())
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+	distributions := make([]*catanv1.ResourceDistribution, 0, len(result.ResourcesGained))
+	for playerID, resources := range result.ResourcesGained {
+		distributions = append(distributions, &catanv1.ResourceDistribution{
+			PlayerId:  playerID,
+			Resources: resources,
+		})
+	}
+	rolledPayload := &catanv1.DiceRolledPayload{
+		PlayerId:             client.PlayerID,
+		Values:               []int32{int32(result.Die1), int32(result.Die2)},
+		ResourcesDistributed: distributions,
+	}
+	h.broadcastServerMessage(client.GameID, "diceRolled", rolledPayload)
+	h.broadcastGameStateProto(client.GameID, state)
+}
+
+// handleBuildStructure handles settlement, city, and road placement.
+func (h *Handler) handleBuildStructure(client *hub.Client, payload []byte) {
+	var req catanv1.BuildStructureMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse build request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	location := req.GetLocation()
+	var serverKind string
+	var serverPayload proto.Message
+	switch state.Status {
+	case game.GameStatusSetup:
+		switch req.GetStructureType() {
+		case catanv1.StructureType_STRUCTURE_TYPE_SETTLEMENT:
+			if err := game.PlaceSetupSettlement(state, client.PlayerID, location); err != nil {
+				h.sendError(client, "BUILD_ERROR", err.Error())
+				return
+			}
+			serverKind = "buildingPlaced"
+			serverPayload = &catanv1.BuildingPlacedPayload{
+				PlayerId:     client.PlayerID,
+				BuildingType: catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+				VertexId:     location,
+			}
+		case catanv1.StructureType_STRUCTURE_TYPE_ROAD:
+			if err := game.PlaceSetupRoad(state, client.PlayerID, location); err != nil {
+				h.sendError(client, "BUILD_ERROR", err.Error())
+				return
+			}
+			serverKind = "roadPlaced"
+			serverPayload = &catanv1.RoadPlacedPayload{
+				PlayerId: client.PlayerID,
+				EdgeId:   location,
+			}
+		default:
+			h.sendError(client, "BUILD_ERROR", "Invalid structure for setup phase")
+			return
+		}
+	case game.GameStatusPlaying:
+		switch req.GetStructureType() {
+		case catanv1.StructureType_STRUCTURE_TYPE_SETTLEMENT:
+			if err := game.PlaceSettlement(state, client.PlayerID, location); err != nil {
+				h.sendError(client, "BUILD_ERROR", err.Error())
+				return
+			}
+			serverKind = "buildingPlaced"
+			serverPayload = &catanv1.BuildingPlacedPayload{
+				PlayerId:     client.PlayerID,
+				BuildingType: catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+				VertexId:     location,
+			}
+		case catanv1.StructureType_STRUCTURE_TYPE_CITY:
+			if err := game.PlaceCity(state, client.PlayerID, location); err != nil {
+				h.sendError(client, "BUILD_ERROR", err.Error())
+				return
+			}
+			serverKind = "buildingPlaced"
+			serverPayload = &catanv1.BuildingPlacedPayload{
+				PlayerId:     client.PlayerID,
+				BuildingType: catanv1.BuildingType_BUILDING_TYPE_CITY,
+				VertexId:     location,
+			}
+		case catanv1.StructureType_STRUCTURE_TYPE_ROAD:
+			if err := game.PlaceRoad(state, client.PlayerID, location); err != nil {
+				h.sendError(client, "BUILD_ERROR", err.Error())
+				return
+			}
+			serverKind = "roadPlaced"
+			serverPayload = &catanv1.RoadPlacedPayload{
+				PlayerId: client.PlayerID,
+				EdgeId:   location,
+			}
+		default:
+			h.sendError(client, "BUILD_ERROR", "Unsupported structure type")
+			return
+		}
+	default:
+		h.sendError(client, "BUILD_ERROR", "Game not in buildable state")
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+	if serverKind != "" && serverPayload != nil {
+		h.broadcastServerMessage(client.GameID, serverKind, serverPayload)
+	}
+	h.broadcastGameStateProto(client.GameID, state)
+}
+
+// handleEndTurn advances to the next player.
+func (h *Handler) handleEndTurn(client *hub.Client, payload []byte) {
+	var req catanv1.EndTurnMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse end turn request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.EndTurn(state, client.PlayerID); err != nil {
+		h.sendError(client, "END_TURN_ERROR", err.Error())
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+	turnPayload := &catanv1.TurnChangedPayload{
+		ActivePlayerId: state.Players[state.CurrentTurn].Id,
+		Phase:          state.TurnPhase,
+	}
+	h.broadcastServerMessage(client.GameID, "turnChanged", turnPayload)
+	h.broadcastGameStateProto(client.GameID, state)
 }
 
 // --- Trading handlers ---
@@ -711,12 +956,17 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 
 type clientEnvelope struct {
 	Message struct {
-		OneofKind    string                       `json:"oneofKind"`
-		ProposeTrade *catanv1.ProposeTradeMessage `json:"proposeTrade,omitempty"`
-		RespondTrade *catanv1.RespondTradeMessage `json:"respondTrade,omitempty"`
-		DiscardCards *catanv1.DiscardCardsMessage `json:"discardCards,omitempty"`
-		MoveRobber   *catanv1.MoveRobberMessage   `json:"moveRobber,omitempty"`
-		BankTrade    *catanv1.BankTradeMessage    `json:"bankTrade,omitempty"`
+		OneofKind      string                         `json:"oneofKind"`
+		StartGame      *catanv1.StartGameMessage      `json:"startGame,omitempty"`
+		RollDice       *catanv1.RollDiceMessage       `json:"rollDice,omitempty"`
+		BuildStructure *catanv1.BuildStructureMessage `json:"buildStructure,omitempty"`
+		EndTurn        *catanv1.EndTurnMessage        `json:"endTurn,omitempty"`
+		PlayerReady    *catanv1.PlayerReadyMessage    `json:"playerReady,omitempty"`
+		ProposeTrade   *catanv1.ProposeTradeMessage   `json:"proposeTrade,omitempty"`
+		RespondTrade   *catanv1.RespondTradeMessage   `json:"respondTrade,omitempty"`
+		DiscardCards   *catanv1.DiscardCardsMessage   `json:"discardCards,omitempty"`
+		MoveRobber     *catanv1.MoveRobberMessage     `json:"moveRobber,omitempty"`
+		BankTrade      *catanv1.BankTradeMessage      `json:"bankTrade,omitempty"`
 	} `json:"message"`
 }
 

@@ -230,3 +230,88 @@ func TestSetupPhase_WrongPlayer(t *testing.T) {
 		t.Error("Should not allow placement when it's not the player's turn")
 	}
 }
+
+func TestSetPlayerReady_UpdatesStatus(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Alice", "Bob"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_WAITING
+
+	if err := SetPlayerReady(state, "p1", true); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !state.Players[0].IsReady {
+		t.Error("expected player to be marked ready")
+	}
+}
+
+func TestSetPlayerReady_WrongPhase(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Alice", "Bob"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_PLAYING
+
+	if err := SetPlayerReady(state, "p1", true); err == nil {
+		t.Error("expected error when setting ready outside waiting phase")
+	}
+}
+
+func TestStartGame_RequiresHostAndReadyPlayers(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Host", "Guest"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_WAITING
+	state.Players[0].IsReady = true
+	state.Players[1].IsReady = true
+
+	if err := StartGame(state, "p2"); err == nil {
+		t.Error("expected error when non-host tries to start game")
+	}
+
+	if err := StartGame(state, "p1"); err != nil {
+		t.Fatalf("unexpected error starting game: %v", err)
+	}
+	if state.Status != pb.GameStatus_GAME_STATUS_SETUP {
+		t.Errorf("expected setup status, got %v", state.Status)
+	}
+	if state.SetupPhase == nil || state.SetupPhase.Round != 1 || state.SetupPhase.PlacementsInTurn != 0 {
+		t.Error("expected setup phase initialized after start")
+	}
+}
+
+func TestStartGame_RequiresReadyPlayers(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Host", "Guest"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_WAITING
+	state.Players[0].IsReady = true
+	state.Players[1].IsReady = false
+
+	if err := StartGame(state, "p1"); err == nil {
+		t.Error("expected error when not all players are ready")
+	}
+}
+
+func TestEndTurn_AdvancesTurnAndResetsPhase(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Alice", "Bob"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_PLAYING
+	state.TurnPhase = pb.TurnPhase_TURN_PHASE_BUILD
+	state.CurrentTurn = 0
+	state.Dice = []int32{3, 4}
+
+	if err := EndTurn(state, "p1"); err != nil {
+		t.Fatalf("unexpected error ending turn: %v", err)
+	}
+	if state.CurrentTurn != 1 {
+		t.Errorf("expected current turn to advance to 1, got %d", state.CurrentTurn)
+	}
+	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_ROLL {
+		t.Errorf("expected roll phase after end turn, got %v", state.TurnPhase)
+	}
+	if state.Dice[0] != 0 || state.Dice[1] != 0 {
+		t.Error("expected dice to reset after end turn")
+	}
+}
+
+func TestEndTurn_DisallowsRollingPhase(t *testing.T) {
+	state := NewGameState("g1", "CODE", []string{"Alice", "Bob"}, []string{"p1", "p2"})
+	state.Status = pb.GameStatus_GAME_STATUS_PLAYING
+	state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
+	state.CurrentTurn = 0
+
+	if err := EndTurn(state, "p1"); err == nil {
+		t.Error("expected error when ending turn during roll phase")
+	}
+}
