@@ -179,6 +179,28 @@
   align-items: center;
 }
 
+.setup-phase-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.setup-phase-banner {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  background: #262f4d;
+  border: 1px solid #3a4a73;
+  color: #f3f6ff;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.setup-turn-indicator {
+  color: #c8d3f5;
+  font-size: 0.95rem;
+}
+
 .game-board-content {
   display: flex;
   flex-direction: row;

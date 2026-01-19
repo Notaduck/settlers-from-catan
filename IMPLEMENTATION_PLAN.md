@@ -38,7 +38,7 @@
 
 ## Priority 2: Setup Phase UI
 
-- [ ] Setup phase banner and turn indicator (round + current player)
+- [x] Setup phase banner and turn indicator (round + current player)
   - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/Game/Game.css
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (new, uses data-cy setup-phase-banner, setup-turn-indicator)
@@ -188,7 +188,7 @@
 
 - `make test-backend` passed.
 - `make typecheck` passed.
-- `make lint` passed with existing warnings:
+- `make lint` reports existing warnings:
   - `frontend/src/components/Game/Game.tsx` has `react-hooks/exhaustive-deps` warnings.
   - `proto/buf.yaml` warns about deprecated DEFAULT category.
 - `make e2e` not run (servers not started per instructions).

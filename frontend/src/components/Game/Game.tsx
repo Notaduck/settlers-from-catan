@@ -61,6 +61,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const isWaiting =
     gameState?.status === GameStatus.WAITING ||
     gameState?.status === ("GAME_STATUS_WAITING" as unknown as GameStatus);
+  const isSetup =
+    gameState?.status === GameStatus.SETUP ||
+    gameState?.status === ("GAME_STATUS_SETUP" as unknown as GameStatus);
 
   const placementModeLabel = useMemo(() => {
     switch (placementMode) {
@@ -74,6 +77,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
         return null;
     }
   }, [placementMode]);
+
+  const setupRound = gameState.setupPhase?.round ?? 1;
+  const currentTurnPlayer = players[gameState.currentTurn ?? 0];
 
   if (error) {
     return (
@@ -205,6 +211,24 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
+          {isSetup && (
+            <div className="setup-phase-panel">
+              <div
+                className="setup-phase-banner"
+                data-cy="setup-phase-banner"
+              >
+                Setup Phase - Round {setupRound}
+              </div>
+              <div
+                className="setup-turn-indicator"
+                data-cy="setup-turn-indicator"
+              >
+                {currentTurnPlayer?.name
+                  ? `Current Turn: ${currentTurnPlayer.name}`
+                  : "Current Turn: --"}
+              </div>
+            </div>
+          )}
           {placementModeLabel && (
             <div className="placement-mode" data-cy="placement-mode">
               {placementModeLabel}
