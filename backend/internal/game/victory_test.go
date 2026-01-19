@@ -101,15 +101,6 @@ func TestCheckVictory_LargestArmyBonus(t *testing.T) {
 
 // Test: Victory points from hidden VP cards (spec: Win with development card VICTORY_POINT)
 func TestCheckVictory_HiddenVPCards(t *testing.T) {
-	players := []*pb.PlayerState{{Id: "p1", Name: "Alice"}}
-	board := &pb.BoardState{Vertices: []*pb.Vertex{}}
-	state := &pb.GameState{
-		Players:     players,
-		Board:       board,
-		Status:      pb.GameStatus_GAME_STATUS_PLAYING,
-		CurrentTurn: 0,
-	}
-	// To simulate hidden VP cards, we fudge the CalculateVictoryPoints call by passing its extra argument.
 	settlements := 2
 	cities := 2
 	hasLongestRoad := false
