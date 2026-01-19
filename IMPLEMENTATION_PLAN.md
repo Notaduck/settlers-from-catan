@@ -24,12 +24,12 @@
   - Go tests: none
   - Playwright: frontend/tests/interactive-board.spec.ts (assert placement mode)
 
-- [ ] Compute valid placements and highlight/click valid vertices and edges (setup + normal play)
+- [x] Compute valid placements and highlight/click valid vertices and edges (setup + normal play)
   - Files: frontend/src/components/Board/Board.tsx, frontend/src/components/Board/Vertex.tsx, frontend/src/components/Board/Edge.tsx, frontend/src/components/Board/Board.css, frontend/src/context/GameContext.tsx (derived placement state), frontend/src/components/Board/placement.ts (new helper)
   - Go tests: none
   - Playwright: frontend/tests/interactive-board.spec.ts (click settlement, click road, invalid placement blocked, highlight class)
 
-- [ ] (Foundational) Normalize board graph to standard 54 vertices / 72 edges
+- [x] (Foundational) Normalize board graph to standard 54 vertices / 72 edges
   - Files: backend/internal/game/board.go, backend/internal/game/board_test.go
   - Go tests: backend/internal/game/board_test.go (update expectations)
   - Playwright: none

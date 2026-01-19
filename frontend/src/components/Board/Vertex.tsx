@@ -7,9 +7,19 @@ interface VertexProps {
   y: number;
   ownerColor?: string;
   dataCy?: string;
+  isValid?: boolean;
+  onClick?: () => void;
 }
 
-export function Vertex({ vertex, x, y, ownerColor, dataCy }: VertexProps) {
+export function Vertex({
+  vertex,
+  x,
+  y,
+  ownerColor,
+  dataCy,
+  isValid,
+  onClick,
+}: VertexProps) {
   const building = vertex.building;
   const hasBuilding = Boolean(building);
   const fillColor = ownerColor ?? "#6b6b6b";
@@ -17,8 +27,11 @@ export function Vertex({ vertex, x, y, ownerColor, dataCy }: VertexProps) {
   return (
     <g
       transform={`translate(${x}, ${y})`}
-      className={`vertex ${hasBuilding ? "vertex--occupied" : "vertex--empty"}`}
+      className={`vertex ${hasBuilding ? "vertex--occupied" : "vertex--empty"} ${
+        isValid ? "vertex--valid" : ""
+      }`}
       data-cy={dataCy}
+      onClick={onClick}
     >
       {!hasBuilding && <circle r={3.2} className="vertex-dot" />}
       {building?.type === BuildingType.SETTLEMENT && (

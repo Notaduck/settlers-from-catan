@@ -37,6 +37,16 @@
   stroke-width: 1;
 }
 
+.vertex--valid {
+  cursor: pointer;
+}
+
+.vertex--valid .vertex-dot {
+  fill: rgba(247, 215, 116, 0.9);
+  stroke: rgba(140, 92, 0, 0.8);
+  stroke-width: 1.5;
+}
+
 .vertex-settlement,
 .vertex-city rect {
   stroke-linejoin: round;
@@ -51,6 +61,15 @@
   stroke-width: 4;
   stroke-linecap: round;
   transition: stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.edge--valid {
+  cursor: pointer;
+}
+
+.edge--valid .edge-line {
+  stroke: rgba(247, 215, 116, 0.9);
+  stroke-width: 6;
 }
 
 .edge--empty:hover .edge-line {

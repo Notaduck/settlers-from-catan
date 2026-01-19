@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"testing"
 
 	pb "settlers_from_catan/gen/proto/catan/v1"
@@ -356,18 +357,45 @@ func TestResourceDistribution_RobberBlocksProduction(t *testing.T) {
 		t.Skip("No hex with number 8 found")
 	}
 
-	// Find a vertex adjacent to this hex
+	hexByCoord := make(map[string]*pb.Hex)
+	for _, hex := range state.Board.Hexes {
+		if hex.Coord == nil {
+			continue
+		}
+		key := fmt.Sprintf("%d,%d", hex.Coord.Q, hex.Coord.R)
+		hexByCoord[key] = hex
+	}
+
+	// Find a vertex adjacent to this hex that doesn't touch another 8
 	var targetVertex *pb.Vertex
 	for _, vertex := range state.Board.Vertices {
 		for _, adjHex := range vertex.AdjacentHexes {
 			if adjHex.Q == targetHex.Coord.Q && adjHex.R == targetHex.Coord.R {
-				targetVertex = vertex
+				hasOtherEight := false
+				for _, neighbor := range vertex.AdjacentHexes {
+					if neighbor.Q == targetHex.Coord.Q && neighbor.R == targetHex.Coord.R {
+						continue
+					}
+					key := fmt.Sprintf("%d,%d", neighbor.Q, neighbor.R)
+					neighborHex := hexByCoord[key]
+					if neighborHex != nil && neighborHex.Number == 8 &&
+						neighborHex.Resource != pb.TileResource_TILE_RESOURCE_DESERT {
+						hasOtherEight = true
+						break
+					}
+				}
+				if !hasOtherEight {
+					targetVertex = vertex
+				}
 				break
 			}
 		}
 		if targetVertex != nil {
 			break
 		}
+	}
+	if targetVertex == nil {
+		t.Skip("No vertex adjacent to a single 8 found")
 	}
 
 	// Place settlement

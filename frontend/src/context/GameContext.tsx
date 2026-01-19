@@ -3,6 +3,7 @@ import {
   useContext,
   useReducer,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import type {
@@ -13,6 +14,7 @@ import type {
 } from "@/types";
 import { GameStatus, StructureType, TurnPhase } from "@/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { getPlacementState, type PlacementState } from "@/components/Board/placement";
 
 // Game context state
 interface GameContextState {
@@ -92,6 +94,7 @@ interface GameContextValue extends GameContextState {
   startGame: () => void;
   setReady: (ready: boolean) => void;
   placementMode: PlacementMode | null;
+  placementState: PlacementState;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -189,6 +192,10 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
   );
 
   const placementMode = getPlacementMode(state.gameState, state.currentPlayerId);
+  const placementState = useMemo(
+    () => getPlacementState(state.gameState, state.currentPlayerId),
+    [state.gameState, state.currentPlayerId]
+  );
 
   const value: GameContextValue = {
     ...state,
@@ -203,6 +210,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     startGame,
     setReady,
     placementMode,
+    placementState,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

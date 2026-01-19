@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
-import { GameStatus, PlayerColor } from "@/types";
+import { GameStatus, PlayerColor, StructureType } from "@/types";
 import "./Game.css";
 
 // Map PlayerColor enum to CSS color strings
@@ -30,6 +30,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
     setReady,
     currentPlayerId,
     placementMode,
+    placementState,
+    build,
   } = useGame();
 
   useEffect(() => {
@@ -210,7 +212,18 @@ export function Game({ gameCode, onLeave }: GameProps) {
           )}
           <div className="game-board-content">
             {gameState.board && (
-              <Board board={gameState.board} players={gameState.players} />
+              <Board
+                board={gameState.board}
+                players={gameState.players}
+                validVertexIds={placementState.validVertexIds}
+                validEdgeIds={placementState.validEdgeIds}
+                onBuildSettlement={(vertexId) =>
+                  build(StructureType.SETTLEMENT, vertexId)
+                }
+                onBuildRoad={(edgeId) =>
+                  build(StructureType.ROAD, edgeId)
+                }
+              />
             )}
             <PlayerPanel
               players={gameState.players}

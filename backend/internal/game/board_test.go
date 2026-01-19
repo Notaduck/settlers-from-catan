@@ -87,12 +87,8 @@ func TestBoardNumberDistribution(t *testing.T) {
 func TestBoardVertices(t *testing.T) {
 	board := GenerateBoard()
 
-	// Note: Standard Catan has exactly 54 vertices
-	// Our simplified algorithm generates 86 vertices due to including
-	// all 6 vertices per hex without proper deduplication for shared corners
-	// TODO: Optimize vertex generation to produce exactly 54 vertices
-	if len(board.Vertices) < 54 {
-		t.Errorf("Expected at least 54 vertices, got %d", len(board.Vertices))
+	if len(board.Vertices) != 54 {
+		t.Errorf("Expected 54 vertices, got %d", len(board.Vertices))
 	}
 
 	vertexIDs := make(map[string]bool)
@@ -107,11 +103,8 @@ func TestBoardVertices(t *testing.T) {
 func TestBoardEdges(t *testing.T) {
 	board := GenerateBoard()
 
-	// Note: Standard Catan has exactly 72 edges
-	// Our simplified algorithm generates 100 edges due to vertex count
-	// TODO: Optimize edge generation to produce exactly 72 edges
-	if len(board.Edges) < 72 {
-		t.Errorf("Expected at least 72 edges, got %d", len(board.Edges))
+	if len(board.Edges) != 72 {
+		t.Errorf("Expected 72 edges, got %d", len(board.Edges))
 	}
 
 	for _, edge := range board.Edges {

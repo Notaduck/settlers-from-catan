@@ -104,6 +104,24 @@ async function startTwoPlayerGame(
   return { hostPage, guestPage };
 }
 
+async function placeSettlement(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Settlement", {
+    timeout: 30000,
+  });
+  const validVertex = page.locator("[data-cy^='vertex-'].vertex--valid").first();
+  await expect(validVertex).toBeVisible({ timeout: 30000 });
+  await validVertex.click();
+}
+
+async function placeRoad(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Road", { timeout: 30000 });
+  const validEdge = page.locator("[data-cy^='edge-'].edge--valid").first();
+  await expect(validEdge).toBeVisible({ timeout: 30000 });
+  await validEdge.click();
+}
+
 test.describe("Interactive Board", () => {
   test("vertices render on board", async ({ page, context, request }) => {
     const { hostPage, guestPage } = await startTwoPlayerGame(
@@ -145,6 +163,105 @@ test.describe("Interactive Board", () => {
     const placementMode = hostPage.locator("[data-cy='placement-mode']");
     await expect(placementMode).toBeVisible({ timeout: 30000 });
     await expect(placementMode).toContainText("Place Settlement");
+
+    await guestPage.close();
+  });
+
+  test("clicking vertex during setup places settlement", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    await placeSettlement(hostPage);
+    await expect(hostPage.locator(".vertex--occupied")).toHaveCount(1, {
+      timeout: 30000,
+    });
+    await expect(hostPage.locator("[data-cy='placement-mode']")).toContainText(
+      "Place Road",
+      { timeout: 30000 }
+    );
+
+    await guestPage.close();
+  });
+
+  test("clicking edge during setup places road", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    await placeSettlement(hostPage);
+    await placeRoad(hostPage);
+
+    await expect(hostPage.locator(".edge--occupied")).toHaveCount(1, {
+      timeout: 30000,
+    });
+
+    await guestPage.close();
+  });
+
+  test("invalid vertices are not clickable during setup", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    await placeSettlement(hostPage);
+    await placeRoad(hostPage);
+
+    await expect(guestPage.locator("[data-cy='placement-mode']")).toContainText(
+      "Place Settlement",
+      { timeout: 30000 }
+    );
+
+    const invalidVertices = guestPage.locator(
+      "[data-cy^='vertex-'].vertex--empty:not(.vertex--valid)"
+    );
+    const invalidCount = await invalidVertices.count();
+    expect(invalidCount).toBeGreaterThan(0);
+
+    const occupiedBefore = await guestPage.locator(".vertex--occupied").count();
+    await invalidVertices.first().click();
+    await expect(guestPage.locator(".vertex--occupied")).toHaveCount(
+      occupiedBefore,
+      { timeout: 10000 }
+    );
+
+    await guestPage.close();
+  });
+
+  test("highlights valid placements during setup", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    const validVertices = hostPage.locator(
+      "[data-cy^='vertex-'].vertex--valid"
+    );
+    const validCount = await validVertices.count();
+    expect(validCount).toBeGreaterThan(0);
 
     await guestPage.close();
   });

@@ -95,7 +95,7 @@ func GenerateBoard() *pb.BoardState {
 
 	// Generate vertices and edges
 	vertices := generateVertices(hexes)
-	edges := generateEdges(vertices)
+	edges := generateEdges(hexes)
 
 	return &pb.BoardState{
 		Hexes:     hexes,
@@ -105,38 +105,43 @@ func GenerateBoard() *pb.BoardState {
 	}
 }
 
-// Vertex directions relative to a hex center (6 corners)
-// We use a naming convention: each vertex is identified by its position
-// relative to the hex that "owns" it
+// Vertex directions relative to a hex center (6 corners).
+// Use a fixed integer scale to keep vertex IDs deterministic and deduplicated.
+const vertexCoordScale = 3
+
 var vertexOffsets = []struct {
 	name string
-	dq   float64 // offset in q direction (fractional)
-	dr   float64 // offset in r direction (fractional)
+	dq   int
+	dr   int
 }{
-	{"N", 0, -0.67},
-	{"NE", 0.5, -0.33},
-	{"SE", 0.5, 0.33},
-	{"S", 0, 0.67},
-	{"SW", -0.5, 0.33},
-	{"NW", -0.5, -0.33},
+	{"N", -1, 2},
+	{"NE", 1, 1},
+	{"SE", 2, -1},
+	{"S", 1, -2},
+	{"SW", -1, -1},
+	{"NW", -2, 1},
 }
 
 func generateVertices(hexes []*pb.Hex) []*pb.Vertex {
 	// Use a map to deduplicate vertices (vertices are shared between hexes)
-	vertexMap := make(map[string]*pb.Vertex)
+	type vertexKey struct {
+		q int
+		r int
+	}
+	vertexMap := make(map[vertexKey]*pb.Vertex)
 
 	for _, hex := range hexes {
+		if hex.Coord == nil {
+			continue
+		}
 		for i := range vertexOffsets {
-			// Calculate approximate position for deduplication
-			vq := float64(hex.Coord.Q) + vertexOffsets[i].dq
-			vr := float64(hex.Coord.R) + vertexOffsets[i].dr
-
-			// Create a key based on approximate position (rounded to handle float imprecision)
-			key := fmt.Sprintf("%.1f,%.1f", vq, vr)
+			vq := int(hex.Coord.Q)*vertexCoordScale + vertexOffsets[i].dq
+			vr := int(hex.Coord.R)*vertexCoordScale + vertexOffsets[i].dr
+			key := vertexKey{q: vq, r: vr}
 
 			if _, exists := vertexMap[key]; !exists {
 				vertexMap[key] = &pb.Vertex{
-					Id:            key,
+					Id:            formatVertexID(vq, vr),
 					AdjacentHexes: []*pb.HexCoord{},
 				}
 			}
@@ -155,47 +160,26 @@ func generateVertices(hexes []*pb.Hex) []*pb.Vertex {
 	return vertices
 }
 
-func generateEdges(vertices []*pb.Vertex) []*pb.Edge {
-	// Build vertex adjacency based on shared hexes
-	// Two vertices are connected if they share at least one adjacent hex
-	// and are close enough to each other
-
-	type vertexPos struct {
-		q, r float64
-	}
-
-	// Parse vertex positions
-	positions := make(map[string]vertexPos)
-	for _, v := range vertices {
-		var q, r float64
-		fmt.Sscanf(v.Id, "%f,%f", &q, &r)
-		positions[v.Id] = vertexPos{q, r}
-	}
-
-	// Find edges (pairs of vertices that are adjacent)
+func generateEdges(hexes []*pb.Hex) []*pb.Edge {
 	edgeMap := make(map[string]*pb.Edge)
 
-	for i, v1 := range vertices {
-		p1 := positions[v1.Id]
+	for _, hex := range hexes {
+		if hex.Coord == nil {
+			continue
+		}
+		vertexIDs := make([]string, len(vertexOffsets))
+		for i, offset := range vertexOffsets {
+			vertexIDs[i] = vertexIDForHex(hex.Coord, offset)
+		}
 
-		for j := i + 1; j < len(vertices); j++ {
-			v2 := vertices[j]
-			p2 := positions[v2.Id]
-
-			// Check if vertices are adjacent (distance should be ~0.67 in hex units)
-			dist := (p1.q-p2.q)*(p1.q-p2.q) + (p1.r-p2.r)*(p1.r-p2.r)
-			if dist > 0.2 && dist < 0.8 { // Adjacent vertices
-				// Check if they share at least one hex
-				if sharesHex(v1.AdjacentHexes, v2.AdjacentHexes) {
-					edgeID := fmt.Sprintf("%s-%s", v1.Id, v2.Id)
-					if v1.Id > v2.Id {
-						edgeID = fmt.Sprintf("%s-%s", v2.Id, v1.Id)
-					}
-
-					edgeMap[edgeID] = &pb.Edge{
-						Id:       edgeID,
-						Vertices: []string{v1.Id, v2.Id},
-					}
+		for i := 0; i < len(vertexIDs); i++ {
+			v1 := vertexIDs[i]
+			v2 := vertexIDs[(i+1)%len(vertexIDs)]
+			edgeID, vertices := orderedEdge(v1, v2)
+			if _, exists := edgeMap[edgeID]; !exists {
+				edgeMap[edgeID] = &pb.Edge{
+					Id:       edgeID,
+					Vertices: vertices,
 				}
 			}
 		}
@@ -209,15 +193,25 @@ func generateEdges(vertices []*pb.Vertex) []*pb.Edge {
 	return edges
 }
 
-func sharesHex(hexes1, hexes2 []*pb.HexCoord) bool {
-	for _, h1 := range hexes1 {
-		for _, h2 := range hexes2 {
-			if h1.Q == h2.Q && h1.R == h2.R {
-				return true
-			}
-		}
+func vertexIDForHex(coord *pb.HexCoord, offset struct {
+	name string
+	dq   int
+	dr   int
+}) string {
+	vq := int(coord.Q)*vertexCoordScale + offset.dq
+	vr := int(coord.R)*vertexCoordScale + offset.dr
+	return formatVertexID(vq, vr)
+}
+
+func formatVertexID(vq, vr int) string {
+	return fmt.Sprintf("%.3f,%.3f", float64(vq)/vertexCoordScale, float64(vr)/vertexCoordScale)
+}
+
+func orderedEdge(v1, v2 string) (string, []string) {
+	if v1 < v2 {
+		return fmt.Sprintf("%s-%s", v1, v2), []string{v1, v2}
 	}
-	return false
+	return fmt.Sprintf("%s-%s", v2, v1), []string{v2, v1}
 }
 
 // NewGameState creates a new game state with the given players

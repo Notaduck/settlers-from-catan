@@ -14,6 +14,10 @@ import "./Board.css";
 interface BoardProps {
   board: BoardState;
   players: PlayerState[];
+  validVertexIds?: Set<string>;
+  validEdgeIds?: Set<string>;
+  onBuildSettlement?: (vertexId: string) => void;
+  onBuildRoad?: (edgeId: string) => void;
 }
 
 // Hex size in pixels
@@ -29,12 +33,12 @@ const PLAYER_COLORS: Record<PlayerColor, string> = {
 };
 
 const VERTEX_OFFSETS = [
-  { direction: "N", dq: 0, dr: -0.67 },
-  { direction: "NE", dq: 0.5, dr: -0.33 },
-  { direction: "SE", dq: 0.5, dr: 0.33 },
-  { direction: "S", dq: 0, dr: 0.67 },
-  { direction: "SW", dq: -0.5, dr: 0.33 },
-  { direction: "NW", dq: -0.5, dr: -0.33 },
+  { direction: "N", dq: -1 / 3, dr: 2 / 3 },
+  { direction: "NE", dq: 1 / 3, dr: 1 / 3 },
+  { direction: "SE", dq: 2 / 3, dr: -1 / 3 },
+  { direction: "S", dq: 1 / 3, dr: -2 / 3 },
+  { direction: "SW", dq: -1 / 3, dr: -1 / 3 },
+  { direction: "NW", dq: -2 / 3, dr: 1 / 3 },
 ];
 
 function axialToPixel(
@@ -139,7 +143,14 @@ function getEdgeDataCy(
   )}-${formatEdgeCoord(second.q)}-${formatEdgeCoord(second.r)}`;
 }
 
-export function Board({ board, players }: BoardProps) {
+export function Board({
+  board,
+  players,
+  validVertexIds,
+  validEdgeIds,
+  onBuildSettlement,
+  onBuildRoad,
+}: BoardProps) {
   // Filter hexes with valid coords
   const validHexes = board.hexes.filter((hex) => isValidCoord(hex.coord));
 
@@ -246,6 +257,7 @@ export function Board({ board, players }: BoardProps) {
             const ownerColor = roadOwnerId
               ? playerColors.get(roadOwnerId)
               : undefined;
+            const isValid = Boolean(validEdgeIds?.has(edge.id));
             return (
               <EdgeSegment
                 key={edge.id}
@@ -256,6 +268,10 @@ export function Board({ board, players }: BoardProps) {
                 y2={v2.pos.y}
                 ownerColor={ownerColor}
                 dataCy={getEdgeDataCy(edge, v1.coord, v2.coord)}
+                isValid={isValid}
+                onClick={
+                  isValid && onBuildRoad ? () => onBuildRoad(edge.id) : undefined
+                }
               />
             );
           })}
@@ -263,6 +279,7 @@ export function Board({ board, players }: BoardProps) {
             const ownerColor = vertex.building
               ? playerColors.get(vertex.building.ownerId)
               : undefined;
+            const isValid = Boolean(validVertexIds?.has(vertex.id));
             return (
               <VertexMarker
                 key={vertex.id}
@@ -271,6 +288,12 @@ export function Board({ board, players }: BoardProps) {
                 y={pos.y}
                 ownerColor={ownerColor}
                 dataCy={getVertexDataCy(vertex, coord)}
+                isValid={isValid}
+                onClick={
+                  isValid && onBuildSettlement
+                    ? () => onBuildSettlement(vertex.id)
+                    : undefined
+                }
               />
             );
           })}

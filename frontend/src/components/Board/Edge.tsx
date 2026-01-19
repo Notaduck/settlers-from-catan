@@ -8,16 +8,31 @@ interface EdgeProps {
   y2: number;
   ownerColor?: string;
   dataCy?: string;
+  isValid?: boolean;
+  onClick?: () => void;
 }
 
-export function Edge({ edge, x1, y1, x2, y2, ownerColor, dataCy }: EdgeProps) {
+export function Edge({
+  edge,
+  x1,
+  y1,
+  x2,
+  y2,
+  ownerColor,
+  dataCy,
+  isValid,
+  onClick,
+}: EdgeProps) {
   const hasRoad = Boolean(edge.road);
   const strokeColor = ownerColor ?? "#d6d6d6";
 
   return (
     <g
-      className={`edge ${hasRoad ? "edge--occupied" : "edge--empty"}`}
+      className={`edge ${hasRoad ? "edge--occupied" : "edge--empty"} ${
+        isValid ? "edge--valid" : ""
+      }`}
       data-cy={dataCy}
+      onClick={onClick}
     >
       <line
         x1={x1}

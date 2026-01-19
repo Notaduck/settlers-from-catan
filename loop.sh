@@ -32,10 +32,11 @@ while true; do
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    # Run Codex iteration
+    # Run Codex in non-interactive mode (exec subcommand)
+    # exec: runs non-interactively and exits when done
     # --dangerously-bypass-approvals-and-sandbox: full access, no prompts
     # || true: continue loop even if codex exits with error
-    codex --dangerously-bypass-approvals-and-sandbox "$(cat "$PROMPT_FILE")" || {
+    codex exec --dangerously-bypass-approvals-and-sandbox "$(cat "$PROMPT_FILE")" || {
         echo "⚠️  Codex exited with error, continuing to next iteration..."
         sleep 2
     }
