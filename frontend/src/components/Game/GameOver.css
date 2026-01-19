@@ -1,0 +1,61 @@
+.game-over-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: rgba(30, 30, 30, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-over-modal {
+  background: #222;
+  border-radius: 16px;
+  padding: 3rem 2.5rem 2rem;
+  box-shadow: 0 8px 36px 4px rgba(20,0,40,0.4);
+  min-width: 340px;
+  max-width: 700px;
+  color: #fff;
+  text-align: center;
+}
+
+.game-over-modal h2 {
+  font-size: 2rem;
+  color: #ffe172;
+  margin: 0 0 0.5em 0;
+}
+
+.game-over-modal .winner-vp {
+  font-size: 1.2rem;
+  margin-bottom: 1.3em;
+}
+
+.score-breakdown {
+  width: 100%;
+  background: #181818;
+  border-radius: 8px;
+  margin: 1.5em 0 2em 0;
+  border-collapse: collapse;
+}
+.score-breakdown th, .score-breakdown td {
+  padding: 0.6em 0.8em;
+  border: 1px solid #2a2a2a;
+}
+.score-breakdown .winner-row {
+  background: #212749;
+  font-weight: bold;
+}
+
+.btn.btn-primary {
+  margin-top: 1.5em;
+  background: #646cff;
+  color: #fff;
+  font-size: 1.1em;
+  padding: 0.7em 2em;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.btn.btn-primary:hover {
+  background: #5161ca;
+}

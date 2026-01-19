@@ -77,10 +77,12 @@
    - Playwright: frontend/tests/victory.spec.ts (new)
    - Notes: Logic dispatches GameOver on FINISHED, blocks further moves after win, integration test covers disabled commands, e2e spec stub added. All backend tests and typecheck/lint pass. E2E not run (per loop rules).
 
-- [ ] Game over UI with winner and final scores
-  - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/Game/GameOver.tsx (new), frontend/src/context/GameContext.tsx
-  - Go tests: none
-  - Playwright: frontend/tests/victory.spec.ts
+- [x] Game over UI with winner and final scores
+   - Files: frontend/src/components/Game/Game.tsx, frontend/src/components/Game/GameOver.tsx (new), frontend/src/context/GameContext.tsx
+   - Go tests: none
+   - Playwright: frontend/tests/victory.spec.ts
+   - Notes: Overlay displays at FINISHED, shows winner, breakdown, and prevents interaction. Typecheck/lint (frontend) pass, backend lint/test fail due to unrelated (pre-existing) handler Go code errors.
+
 
 ---
 

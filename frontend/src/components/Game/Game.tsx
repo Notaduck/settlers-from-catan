@@ -3,6 +3,8 @@ import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
 import { GameStatus, PlayerColor, StructureType } from "@/types";
+import { GameOver } from "./GameOver";
+import "./GameOver.css";
 import "./Game.css";
 
 // Map PlayerColor enum to CSS color strings
@@ -162,8 +164,17 @@ export function Game({ gameCode, onLeave }: GameProps) {
     );
   }
 
+  // Game Over overlay
+  const isGameOver = gameState?.status === GameStatus.FINISHED || gameState?.status === 'GAME_STATUS_FINISHED';
+
   return (
     <div className="game" data-cy="game">
+      {isGameOver && (
+        <GameOver
+          gameState={gameState}
+          onNewGame={onLeave}
+        />
+      )}
       <div className="game-header">
         <div className="game-code" data-cy="game-code">
           Game Code: <strong>{gameCode}</strong>
