@@ -83,6 +83,7 @@ message ClientMessage {
 
 message GameStatePayload {
   GameState state = 1;
+  // Board ports reflected in state.board.ports
 }
 
 message PlayerJoinedPayload {

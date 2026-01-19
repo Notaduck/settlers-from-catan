@@ -836,7 +836,7 @@ func (*ClientMessage_BankTrade) isClientMessage_Message() {}
 
 type GameStatePayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *GameState             `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
+	State         *GameState             `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"` // Board ports reflected in state.board.ports
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

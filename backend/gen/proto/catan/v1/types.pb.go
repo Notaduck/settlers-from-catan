@@ -21,6 +21,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PortType int32
+
+const (
+	PortType_PORT_TYPE_UNSPECIFIED PortType = 0
+	PortType_PORT_TYPE_GENERIC     PortType = 1
+	PortType_PORT_TYPE_SPECIFIC    PortType = 2
+)
+
+// Enum value maps for PortType.
+var (
+	PortType_name = map[int32]string{
+		0: "PORT_TYPE_UNSPECIFIED",
+		1: "PORT_TYPE_GENERIC",
+		2: "PORT_TYPE_SPECIFIC",
+	}
+	PortType_value = map[string]int32{
+		"PORT_TYPE_UNSPECIFIED": 0,
+		"PORT_TYPE_GENERIC":     1,
+		"PORT_TYPE_SPECIFIC":    2,
+	}
+)
+
+func (x PortType) Enum() *PortType {
+	p := new(PortType)
+	*p = x
+	return p
+}
+
+func (x PortType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PortType) Descriptor() protoreflect.EnumDescriptor {
+	return file_catan_v1_types_proto_enumTypes[0].Descriptor()
+}
+
+func (PortType) Type() protoreflect.EnumType {
+	return &file_catan_v1_types_proto_enumTypes[0]
+}
+
+func (x PortType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PortType.Descriptor instead.
+func (PortType) EnumDescriptor() ([]byte, []int) {
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{0}
+}
+
 type Resource int32
 
 const (
@@ -63,11 +112,11 @@ func (x Resource) String() string {
 }
 
 func (Resource) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[0].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[1].Descriptor()
 }
 
 func (Resource) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[0]
+	return &file_catan_v1_types_proto_enumTypes[1]
 }
 
 func (x Resource) Number() protoreflect.EnumNumber {
@@ -76,7 +125,7 @@ func (x Resource) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Resource.Descriptor instead.
 func (Resource) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{0}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{1}
 }
 
 type TileResource int32
@@ -124,11 +173,11 @@ func (x TileResource) String() string {
 }
 
 func (TileResource) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[1].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[2].Descriptor()
 }
 
 func (TileResource) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[1]
+	return &file_catan_v1_types_proto_enumTypes[2]
 }
 
 func (x TileResource) Number() protoreflect.EnumNumber {
@@ -137,7 +186,7 @@ func (x TileResource) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TileResource.Descriptor instead.
 func (TileResource) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{1}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{2}
 }
 
 type BuildingType int32
@@ -173,11 +222,11 @@ func (x BuildingType) String() string {
 }
 
 func (BuildingType) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[2].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[3].Descriptor()
 }
 
 func (BuildingType) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[2]
+	return &file_catan_v1_types_proto_enumTypes[3]
 }
 
 func (x BuildingType) Number() protoreflect.EnumNumber {
@@ -186,7 +235,7 @@ func (x BuildingType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BuildingType.Descriptor instead.
 func (BuildingType) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{2}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{3}
 }
 
 type StructureType int32
@@ -225,11 +274,11 @@ func (x StructureType) String() string {
 }
 
 func (StructureType) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[3].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[4].Descriptor()
 }
 
 func (StructureType) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[3]
+	return &file_catan_v1_types_proto_enumTypes[4]
 }
 
 func (x StructureType) Number() protoreflect.EnumNumber {
@@ -238,7 +287,7 @@ func (x StructureType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StructureType.Descriptor instead.
 func (StructureType) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{3}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{4}
 }
 
 type GameStatus int32
@@ -280,11 +329,11 @@ func (x GameStatus) String() string {
 }
 
 func (GameStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[4].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[5].Descriptor()
 }
 
 func (GameStatus) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[4]
+	return &file_catan_v1_types_proto_enumTypes[5]
 }
 
 func (x GameStatus) Number() protoreflect.EnumNumber {
@@ -293,7 +342,7 @@ func (x GameStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GameStatus.Descriptor instead.
 func (GameStatus) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{4}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{5}
 }
 
 type TurnPhase int32
@@ -332,11 +381,11 @@ func (x TurnPhase) String() string {
 }
 
 func (TurnPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[5].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[6].Descriptor()
 }
 
 func (TurnPhase) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[5]
+	return &file_catan_v1_types_proto_enumTypes[6]
 }
 
 func (x TurnPhase) Number() protoreflect.EnumNumber {
@@ -345,7 +394,7 @@ func (x TurnPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TurnPhase.Descriptor instead.
 func (TurnPhase) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{5}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{6}
 }
 
 type PlayerColor int32
@@ -387,11 +436,11 @@ func (x PlayerColor) String() string {
 }
 
 func (PlayerColor) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[6].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[7].Descriptor()
 }
 
 func (PlayerColor) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[6]
+	return &file_catan_v1_types_proto_enumTypes[7]
 }
 
 func (x PlayerColor) Number() protoreflect.EnumNumber {
@@ -400,7 +449,7 @@ func (x PlayerColor) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PlayerColor.Descriptor instead.
 func (PlayerColor) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{6}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{7}
 }
 
 type DevCardType int32
@@ -445,11 +494,11 @@ func (x DevCardType) String() string {
 }
 
 func (DevCardType) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[7].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[8].Descriptor()
 }
 
 func (DevCardType) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[7]
+	return &file_catan_v1_types_proto_enumTypes[8]
 }
 
 func (x DevCardType) Number() protoreflect.EnumNumber {
@@ -458,7 +507,7 @@ func (x DevCardType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DevCardType.Descriptor instead.
 func (DevCardType) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{7}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{8}
 }
 
 type TradeStatus int32
@@ -500,11 +549,11 @@ func (x TradeStatus) String() string {
 }
 
 func (TradeStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_catan_v1_types_proto_enumTypes[8].Descriptor()
+	return file_catan_v1_types_proto_enumTypes[9].Descriptor()
 }
 
 func (TradeStatus) Type() protoreflect.EnumType {
-	return &file_catan_v1_types_proto_enumTypes[8]
+	return &file_catan_v1_types_proto_enumTypes[9]
 }
 
 func (x TradeStatus) Number() protoreflect.EnumNumber {
@@ -513,7 +562,7 @@ func (x TradeStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TradeStatus.Descriptor instead.
 func (TradeStatus) EnumDescriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{8}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{9}
 }
 
 // Axial coordinates for hex grid
@@ -1052,6 +1101,68 @@ func (x *PlayerState) GetVictoryPointCards() int32 {
 	return 0
 }
 
+// Port model for board trading bonuses
+type Port struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Port location: edge (preferred) or vertex (for UI highlight)
+	Location      []string `protobuf:"bytes,1,rep,name=location,proto3" json:"location,omitempty"` // Vertex ID(s) or Edge ID for port
+	Type          PortType `protobuf:"varint,2,opt,name=type,proto3,enum=catan.v1.PortType" json:"type,omitempty"`
+	Resource      Resource `protobuf:"varint,3,opt,name=resource,proto3,enum=catan.v1.Resource" json:"resource,omitempty"` // If specific, which resource (WOOD, BRICK, etc)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Port) Reset() {
+	*x = Port{}
+	mi := &file_catan_v1_types_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Port) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Port) ProtoMessage() {}
+
+func (x *Port) ProtoReflect() protoreflect.Message {
+	mi := &file_catan_v1_types_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Port.ProtoReflect.Descriptor instead.
+func (*Port) Descriptor() ([]byte, []int) {
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Port) GetLocation() []string {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
+func (x *Port) GetType() PortType {
+	if x != nil {
+		return x.Type
+	}
+	return PortType_PORT_TYPE_UNSPECIFIED
+}
+
+func (x *Port) GetResource() Resource {
+	if x != nil {
+		return x.Resource
+	}
+	return Resource_RESOURCE_UNSPECIFIED
+}
+
 // The game board state
 type BoardState struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1059,13 +1170,14 @@ type BoardState struct {
 	Vertices      []*Vertex              `protobuf:"bytes,2,rep,name=vertices,proto3" json:"vertices,omitempty"`
 	Edges         []*Edge                `protobuf:"bytes,3,rep,name=edges,proto3" json:"edges,omitempty"`
 	RobberHex     *HexCoord              `protobuf:"bytes,4,opt,name=robber_hex,json=robberHex,proto3" json:"robber_hex,omitempty"`
+	Ports         []*Port                `protobuf:"bytes,5,rep,name=ports,proto3" json:"ports,omitempty"` // Maritime trading ports
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BoardState) Reset() {
 	*x = BoardState{}
-	mi := &file_catan_v1_types_proto_msgTypes[8]
+	mi := &file_catan_v1_types_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1077,7 +1189,7 @@ func (x *BoardState) String() string {
 func (*BoardState) ProtoMessage() {}
 
 func (x *BoardState) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[8]
+	mi := &file_catan_v1_types_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1090,7 +1202,7 @@ func (x *BoardState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BoardState.ProtoReflect.Descriptor instead.
 func (*BoardState) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{8}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BoardState) GetHexes() []*Hex {
@@ -1121,6 +1233,13 @@ func (x *BoardState) GetRobberHex() *HexCoord {
 	return nil
 }
 
+func (x *BoardState) GetPorts() []*Port {
+	if x != nil {
+		return x.Ports
+	}
+	return nil
+}
+
 // Complete game state
 type GameState struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -1143,7 +1262,7 @@ type GameState struct {
 
 func (x *GameState) Reset() {
 	*x = GameState{}
-	mi := &file_catan_v1_types_proto_msgTypes[9]
+	mi := &file_catan_v1_types_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1274,7 @@ func (x *GameState) String() string {
 func (*GameState) ProtoMessage() {}
 
 func (x *GameState) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[9]
+	mi := &file_catan_v1_types_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,7 +1287,7 @@ func (x *GameState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameState.ProtoReflect.Descriptor instead.
 func (*GameState) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{9}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GameState) GetId() string {
@@ -1279,7 +1398,7 @@ type RobberPhase struct {
 
 func (x *RobberPhase) Reset() {
 	*x = RobberPhase{}
-	mi := &file_catan_v1_types_proto_msgTypes[10]
+	mi := &file_catan_v1_types_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1291,7 +1410,7 @@ func (x *RobberPhase) String() string {
 func (*RobberPhase) ProtoMessage() {}
 
 func (x *RobberPhase) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[10]
+	mi := &file_catan_v1_types_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1304,7 +1423,7 @@ func (x *RobberPhase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RobberPhase.ProtoReflect.Descriptor instead.
 func (*RobberPhase) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{10}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RobberPhase) GetDiscardPending() []string {
@@ -1350,7 +1469,7 @@ type TradeOffer struct {
 
 func (x *TradeOffer) Reset() {
 	*x = TradeOffer{}
-	mi := &file_catan_v1_types_proto_msgTypes[11]
+	mi := &file_catan_v1_types_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +1481,7 @@ func (x *TradeOffer) String() string {
 func (*TradeOffer) ProtoMessage() {}
 
 func (x *TradeOffer) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[11]
+	mi := &file_catan_v1_types_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +1494,7 @@ func (x *TradeOffer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeOffer.ProtoReflect.Descriptor instead.
 func (*TradeOffer) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{11}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TradeOffer) GetId() string {
@@ -1431,7 +1550,7 @@ type SetupPhase struct {
 
 func (x *SetupPhase) Reset() {
 	*x = SetupPhase{}
-	mi := &file_catan_v1_types_proto_msgTypes[12]
+	mi := &file_catan_v1_types_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1443,7 +1562,7 @@ func (x *SetupPhase) String() string {
 func (*SetupPhase) ProtoMessage() {}
 
 func (x *SetupPhase) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[12]
+	mi := &file_catan_v1_types_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1456,7 +1575,7 @@ func (x *SetupPhase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetupPhase.ProtoReflect.Descriptor instead.
 func (*SetupPhase) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{12}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SetupPhase) GetRound() int32 {
@@ -1482,7 +1601,7 @@ type CreateGameRequest struct {
 
 func (x *CreateGameRequest) Reset() {
 	*x = CreateGameRequest{}
-	mi := &file_catan_v1_types_proto_msgTypes[13]
+	mi := &file_catan_v1_types_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1494,7 +1613,7 @@ func (x *CreateGameRequest) String() string {
 func (*CreateGameRequest) ProtoMessage() {}
 
 func (x *CreateGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[13]
+	mi := &file_catan_v1_types_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1507,7 +1626,7 @@ func (x *CreateGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGameRequest.ProtoReflect.Descriptor instead.
 func (*CreateGameRequest) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{13}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateGameRequest) GetPlayerName() string {
@@ -1529,7 +1648,7 @@ type CreateGameResponse struct {
 
 func (x *CreateGameResponse) Reset() {
 	*x = CreateGameResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[14]
+	mi := &file_catan_v1_types_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1541,7 +1660,7 @@ func (x *CreateGameResponse) String() string {
 func (*CreateGameResponse) ProtoMessage() {}
 
 func (x *CreateGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[14]
+	mi := &file_catan_v1_types_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1554,7 +1673,7 @@ func (x *CreateGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGameResponse.ProtoReflect.Descriptor instead.
 func (*CreateGameResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{14}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateGameResponse) GetGameId() string {
@@ -1594,7 +1713,7 @@ type JoinGameRequest struct {
 
 func (x *JoinGameRequest) Reset() {
 	*x = JoinGameRequest{}
-	mi := &file_catan_v1_types_proto_msgTypes[15]
+	mi := &file_catan_v1_types_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1606,7 +1725,7 @@ func (x *JoinGameRequest) String() string {
 func (*JoinGameRequest) ProtoMessage() {}
 
 func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[15]
+	mi := &file_catan_v1_types_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1619,7 +1738,7 @@ func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameRequest.ProtoReflect.Descriptor instead.
 func (*JoinGameRequest) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{15}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *JoinGameRequest) GetPlayerName() string {
@@ -1641,7 +1760,7 @@ type JoinGameResponse struct {
 
 func (x *JoinGameResponse) Reset() {
 	*x = JoinGameResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[16]
+	mi := &file_catan_v1_types_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1653,7 +1772,7 @@ func (x *JoinGameResponse) String() string {
 func (*JoinGameResponse) ProtoMessage() {}
 
 func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[16]
+	mi := &file_catan_v1_types_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1666,7 +1785,7 @@ func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameResponse.ProtoReflect.Descriptor instead.
 func (*JoinGameResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{16}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *JoinGameResponse) GetGameId() string {
@@ -1708,7 +1827,7 @@ type PlayerInfo struct {
 
 func (x *PlayerInfo) Reset() {
 	*x = PlayerInfo{}
-	mi := &file_catan_v1_types_proto_msgTypes[17]
+	mi := &file_catan_v1_types_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1720,7 +1839,7 @@ func (x *PlayerInfo) String() string {
 func (*PlayerInfo) ProtoMessage() {}
 
 func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[17]
+	mi := &file_catan_v1_types_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1733,7 +1852,7 @@ func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerInfo.ProtoReflect.Descriptor instead.
 func (*PlayerInfo) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{17}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PlayerInfo) GetId() string {
@@ -1769,7 +1888,7 @@ type GameInfoResponse struct {
 
 func (x *GameInfoResponse) Reset() {
 	*x = GameInfoResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[18]
+	mi := &file_catan_v1_types_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1781,7 +1900,7 @@ func (x *GameInfoResponse) String() string {
 func (*GameInfoResponse) ProtoMessage() {}
 
 func (x *GameInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[18]
+	mi := &file_catan_v1_types_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1794,7 +1913,7 @@ func (x *GameInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameInfoResponse.ProtoReflect.Descriptor instead.
 func (*GameInfoResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{18}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GameInfoResponse) GetCode() string {
@@ -1870,14 +1989,19 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\bis_ready\x18\t \x01(\bR\aisReady\x12\x17\n" +
 	"\ais_host\x18\n" +
 	" \x01(\bR\x06isHost\x12.\n" +
-	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\"\xb8\x01\n" +
+	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\"z\n" +
+	"\x04Port\x12\x1a\n" +
+	"\blocation\x18\x01 \x03(\tR\blocation\x12&\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x12.catan.v1.PortTypeR\x04type\x12.\n" +
+	"\bresource\x18\x03 \x01(\x0e2\x12.catan.v1.ResourceR\bresource\"\xde\x01\n" +
 	"\n" +
 	"BoardState\x12#\n" +
 	"\x05hexes\x18\x01 \x03(\v2\r.catan.v1.HexR\x05hexes\x12,\n" +
 	"\bvertices\x18\x02 \x03(\v2\x10.catan.v1.VertexR\bvertices\x12$\n" +
 	"\x05edges\x18\x03 \x03(\v2\x0e.catan.v1.EdgeR\x05edges\x121\n" +
 	"\n" +
-	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\"\xa8\x05\n" +
+	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\x12$\n" +
+	"\x05ports\x18\x05 \x03(\v2\x0e.catan.v1.PortR\x05ports\"\xa8\x05\n" +
 	"\tGameState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12*\n" +
@@ -1951,7 +2075,11 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12,\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x14.catan.v1.GameStatusR\x06status\x12!\n" +
 	"\fplayer_count\x18\x03 \x01(\x05R\vplayerCount\x12.\n" +
-	"\aplayers\x18\x04 \x03(\v2\x14.catan.v1.PlayerInfoR\aplayers*\x85\x01\n" +
+	"\aplayers\x18\x04 \x03(\v2\x14.catan.v1.PlayerInfoR\aplayers*T\n" +
+	"\bPortType\x12\x19\n" +
+	"\x15PORT_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11PORT_TYPE_GENERIC\x10\x01\x12\x16\n" +
+	"\x12PORT_TYPE_SPECIFIC\x10\x02*\x85\x01\n" +
 	"\bResource\x12\x18\n" +
 	"\x14RESOURCE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rRESOURCE_WOOD\x10\x01\x12\x12\n" +
@@ -2022,72 +2150,77 @@ func file_catan_v1_types_proto_rawDescGZIP() []byte {
 	return file_catan_v1_types_proto_rawDescData
 }
 
-var file_catan_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
-var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_catan_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
+var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_catan_v1_types_proto_goTypes = []any{
-	(Resource)(0),              // 0: catan.v1.Resource
-	(TileResource)(0),          // 1: catan.v1.TileResource
-	(BuildingType)(0),          // 2: catan.v1.BuildingType
-	(StructureType)(0),         // 3: catan.v1.StructureType
-	(GameStatus)(0),            // 4: catan.v1.GameStatus
-	(TurnPhase)(0),             // 5: catan.v1.TurnPhase
-	(PlayerColor)(0),           // 6: catan.v1.PlayerColor
-	(DevCardType)(0),           // 7: catan.v1.DevCardType
-	(TradeStatus)(0),           // 8: catan.v1.TradeStatus
-	(*HexCoord)(nil),           // 9: catan.v1.HexCoord
-	(*Hex)(nil),                // 10: catan.v1.Hex
-	(*Building)(nil),           // 11: catan.v1.Building
-	(*Road)(nil),               // 12: catan.v1.Road
-	(*Vertex)(nil),             // 13: catan.v1.Vertex
-	(*Edge)(nil),               // 14: catan.v1.Edge
-	(*ResourceCount)(nil),      // 15: catan.v1.ResourceCount
-	(*PlayerState)(nil),        // 16: catan.v1.PlayerState
-	(*BoardState)(nil),         // 17: catan.v1.BoardState
-	(*GameState)(nil),          // 18: catan.v1.GameState
-	(*RobberPhase)(nil),        // 19: catan.v1.RobberPhase
-	(*TradeOffer)(nil),         // 20: catan.v1.TradeOffer
-	(*SetupPhase)(nil),         // 21: catan.v1.SetupPhase
-	(*CreateGameRequest)(nil),  // 22: catan.v1.CreateGameRequest
-	(*CreateGameResponse)(nil), // 23: catan.v1.CreateGameResponse
-	(*JoinGameRequest)(nil),    // 24: catan.v1.JoinGameRequest
-	(*JoinGameResponse)(nil),   // 25: catan.v1.JoinGameResponse
-	(*PlayerInfo)(nil),         // 26: catan.v1.PlayerInfo
-	(*GameInfoResponse)(nil),   // 27: catan.v1.GameInfoResponse
-	nil,                        // 28: catan.v1.RobberPhase.DiscardRequiredEntry
+	(PortType)(0),              // 0: catan.v1.PortType
+	(Resource)(0),              // 1: catan.v1.Resource
+	(TileResource)(0),          // 2: catan.v1.TileResource
+	(BuildingType)(0),          // 3: catan.v1.BuildingType
+	(StructureType)(0),         // 4: catan.v1.StructureType
+	(GameStatus)(0),            // 5: catan.v1.GameStatus
+	(TurnPhase)(0),             // 6: catan.v1.TurnPhase
+	(PlayerColor)(0),           // 7: catan.v1.PlayerColor
+	(DevCardType)(0),           // 8: catan.v1.DevCardType
+	(TradeStatus)(0),           // 9: catan.v1.TradeStatus
+	(*HexCoord)(nil),           // 10: catan.v1.HexCoord
+	(*Hex)(nil),                // 11: catan.v1.Hex
+	(*Building)(nil),           // 12: catan.v1.Building
+	(*Road)(nil),               // 13: catan.v1.Road
+	(*Vertex)(nil),             // 14: catan.v1.Vertex
+	(*Edge)(nil),               // 15: catan.v1.Edge
+	(*ResourceCount)(nil),      // 16: catan.v1.ResourceCount
+	(*PlayerState)(nil),        // 17: catan.v1.PlayerState
+	(*Port)(nil),               // 18: catan.v1.Port
+	(*BoardState)(nil),         // 19: catan.v1.BoardState
+	(*GameState)(nil),          // 20: catan.v1.GameState
+	(*RobberPhase)(nil),        // 21: catan.v1.RobberPhase
+	(*TradeOffer)(nil),         // 22: catan.v1.TradeOffer
+	(*SetupPhase)(nil),         // 23: catan.v1.SetupPhase
+	(*CreateGameRequest)(nil),  // 24: catan.v1.CreateGameRequest
+	(*CreateGameResponse)(nil), // 25: catan.v1.CreateGameResponse
+	(*JoinGameRequest)(nil),    // 26: catan.v1.JoinGameRequest
+	(*JoinGameResponse)(nil),   // 27: catan.v1.JoinGameResponse
+	(*PlayerInfo)(nil),         // 28: catan.v1.PlayerInfo
+	(*GameInfoResponse)(nil),   // 29: catan.v1.GameInfoResponse
+	nil,                        // 30: catan.v1.RobberPhase.DiscardRequiredEntry
 }
 var file_catan_v1_types_proto_depIdxs = []int32{
-	9,  // 0: catan.v1.Hex.coord:type_name -> catan.v1.HexCoord
-	1,  // 1: catan.v1.Hex.resource:type_name -> catan.v1.TileResource
-	2,  // 2: catan.v1.Building.type:type_name -> catan.v1.BuildingType
-	9,  // 3: catan.v1.Vertex.adjacent_hexes:type_name -> catan.v1.HexCoord
-	11, // 4: catan.v1.Vertex.building:type_name -> catan.v1.Building
-	12, // 5: catan.v1.Edge.road:type_name -> catan.v1.Road
-	6,  // 6: catan.v1.PlayerState.color:type_name -> catan.v1.PlayerColor
-	15, // 7: catan.v1.PlayerState.resources:type_name -> catan.v1.ResourceCount
-	10, // 8: catan.v1.BoardState.hexes:type_name -> catan.v1.Hex
-	13, // 9: catan.v1.BoardState.vertices:type_name -> catan.v1.Vertex
-	14, // 10: catan.v1.BoardState.edges:type_name -> catan.v1.Edge
-	9,  // 11: catan.v1.BoardState.robber_hex:type_name -> catan.v1.HexCoord
-	17, // 12: catan.v1.GameState.board:type_name -> catan.v1.BoardState
-	16, // 13: catan.v1.GameState.players:type_name -> catan.v1.PlayerState
-	5,  // 14: catan.v1.GameState.turn_phase:type_name -> catan.v1.TurnPhase
-	4,  // 15: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
-	21, // 16: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
-	19, // 17: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
-	20, // 18: catan.v1.GameState.pending_trades:type_name -> catan.v1.TradeOffer
-	28, // 19: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
-	15, // 20: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
-	15, // 21: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
-	8,  // 22: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
-	26, // 23: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
-	6,  // 24: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
-	4,  // 25: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
-	26, // 26: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
-	27, // [27:27] is the sub-list for method output_type
-	27, // [27:27] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	10, // 0: catan.v1.Hex.coord:type_name -> catan.v1.HexCoord
+	2,  // 1: catan.v1.Hex.resource:type_name -> catan.v1.TileResource
+	3,  // 2: catan.v1.Building.type:type_name -> catan.v1.BuildingType
+	10, // 3: catan.v1.Vertex.adjacent_hexes:type_name -> catan.v1.HexCoord
+	12, // 4: catan.v1.Vertex.building:type_name -> catan.v1.Building
+	13, // 5: catan.v1.Edge.road:type_name -> catan.v1.Road
+	7,  // 6: catan.v1.PlayerState.color:type_name -> catan.v1.PlayerColor
+	16, // 7: catan.v1.PlayerState.resources:type_name -> catan.v1.ResourceCount
+	0,  // 8: catan.v1.Port.type:type_name -> catan.v1.PortType
+	1,  // 9: catan.v1.Port.resource:type_name -> catan.v1.Resource
+	11, // 10: catan.v1.BoardState.hexes:type_name -> catan.v1.Hex
+	14, // 11: catan.v1.BoardState.vertices:type_name -> catan.v1.Vertex
+	15, // 12: catan.v1.BoardState.edges:type_name -> catan.v1.Edge
+	10, // 13: catan.v1.BoardState.robber_hex:type_name -> catan.v1.HexCoord
+	18, // 14: catan.v1.BoardState.ports:type_name -> catan.v1.Port
+	19, // 15: catan.v1.GameState.board:type_name -> catan.v1.BoardState
+	17, // 16: catan.v1.GameState.players:type_name -> catan.v1.PlayerState
+	6,  // 17: catan.v1.GameState.turn_phase:type_name -> catan.v1.TurnPhase
+	5,  // 18: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
+	23, // 19: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
+	21, // 20: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
+	22, // 21: catan.v1.GameState.pending_trades:type_name -> catan.v1.TradeOffer
+	30, // 22: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
+	16, // 23: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
+	16, // 24: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
+	9,  // 25: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
+	28, // 26: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
+	7,  // 27: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
+	5,  // 28: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
+	28, // 29: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_catan_v1_types_proto_init() }
@@ -2097,16 +2230,16 @@ func file_catan_v1_types_proto_init() {
 	}
 	file_catan_v1_types_proto_msgTypes[4].OneofWrappers = []any{}
 	file_catan_v1_types_proto_msgTypes[5].OneofWrappers = []any{}
-	file_catan_v1_types_proto_msgTypes[9].OneofWrappers = []any{}
 	file_catan_v1_types_proto_msgTypes[10].OneofWrappers = []any{}
 	file_catan_v1_types_proto_msgTypes[11].OneofWrappers = []any{}
+	file_catan_v1_types_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catan_v1_types_proto_rawDesc), len(file_catan_v1_types_proto_rawDesc)),
-			NumEnums:      9,
-			NumMessages:   20,
+			NumEnums:      10,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

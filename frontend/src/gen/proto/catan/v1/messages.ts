@@ -248,7 +248,7 @@ export interface GameStatePayload {
     /**
      * @generated from protobuf field: catan.v1.GameState state = 1
      */
-    state?: GameState;
+    state?: GameState; // Board ports reflected in state.board.ports
 }
 /**
  * @generated from protobuf message catan.v1.PlayerJoinedPayload

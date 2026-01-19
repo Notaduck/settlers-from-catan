@@ -6,6 +6,12 @@ option go_package = "settlers_from_catan/gen/proto/catan/v1;catanv1";
 
 // ==================== Enums ====================
 
+enum PortType {
+  PORT_TYPE_UNSPECIFIED = 0;
+  PORT_TYPE_GENERIC = 1;
+  PORT_TYPE_SPECIFIC = 2;
+}
+
 enum Resource {
   RESOURCE_UNSPECIFIED = 0;
   RESOURCE_WOOD = 1;
@@ -142,12 +148,22 @@ message PlayerState {
   int32 victory_point_cards = 11; // Number of VP dev cards in hand (hidden from other players)
 }
 
+// Port model for board trading bonuses
+message Port {
+  // Port location: edge (preferred) or vertex (for UI highlight)
+  repeated string location = 1; // Vertex ID(s) or Edge ID for port
+  PortType type = 2;
+  Resource resource = 3; // If specific, which resource (WOOD, BRICK, etc)
+}
+
+
 // The game board state
 message BoardState {
   repeated Hex hexes = 1;
   repeated Vertex vertices = 2;
   repeated Edge edges = 3;
   HexCoord robber_hex = 4;
+  repeated Port ports = 5; // Maritime trading ports
 }
 
 // Complete game state

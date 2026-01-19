@@ -189,6 +189,27 @@ export interface PlayerState {
     victoryPointCards: number; // Number of VP dev cards in hand (hidden from other players)
 }
 /**
+ * Port model for board trading bonuses
+ *
+ * @generated from protobuf message catan.v1.Port
+ */
+export interface Port {
+    /**
+     * Port location: edge (preferred) or vertex (for UI highlight)
+     *
+     * @generated from protobuf field: repeated string location = 1
+     */
+    location: string[]; // Vertex ID(s) or Edge ID for port
+    /**
+     * @generated from protobuf field: catan.v1.PortType type = 2
+     */
+    type: PortType;
+    /**
+     * @generated from protobuf field: catan.v1.Resource resource = 3
+     */
+    resource: Resource; // If specific, which resource (WOOD, BRICK, etc)
+}
+/**
  * The game board state
  *
  * @generated from protobuf message catan.v1.BoardState
@@ -210,6 +231,10 @@ export interface BoardState {
      * @generated from protobuf field: catan.v1.HexCoord robber_hex = 4
      */
     robberHex?: HexCoord;
+    /**
+     * @generated from protobuf field: repeated catan.v1.Port ports = 5
+     */
+    ports: Port[]; // Maritime trading ports
 }
 /**
  * Complete game state
@@ -451,6 +476,23 @@ export interface GameInfoResponse {
 }
 // ==================== Enums ====================
 
+/**
+ * @generated from protobuf enum catan.v1.PortType
+ */
+export enum PortType {
+    /**
+     * @generated from protobuf enum value: PORT_TYPE_UNSPECIFIED = 0;
+     */
+    UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: PORT_TYPE_GENERIC = 1;
+     */
+    GENERIC = 1,
+    /**
+     * @generated from protobuf enum value: PORT_TYPE_SPECIFIC = 2;
+     */
+    SPECIFIC = 2
+}
 /**
  * @generated from protobuf enum catan.v1.Resource
  */
@@ -1225,13 +1267,77 @@ class PlayerState$Type extends MessageType<PlayerState> {
  */
 export const PlayerState = new PlayerState$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class Port$Type extends MessageType<Port> {
+    constructor() {
+        super("catan.v1.Port", [
+            { no: 1, name: "location", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "type", kind: "enum", T: () => ["catan.v1.PortType", PortType, "PORT_TYPE_"] },
+            { no: 3, name: "resource", kind: "enum", T: () => ["catan.v1.Resource", Resource, "RESOURCE_"] }
+        ]);
+    }
+    create(value?: PartialMessage<Port>): Port {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.location = [];
+        message.type = 0;
+        message.resource = 0;
+        if (value !== undefined)
+            reflectionMergePartial<Port>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Port): Port {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated string location */ 1:
+                    message.location.push(reader.string());
+                    break;
+                case /* catan.v1.PortType type */ 2:
+                    message.type = reader.int32();
+                    break;
+                case /* catan.v1.Resource resource */ 3:
+                    message.resource = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Port, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated string location = 1; */
+        for (let i = 0; i < message.location.length; i++)
+            writer.tag(1, WireType.LengthDelimited).string(message.location[i]);
+        /* catan.v1.PortType type = 2; */
+        if (message.type !== 0)
+            writer.tag(2, WireType.Varint).int32(message.type);
+        /* catan.v1.Resource resource = 3; */
+        if (message.resource !== 0)
+            writer.tag(3, WireType.Varint).int32(message.resource);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.Port
+ */
+export const Port = new Port$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class BoardState$Type extends MessageType<BoardState> {
     constructor() {
         super("catan.v1.BoardState", [
             { no: 1, name: "hexes", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => Hex },
             { no: 2, name: "vertices", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => Vertex },
             { no: 3, name: "edges", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => Edge },
-            { no: 4, name: "robber_hex", kind: "message", T: () => HexCoord }
+            { no: 4, name: "robber_hex", kind: "message", T: () => HexCoord },
+            { no: 5, name: "ports", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => Port }
         ]);
     }
     create(value?: PartialMessage<BoardState>): BoardState {
@@ -1239,6 +1345,7 @@ class BoardState$Type extends MessageType<BoardState> {
         message.hexes = [];
         message.vertices = [];
         message.edges = [];
+        message.ports = [];
         if (value !== undefined)
             reflectionMergePartial<BoardState>(this, message, value);
         return message;
@@ -1259,6 +1366,9 @@ class BoardState$Type extends MessageType<BoardState> {
                     break;
                 case /* catan.v1.HexCoord robber_hex */ 4:
                     message.robberHex = HexCoord.internalBinaryRead(reader, reader.uint32(), options, message.robberHex);
+                    break;
+                case /* repeated catan.v1.Port ports */ 5:
+                    message.ports.push(Port.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1284,6 +1394,9 @@ class BoardState$Type extends MessageType<BoardState> {
         /* catan.v1.HexCoord robber_hex = 4; */
         if (message.robberHex)
             HexCoord.internalBinaryWrite(message.robberHex, writer.tag(4, WireType.LengthDelimited).fork(), options).join();
+        /* repeated catan.v1.Port ports = 5; */
+        for (let i = 0; i < message.ports.length; i++)
+            Port.internalBinaryWrite(message.ports[i], writer.tag(5, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
