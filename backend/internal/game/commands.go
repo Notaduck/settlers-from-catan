@@ -76,6 +76,11 @@ func PlaceSettlement(state *pb.GameState, playerID, vertexID string) error {
 	// Update victory points
 	player.VictoryPoints++
 
+	// Check victory after point-gaining settlement placement
+	if victory, _ := CheckVictory(state); victory {
+		state.Status = pb.GameStatus_GAME_STATUS_FINISHED
+	}
+
 	return nil
 }
 
@@ -137,6 +142,11 @@ func PlaceCity(state *pb.GameState, playerID, vertexID string) error {
 
 	// Update victory points (city is worth 2, settlement was worth 1, so +1)
 	player.VictoryPoints++
+
+	// Check victory after city placement
+	if victory, _ := CheckVictory(state); victory {
+		state.Status = pb.GameStatus_GAME_STATUS_FINISHED
+	}
 
 	return nil
 }
@@ -202,6 +212,11 @@ func PlaceRoad(state *pb.GameState, playerID, edgeID string) error {
 	// Place the road
 	targetEdge.Road = &pb.Road{
 		OwnerId: playerID,
+	}
+
+	// Check victory after possible bonus (e.g., longest road transferred)
+	if victory, _ := CheckVictory(state); victory {
+		state.Status = pb.GameStatus_GAME_STATUS_FINISHED
 	}
 
 	return nil

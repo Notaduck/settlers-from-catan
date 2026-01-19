@@ -64,10 +64,12 @@
 
 ## Priority 3: Victory Flow
 
-- [ ] Add victory evaluation helper and call it after point-gaining actions
-  - Files: backend/internal/game/rules.go (CheckVictory helper), backend/internal/game/commands.go (post-build checks), backend/internal/handlers/handlers.go (game over broadcast)
-  - Go tests: backend/internal/game/victory_test.go (new)
-  - Playwright: none
+- [x] Add victory evaluation helper and call it after point-gaining actions
+   - Files: backend/internal/game/rules.go (CheckVictory helper — done), backend/internal/game/commands.go (called after build, upgrade, road — done), backend/internal/handlers/handlers.go (see next item for handler step)
+   - Go tests: backend/internal/game/victory_test.go (added; covers basic victory logic, bonus triggers, current-turn constraint)
+   - Playwright: none
+   - Discovery: PlayerState does not directly store bonus or VP dev card hand — bonuses taken from GameState LongestRoadPlayerId/LargestArmyPlayerId; dev/vp card count is TODO (pending devcard pipeline).
+   - All Go backend/unit tests pass (except unrelated, known distance rule test sometimes fails on random board). Lint/typecheck clean apart from pre-existing warnings detailed below.
 
 - [ ] Broadcast GameOver payload and lock game state on victory
   - Files: backend/internal/handlers/handlers.go

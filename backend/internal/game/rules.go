@@ -2,7 +2,6 @@ package game
 
 import (
 	"math/rand"
-
 	pb "settlers_from_catan/gen/proto/catan/v1"
 )
 
@@ -181,4 +180,38 @@ func ResourceCountToMap(rc *pb.ResourceCount) map[pb.TileResource]int {
 		pb.TileResource_TILE_RESOURCE_WHEAT: int(rc.Wheat),
 		pb.TileResource_TILE_RESOURCE_ORE:   int(rc.Ore),
 	}
+}
+
+// CheckVictory evaluates if the current player meets victory conditions after a point-gaining action.
+// Returns (victory, winnerID) - only for the active player on their turn.
+func CheckVictory(state *pb.GameState) (bool, string) {
+	if state == nil || state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
+		return false, ""
+	}
+	currentIdx := state.CurrentTurn
+	if currentIdx < 0 || int(currentIdx) >= len(state.Players) {
+		return false, ""
+	}
+	player := state.Players[currentIdx]
+	// Compute VP sources
+	settlements, cities := 0, 0
+	for _, v := range state.Board.Vertices {
+		if v.Building != nil && v.Building.OwnerId == player.Id {
+			if v.Building.Type == pb.BuildingType_BUILDING_TYPE_SETTLEMENT {
+				settlements++
+			} else if v.Building.Type == pb.BuildingType_BUILDING_TYPE_CITY {
+				cities++
+			}
+		}
+	}
+
+	hasLongestRoad := state.GetLongestRoadPlayerId() == player.Id
+	hasLargestArmy := state.GetLargestArmyPlayerId() == player.Id
+	// TODO: Count hidden VP cards: if system for player dev card hands exists, count dev cards of type VICTORY_POINT in hand
+	vpCards := 0
+	totalVP := CalculateVictoryPoints(settlements, cities, hasLongestRoad, hasLargestArmy, vpCards)
+	if IsVictorious(totalVP) {
+		return true, player.Id
+	}
+	return false, ""
 }
