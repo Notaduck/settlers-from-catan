@@ -114,6 +114,91 @@ func (h *Handler) handleRespondTrade(client *hub.Client, payload []byte) {
 	h.broadcastGameStateProto(client.GameID, &state)
 }
 
+// handleDiscardCards handles discarding cards for the robber phase.
+func (h *Handler) handleDiscardCards(client *hub.Client, payload []byte) {
+	var req catanv1.DiscardCardsMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse discard cards request")
+		return
+	}
+	var stateJSON string
+	var state game.GameState
+	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.DiscardCards(&state, client.PlayerID, req.GetResources()); err != nil {
+		h.sendError(client, "DISCARD_ERROR", err.Error())
+		return
+	}
+	updatedJSON, _ := protojson.Marshal(&state)
+	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
+	msg := catanv1.ServerMessage{
+		Message: &catanv1.ServerMessage_DiscardedCards{
+			DiscardedCards: &catanv1.DiscardedCardsPayload{
+				PlayerId:  client.PlayerID,
+				Resources: req.GetResources(),
+			},
+		},
+	}
+	data, _ := protojson.Marshal(&msg)
+	h.hub.BroadcastToGame(client.GameID, data)
+	h.broadcastGameStateProto(client.GameID, &state)
+}
+
+// handleMoveRobber handles moving the robber and optional stealing.
+func (h *Handler) handleMoveRobber(client *hub.Client, payload []byte) {
+	var req catanv1.MoveRobberMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse move robber request")
+		return
+	}
+	var stateJSON string
+	var state game.GameState
+	h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID)
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.MoveRobber(&state, client.PlayerID, req.GetHex()); err != nil {
+		h.sendError(client, "MOVE_ROBBER_ERROR", err.Error())
+		return
+	}
+	var stolenResource catanv1.Resource
+	victimId := ""
+	if req.VictimId != nil && *req.VictimId != "" {
+		victimId = *req.VictimId
+		res, err := game.StealFromPlayer(&state, client.PlayerID, victimId)
+		if err == nil {
+			stolenResource = res
+		}
+	}
+	updatedJSON, _ := protojson.Marshal(&state)
+	h.db.Exec("UPDATE games SET state = ? WHERE id = ?", string(updatedJSON), client.GameID)
+	msg := catanv1.ServerMessage{
+		Message: &catanv1.ServerMessage_RobberMoved{
+			RobberMoved: &catanv1.RobberMovedPayload{
+				PlayerId:       client.PlayerID,
+				Hex:            req.GetHex(),
+				VictimId:       &victimId,
+				StolenResource: &stolenResource,
+			},
+		},
+	}
+	data, _ := protojson.Marshal(&msg)
+	h.hub.BroadcastToGame(client.GameID, data)
+	h.broadcastGameStateProto(client.GameID, &state)
+}
+
 // handleBankTrade handles a player's trade with the bank (4:1).
 func (h *Handler) handleBankTrade(client *hub.Client, payload []byte) {
 	var req catanv1.BankTradeMessage
