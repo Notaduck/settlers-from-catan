@@ -11,6 +11,7 @@ import type {
   PlayerState,
   ServerMessage,
   ClientMessage,
+  ResourceCount,
 } from "@/types";
 import { GameStatus, StructureType, TurnPhase } from "@/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -22,9 +23,15 @@ interface GameContextState {
   currentPlayerId: string | null;
   isConnected: boolean;
   error: string | null;
+  resourceGain: ResourceGain | null;
 }
 
 type PlacementMode = "settlement" | "road" | "build";
+
+interface ResourceGain {
+  playerId: string;
+  resources: ResourceCount;
+}
 
 // Actions for the reducer
 type GameAction =
@@ -34,6 +41,7 @@ type GameAction =
   | { type: "PLAYER_LEFT"; payload: string }
   | { type: "SET_CONNECTED"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
+  | { type: "CLEAR_RESOURCE_GAIN" }
   | { type: "RESET" };
 
 const initialState: GameContextState = {
@@ -41,6 +49,7 @@ const initialState: GameContextState = {
   currentPlayerId: null,
   isConnected: false,
   error: null,
+  resourceGain: null,
 };
 
 function gameReducer(
@@ -48,8 +57,18 @@ function gameReducer(
   action: GameAction
 ): GameContextState {
   switch (action.type) {
-    case "SET_GAME_STATE":
-      return { ...state, gameState: action.payload };
+    case "SET_GAME_STATE": {
+      const resourceGain = getSetupResourceGain(
+        state.gameState,
+        action.payload,
+        state.currentPlayerId
+      );
+      return {
+        ...state,
+        gameState: action.payload,
+        resourceGain: resourceGain ?? state.resourceGain,
+      };
+    }
     case "SET_PLAYER_ID":
       return { ...state, currentPlayerId: action.payload };
     case "PLAYER_JOINED":
@@ -76,6 +95,8 @@ function gameReducer(
       return { ...state, isConnected: action.payload };
     case "SET_ERROR":
       return { ...state, error: action.payload };
+    case "CLEAR_RESOURCE_GAIN":
+      return { ...state, resourceGain: null };
     case "RESET":
       return initialState;
     default:
@@ -93,6 +114,7 @@ interface GameContextValue extends GameContextState {
   endTurn: () => void;
   startGame: () => void;
   setReady: (ready: boolean) => void;
+  clearResourceGain: () => void;
   placementMode: PlacementMode | null;
   placementState: PlacementState;
 }
@@ -191,6 +213,10 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     [sendMessage]
   );
 
+  const clearResourceGain = useCallback(() => {
+    dispatch({ type: "CLEAR_RESOURCE_GAIN" });
+  }, []);
+
   const placementMode = getPlacementMode(state.gameState, state.currentPlayerId);
   const placementState = useMemo(
     () => getPlacementState(state.gameState, state.currentPlayerId),
@@ -209,6 +235,8 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     endTurn,
     startGame,
     setReady,
+    resourceGain: state.resourceGain,
+    clearResourceGain,
     placementMode,
     placementState,
   };
@@ -238,6 +266,67 @@ function isTurnPhase(
   expectedString: string
 ): boolean {
   return phase === expected || phase === (expectedString as TurnPhase);
+}
+
+function getSetupResourceGain(
+  previousState: GameState | null,
+  nextState: GameState,
+  currentPlayerId: string | null
+): ResourceGain | null {
+  if (!previousState || !currentPlayerId) {
+    return null;
+  }
+
+  if (
+    !isStatus(nextState.status, GameStatus.SETUP, "GAME_STATUS_SETUP") ||
+    nextState.setupPhase?.round !== 2
+  ) {
+    return null;
+  }
+
+  const previousPlayer = previousState.players.find(
+    (player) => player.id === currentPlayerId
+  );
+  const nextPlayer = nextState.players.find(
+    (player) => player.id === currentPlayerId
+  );
+
+  if (!previousPlayer || !nextPlayer) {
+    return null;
+  }
+
+  const delta = getPositiveResourceDelta(
+    previousPlayer.resources,
+    nextPlayer.resources
+  );
+  if (!delta) {
+    return null;
+  }
+
+  return { playerId: currentPlayerId, resources: delta };
+}
+
+function getPositiveResourceDelta(
+  previousResources: ResourceCount | undefined,
+  nextResources: ResourceCount | undefined
+): ResourceCount | null {
+  if (!previousResources || !nextResources) {
+    return null;
+  }
+
+  const delta: ResourceCount = {};
+  let hasGain = false;
+  const keys = ["wood", "brick", "sheep", "wheat", "ore"] as const;
+
+  for (const key of keys) {
+    const diff = (nextResources[key] ?? 0) - (previousResources[key] ?? 0);
+    if (diff > 0) {
+      delta[key] = diff;
+      hasGain = true;
+    }
+  }
+
+  return hasGain ? delta : null;
 }
 
 function getPlacementMode(

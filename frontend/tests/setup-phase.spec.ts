@@ -104,6 +104,26 @@ async function startTwoPlayerGame(
   return { hostPage, guestPage };
 }
 
+async function placeSettlement(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Settlement", {
+    timeout: 30000,
+  });
+  const validVertex = page
+    .locator("[data-cy^='vertex-'].vertex--valid")
+    .first();
+  await expect(validVertex).toBeVisible({ timeout: 30000 });
+  await validVertex.click();
+}
+
+async function placeRoad(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Road", { timeout: 30000 });
+  const validEdge = page.locator("[data-cy^='edge-'].edge--valid").first();
+  await expect(validEdge).toBeVisible({ timeout: 30000 });
+  await validEdge.click();
+}
+
 test.describe("Setup Phase UI", () => {
   test("shows setup phase banner and turn indicator", async ({
     page,
@@ -130,6 +150,32 @@ test.describe("Setup Phase UI", () => {
     await expect(instruction).toBeVisible({ timeout: 30000 });
     await expect(instruction).toContainText("Place Settlement");
     await expect(instruction).toContainText("1/2");
+
+    await guestPage.close();
+  });
+
+  test("round 2 settlement grants resources toast", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(
+      page,
+      context,
+      request
+    );
+
+    await placeSettlement(hostPage);
+    await placeRoad(hostPage);
+
+    await placeSettlement(guestPage);
+    await placeRoad(guestPage);
+
+    await placeSettlement(guestPage);
+
+    const toast = guestPage.locator("[data-cy='setup-resource-toast']");
+    await expect(toast).toBeVisible({ timeout: 30000 });
+    await expect(toast).toContainText("You received:");
 
     await guestPage.close();
   });

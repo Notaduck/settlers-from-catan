@@ -48,7 +48,7 @@
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (uses data-cy setup-instruction)
 
-- [ ] Resource grant notification after Round 2 settlement
+- [x] Resource grant notification after Round 2 settlement
   - Files: frontend/src/context/GameContext.tsx (resource diffing), frontend/src/components/Game/Game.tsx (toast)
   - Go tests: none
   - Playwright: frontend/tests/setup-phase.spec.ts (resource toast visible)

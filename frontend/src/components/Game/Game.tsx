@@ -32,6 +32,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
     placementMode,
     placementState,
     build,
+    resourceGain,
+    clearResourceGain,
   } = useGame();
 
   useEffect(() => {
@@ -77,6 +79,42 @@ export function Game({ gameCode, onLeave }: GameProps) {
         return null;
     }
   }, [placementMode]);
+
+  const resourceGainText = useMemo(() => {
+    if (!resourceGain || resourceGain.playerId !== currentPlayerId) {
+      return null;
+    }
+
+    const resourceLabels: Record<string, string> = {
+      wood: "Wood",
+      brick: "Brick",
+      sheep: "Sheep",
+      wheat: "Wheat",
+      ore: "Ore",
+    };
+
+    const parts = Object.entries(resourceGain.resources)
+      .filter(([, value]) => (value ?? 0) > 0)
+      .map(([key, value]) => `${value} ${resourceLabels[key] ?? key}`);
+
+    if (parts.length === 0) {
+      return null;
+    }
+
+    return `You received: ${parts.join(", ")}`;
+  }, [resourceGain, currentPlayerId]);
+
+  useEffect(() => {
+    if (!resourceGainText) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      clearResourceGain();
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [resourceGainText, clearResourceGain]);
 
   const setupRound = gameState.setupPhase?.round ?? 1;
   const currentTurnPlayer = players[gameState.currentTurn ?? 0];
@@ -246,6 +284,14 @@ export function Game({ gameCode, onLeave }: GameProps) {
                   {setupInstruction}
                 </div>
               )}
+            </div>
+          )}
+          {resourceGainText && (
+            <div
+              className="setup-resource-toast"
+              data-cy="setup-resource-toast"
+            >
+              {resourceGainText}
             </div>
           )}
           {placementModeLabel && (
