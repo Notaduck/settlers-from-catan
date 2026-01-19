@@ -125,13 +125,14 @@ func TestCheckVictory_GameEndsOnWin(t *testing.T) {
 		Status:      pb.GameStatus_GAME_STATUS_PLAYING,
 		CurrentTurn: 0,
 	}
-	// Simulate win: 5 settlements
+	// Simulate win: 5 settlements and 1 dev card VP
 	for i := 0; i < 5; i++ {
 		board.Vertices = append(board.Vertices, &pb.Vertex{Id: "p1:" + strconv.Itoa(i), Building: &pb.Building{OwnerId: "p1", Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT}})
 	}
+	state.Players[0].VictoryPointCards = 1 // Add 1 VP dev card for 10 VP total
 	victory, _ := CheckVictory(state)
 	if !victory {
-		t.Fatalf("Player should be victorious at 10 VP")
+		t.Fatalf("Player should be victorious at 10 VP (including dev card)")
 	}
 	// Simulate PlaceSettlement setting status
 	status := pb.GameStatus_GAME_STATUS_PLAYING

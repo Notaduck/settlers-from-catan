@@ -929,19 +929,20 @@ func (x *ResourceCount) GetOre() int32 {
 
 // A player's current state
 type PlayerState struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Color         PlayerColor            `protobuf:"varint,3,opt,name=color,proto3,enum=catan.v1.PlayerColor" json:"color,omitempty"`
-	Resources     *ResourceCount         `protobuf:"bytes,4,opt,name=resources,proto3" json:"resources,omitempty"`
-	DevCardCount  int32                  `protobuf:"varint,5,opt,name=dev_card_count,json=devCardCount,proto3" json:"dev_card_count,omitempty"` // Hidden from other players
-	KnightsPlayed int32                  `protobuf:"varint,6,opt,name=knights_played,json=knightsPlayed,proto3" json:"knights_played,omitempty"`
-	VictoryPoints int32                  `protobuf:"varint,7,opt,name=victory_points,json=victoryPoints,proto3" json:"victory_points,omitempty"`
-	Connected     bool                   `protobuf:"varint,8,opt,name=connected,proto3" json:"connected,omitempty"`
-	IsReady       bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"` // Ready to start the game (lobby only)
-	IsHost        bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`   // Host can start game when all ready
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Color             PlayerColor            `protobuf:"varint,3,opt,name=color,proto3,enum=catan.v1.PlayerColor" json:"color,omitempty"`
+	Resources         *ResourceCount         `protobuf:"bytes,4,opt,name=resources,proto3" json:"resources,omitempty"`
+	DevCardCount      int32                  `protobuf:"varint,5,opt,name=dev_card_count,json=devCardCount,proto3" json:"dev_card_count,omitempty"` // Hidden from other players
+	KnightsPlayed     int32                  `protobuf:"varint,6,opt,name=knights_played,json=knightsPlayed,proto3" json:"knights_played,omitempty"`
+	VictoryPoints     int32                  `protobuf:"varint,7,opt,name=victory_points,json=victoryPoints,proto3" json:"victory_points,omitempty"`
+	Connected         bool                   `protobuf:"varint,8,opt,name=connected,proto3" json:"connected,omitempty"`
+	IsReady           bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"`                                  // Ready to start the game (lobby only)
+	IsHost            bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`                                    // Host can start game when all ready
+	VictoryPointCards int32                  `protobuf:"varint,11,opt,name=victory_point_cards,json=victoryPointCards,proto3" json:"victory_point_cards,omitempty"` // Number of VP dev cards in hand (hidden from other players)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *PlayerState) Reset() {
@@ -1042,6 +1043,13 @@ func (x *PlayerState) GetIsHost() bool {
 		return x.IsHost
 	}
 	return false
+}
+
+func (x *PlayerState) GetVictoryPointCards() int32 {
+	if x != nil {
+		return x.VictoryPointCards
+	}
+	return 0
 }
 
 // The game board state
@@ -1849,7 +1857,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x05brick\x18\x02 \x01(\x05R\x05brick\x12\x14\n" +
 	"\x05sheep\x18\x03 \x01(\x05R\x05sheep\x12\x14\n" +
 	"\x05wheat\x18\x04 \x01(\x05R\x05wheat\x12\x10\n" +
-	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\xdb\x02\n" +
+	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\x8b\x03\n" +
 	"\vPlayerState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
@@ -1861,7 +1869,8 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\tconnected\x18\b \x01(\bR\tconnected\x12\x19\n" +
 	"\bis_ready\x18\t \x01(\bR\aisReady\x12\x17\n" +
 	"\ais_host\x18\n" +
-	" \x01(\bR\x06isHost\"\xb8\x01\n" +
+	" \x01(\bR\x06isHost\x12.\n" +
+	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\"\xb8\x01\n" +
 	"\n" +
 	"BoardState\x12#\n" +
 	"\x05hexes\x18\x01 \x03(\v2\r.catan.v1.HexR\x05hexes\x12,\n" +

@@ -183,6 +183,10 @@ export interface PlayerState {
      * @generated from protobuf field: bool is_host = 10
      */
     isHost: boolean; // Host can start game when all ready
+    /**
+     * @generated from protobuf field: int32 victory_point_cards = 11
+     */
+    victoryPointCards: number; // Number of VP dev cards in hand (hidden from other players)
 }
 /**
  * The game board state
@@ -1107,7 +1111,8 @@ class PlayerState$Type extends MessageType<PlayerState> {
             { no: 7, name: "victory_points", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 8, name: "connected", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 9, name: "is_ready", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
-            { no: 10, name: "is_host", kind: "scalar", T: 8 /*ScalarType.BOOL*/ }
+            { no: 10, name: "is_host", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
+            { no: 11, name: "victory_point_cards", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
         ]);
     }
     create(value?: PartialMessage<PlayerState>): PlayerState {
@@ -1121,6 +1126,7 @@ class PlayerState$Type extends MessageType<PlayerState> {
         message.connected = false;
         message.isReady = false;
         message.isHost = false;
+        message.victoryPointCards = 0;
         if (value !== undefined)
             reflectionMergePartial<PlayerState>(this, message, value);
         return message;
@@ -1159,6 +1165,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
                     break;
                 case /* bool is_host */ 10:
                     message.isHost = reader.bool();
+                    break;
+                case /* int32 victory_point_cards */ 11:
+                    message.victoryPointCards = reader.int32();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1202,6 +1211,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
         /* bool is_host = 10; */
         if (message.isHost !== false)
             writer.tag(10, WireType.Varint).bool(message.isHost);
+        /* int32 victory_point_cards = 11; */
+        if (message.victoryPointCards !== 0)
+            writer.tag(11, WireType.Varint).int32(message.victoryPointCards);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

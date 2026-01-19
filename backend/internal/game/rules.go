@@ -208,7 +208,7 @@ func CheckVictory(state *pb.GameState) (bool, string) {
 	hasLongestRoad := state.GetLongestRoadPlayerId() == player.Id
 	hasLargestArmy := state.GetLargestArmyPlayerId() == player.Id
 	// TODO: Count hidden VP cards: if system for player dev card hands exists, count dev cards of type VICTORY_POINT in hand
-	vpCards := 0
+	vpCards := int(player.GetVictoryPointCards())
 	totalVP := CalculateVictoryPoints(settlements, cities, hasLongestRoad, hasLargestArmy, vpCards)
 	if IsVictorious(totalVP) {
 		return true, player.Id

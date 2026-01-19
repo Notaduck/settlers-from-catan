@@ -139,6 +139,7 @@ message PlayerState {
   bool connected = 8;
   bool is_ready = 9; // Ready to start the game (lobby only)
   bool is_host = 10; // Host can start game when all ready
+  int32 victory_point_cards = 11; // Number of VP dev cards in hand (hidden from other players)
 }
 
 // The game board state
