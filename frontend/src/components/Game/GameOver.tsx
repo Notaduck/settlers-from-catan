@@ -1,36 +1,81 @@
 import React from "react";
-import { GameState, PlayerState } from "@/types";
+import { BuildingType, GameOverPayload, GameState, PlayerState } from "@/types";
 
 interface GameOverProps {
   gameState: GameState;
+  gameOver: GameOverPayload | null;
   onNewGame: () => void;
 }
 
-export function GameOver({ gameState, onNewGame }: GameOverProps) {
-  if (!gameState || (gameState.status !== "GAME_STATUS_FINISHED" && gameState.status !== 4)) {
+export function GameOver({ gameState, gameOver, onNewGame }: GameOverProps) {
+  if (!gameState || (!gameOver && gameState.status !== "GAME_STATUS_FINISHED" && gameState.status !== 4)) {
     return null;
   }
-  // Find the winner and compute totals
+  const scoreMap = new Map(
+    (gameOver?.scores ?? []).map((score) => [score.playerId, score.points])
+  );
   const players = gameState.players || [];
-  // Winner id may come from GameState.winnerId or derive from max victory points
-  // @ts-expect-error (winnerId possibly not in types generated)
-  const winnerId: string = (gameState.winnerId as string | undefined) || (players.reduce((cur, x) => (x.victoryPoints || 0) > (cur.victoryPoints || 0) ? x : cur, players[0])?.id);
+  const fallbackPlayer = players[0];
+  const winnerId =
+    gameOver?.winnerId ||
+    (fallbackPlayer
+      ? players.reduce(
+          (cur, x) =>
+            (x.victoryPoints || 0) > (cur.victoryPoints || 0) ? x : cur,
+          fallbackPlayer
+        )?.id
+      : undefined);
+
+  const getBuildingCounts = (playerId: string) => {
+    let settlements = 0;
+    let cities = 0;
+    for (const vertex of gameState.board?.vertices ?? []) {
+      if (vertex.building?.ownerId !== playerId) {
+        continue;
+      }
+      const buildingTypeValue = vertex.building?.type as unknown;
+      const buildingTypeName =
+        typeof buildingTypeValue === "string"
+          ? buildingTypeValue
+          : BuildingType[buildingTypeValue as BuildingType];
+      if (
+        buildingTypeValue === BuildingType.SETTLEMENT ||
+        buildingTypeName === "BUILDING_TYPE_SETTLEMENT" ||
+        buildingTypeName === "SETTLEMENT"
+      ) {
+        settlements += 1;
+      }
+      if (
+        buildingTypeValue === BuildingType.CITY ||
+        buildingTypeName === "BUILDING_TYPE_CITY" ||
+        buildingTypeName === "CITY"
+      ) {
+        cities += 1;
+      }
+    }
+    return { settlements, cities };
+  };
 
   const getBreakdown = (player: PlayerState) => {
+    const { settlements, cities } = getBuildingCounts(player.id);
     return [
-      { label: "Settlements", value: player.settlementCount ?? player.settlements ?? 0 },
-      { label: "Cities", value: player.cityCount ?? player.cities ?? 0 },
-      { label: "Longest Road", value: player.hasLongestRoad ? 2 : 0 },
-      { label: "Largest Army", value: player.hasLargestArmy ? 2 : 0 },
-      { label: "VP Cards", value: player.vpDevCard ?? player.victoryPointCards ?? 0 },
+      { label: "Settlements", value: settlements },
+      { label: "Cities", value: cities },
+      {
+        label: "Longest Road",
+        value: gameState.longestRoadPlayerId === player.id ? 2 : 0,
+      },
+      {
+        label: "Largest Army",
+        value: gameState.largestArmyPlayerId === player.id ? 2 : 0,
+      },
+      { label: "VP Cards", value: player.victoryPointCards ?? 0 },
     ];
   };
 
   const getTotalVp = (player: PlayerState) => {
-    let vp = 0;
     const breakdown = getBreakdown(player);
-    vp = breakdown.reduce((sum, { value }) => sum + (value || 0), 0);
-    return vp;
+    return breakdown.reduce((sum, { value }) => sum + (value || 0), 0);
   };
 
   // Assume each player row has a player.id uniquely present
@@ -39,7 +84,7 @@ export function GameOver({ gameState, onNewGame }: GameOverProps) {
       <div className="game-over-modal">
         <h2 data-cy="winner-name">Winner: {players.find(p => p.id === winnerId)?.name ?? "?"}</h2>
         <div className="winner-vp" data-cy="winner-vp">
-          VP: {players.find(p => p.id === winnerId)?.victoryPoints ?? getTotalVp(players.find(p => p.id === winnerId) ?? players[0])}
+          VP: {scoreMap.get(winnerId ?? "") ?? (fallbackPlayer ? getTotalVp(players.find(p => p.id === winnerId) ?? fallbackPlayer) : 0)}
         </div>
         <h3>Score Breakdown</h3>
         <table className="score-breakdown">
@@ -49,7 +94,7 @@ export function GameOver({ gameState, onNewGame }: GameOverProps) {
           <tbody>
             {players.map(player => {
               const breakdown = getBreakdown(player);
-              const total = getTotalVp(player);
+              const total = scoreMap.get(player.id) ?? getTotalVp(player);
               return (
                 <tr key={player.id} data-cy={`final-score-${player.id}`}
                   className={player.id === winnerId ? "winner-row" : ""}>

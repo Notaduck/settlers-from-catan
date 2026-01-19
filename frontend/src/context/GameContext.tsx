@@ -12,6 +12,7 @@ import type {
   ServerMessage,
   ClientMessage,
   ResourceCount,
+  GameOverPayload,
 } from "@/types";
 import { GameStatus, StructureType, TurnPhase } from "@/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -20,6 +21,7 @@ import { getPlacementState, type PlacementState } from "@/components/Board/place
 // Game context state
 interface GameContextState {
   gameState: GameState | null;
+  gameOver: GameOverPayload | null;
   currentPlayerId: string | null;
   isConnected: boolean;
   error: string | null;
@@ -36,6 +38,7 @@ interface ResourceGain {
 // Actions for the reducer
 type GameAction =
   | { type: "SET_GAME_STATE"; payload: GameState }
+  | { type: "SET_GAME_OVER"; payload: GameOverPayload | null }
   | { type: "SET_PLAYER_ID"; payload: string }
   | { type: "PLAYER_JOINED"; payload: PlayerState }
   | { type: "PLAYER_LEFT"; payload: string }
@@ -46,6 +49,7 @@ type GameAction =
 
 const initialState: GameContextState = {
   gameState: null,
+  gameOver: null,
   currentPlayerId: null,
   isConnected: false,
   error: null,
@@ -63,12 +67,20 @@ function gameReducer(
         action.payload,
         state.currentPlayerId
       );
+      const isFinished = isStatus(
+        action.payload.status,
+        GameStatus.FINISHED,
+        "GAME_STATUS_FINISHED"
+      );
       return {
         ...state,
         gameState: action.payload,
+        gameOver: isFinished ? state.gameOver : null,
         resourceGain: resourceGain ?? state.resourceGain,
       };
     }
+    case "SET_GAME_OVER":
+      return { ...state, gameOver: action.payload };
     case "SET_PLAYER_ID":
       return { ...state, currentPlayerId: action.payload };
     case "PLAYER_JOINED":
@@ -172,6 +184,9 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
         if (msg.error?.message) {
           dispatch({ type: "SET_ERROR", payload: msg.error.message });
         }
+        break;
+      case "gameOver":
+        dispatch({ type: "SET_GAME_OVER", payload: msg.gameOver ?? null });
         break;
       // Handle other message types as needed
     }

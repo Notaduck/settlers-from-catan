@@ -44,6 +44,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
     currentPlayerId,
     placementMode,
     placementState,
+    gameOver,
     build,
     resourceGain,
     clearResourceGain,
@@ -191,45 +192,52 @@ export function Game({ gameCode, onLeave }: GameProps) {
   }
 
   // Game Over overlay
-  const isGameOver = gameState?.status === GameStatus.FINISHED || gameState?.status === 'GAME_STATUS_FINISHED';
+  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || gameState?.status === 'GAME_STATUS_FINISHED';
+  const interactionsDisabled = isGameOver;
 
   return (
     <div className="game" data-cy="game">
       {/* BANK TRADE MODAL */}
-      <BankTradeModal
-        open={showBankTrade}
-        onClose={() => setShowBankTrade(false)}
-        onSubmit={(offering, requested) => {
-          // TODO: Hook up to trade send
-          setShowBankTrade(false);
-        }}
-        resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
-      />
+      {!interactionsDisabled && (
+        <BankTradeModal
+          open={showBankTrade}
+          onClose={() => setShowBankTrade(false)}
+          onSubmit={(offering, requested) => {
+            // TODO: Hook up to trade send
+            setShowBankTrade(false);
+          }}
+          resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
+        />
+      )}
       {/* PROPOSE TRADE MODAL */}
-      <ProposeTradeModal
-        open={showProposeTrade}
-        onClose={() => setShowProposeTrade(false)}
-        onSubmit={(offer, request, toPlayerId) => {
-          // TODO: Hook up to trade send
-          setShowProposeTrade(false);
-          // For demo: simulate incoming trade right away
-          setIncomingTrade({from:currentPlayer?.name||'Player',offer,request});
-          setShowIncomingTrade(true);
-        }}
-        players={players}
-        myResources={currentPlayer?.resources ?? {}}
-      />
+      {!interactionsDisabled && (
+        <ProposeTradeModal
+          open={showProposeTrade}
+          onClose={() => setShowProposeTrade(false)}
+          onSubmit={(offer, request, toPlayerId) => {
+            // TODO: Hook up to trade send
+            setShowProposeTrade(false);
+            // For demo: simulate incoming trade right away
+            setIncomingTrade({from:currentPlayer?.name||'Player',offer,request});
+            setShowIncomingTrade(true);
+          }}
+          players={players}
+          myResources={currentPlayer?.resources ?? {}}
+        />
+      )}
       {/* INCOMING TRADE MODAL (stub/demo, always shows same test offer) */}
-      <IncomingTradeModal
-        open={showIncomingTrade}
-        onAccept={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
-        onDecline={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
-        fromPlayer={incomingTrade?.from || 'Other'}
-        offer={incomingTrade?.offer || {wood:1}}
-        request={incomingTrade?.request || {brick:1}}
-      />
+      {!interactionsDisabled && (
+        <IncomingTradeModal
+          open={showIncomingTrade}
+          onAccept={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
+          onDecline={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
+          fromPlayer={incomingTrade?.from || 'Other'}
+          offer={incomingTrade?.offer || {wood:1}}
+          request={incomingTrade?.request || {brick:1}}
+        />
+      )}
       {/* Robber Discard Modal */}
-      {isRobberDiscardRequired && !discardClosed && (
+      {!interactionsDisabled && isRobberDiscardRequired && !discardClosed && (
         <DiscardModal
           requiredCount={robberDiscardAmount}
           maxAvailable={robberDiscardMax || { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 }}
@@ -238,7 +246,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
         />
       )}
       {/* Robber Steal Modal */}
-      {isRobberStealRequired && !stealClosed && (
+      {!interactionsDisabled && isRobberStealRequired && !stealClosed && (
         <StealModal
           candidates={robberStealCandidates}
           onSteal={victimId => { sendRobberSteal(victimId); setStealClosed(true); }}
@@ -249,6 +257,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
       {isGameOver && (
         <GameOver
           gameState={gameState}
+          gameOver={gameOver}
           onNewGame={onLeave}
         />
       )}
@@ -351,7 +360,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
            {(isSetup && gameState.status === GameStatus.SETUP) && (
             <div className="setup-phase-panel">
               {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
-              {gameState.status === GameStatus.PLAYING && gameState.turnPhase === "TURN_PHASE_TRADE" && currentPlayer?.id === currentPlayerId && (
+              {!interactionsDisabled && gameState.status === GameStatus.PLAYING && gameState.turnPhase === "TURN_PHASE_TRADE" && currentPlayer?.id === currentPlayerId && (
                 <div className="trade-phase-control">
                   <button
                     className="btn btn-secondary"
@@ -402,7 +411,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               {resourceGainText}
             </div>
           )}
-           {placementModeLabel && ((isSetup && gameState.status === GameStatus.SETUP) || (gameState.status === GameStatus.PLAYING)) && (
+           {!interactionsDisabled && placementModeLabel && ((isSetup && gameState.status === GameStatus.SETUP) || (gameState.status === GameStatus.PLAYING)) && (
             <div className="placement-mode" data-cy="placement-mode">
               {/* (Placement and trading UI are independent; both can be present) */}
               {placementModeLabel}
@@ -416,11 +425,11 @@ export function Game({ gameCode, onLeave }: GameProps) {
                  players={gameState.players}
                  validVertexIds={placementState.validVertexIds}
                  validEdgeIds={placementState.validEdgeIds}
-                 onBuildSettlement={(vertexId) => build(StructureType.SETTLEMENT, vertexId)}
-                 onBuildRoad={(edgeId) => build(StructureType.ROAD, edgeId)}
+                 onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
+                 onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
                  isRobberMoveMode={isRobberMoveRequired}
                  currentRobberHex={gameState.board.robberHex}
-                 onSelectRobberHex={isRobberMoveRequired ? (hex) => {
+                 onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
                    sendRobberMove(hex.coord);
                  } : undefined}
                />
@@ -431,6 +440,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               turnPhase={gameState.turnPhase}
               dice={gameState.dice}
               gameStatus={gameState.status}
+              isGameOver={isGameOver}
             />
           </div>
         </div>

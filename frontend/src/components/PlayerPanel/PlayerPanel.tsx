@@ -18,6 +18,7 @@ interface PlayerPanelProps {
   turnPhase: TurnPhase;
   dice: number[];
   gameStatus?: string;
+  isGameOver?: boolean;
 }
 
 const RESOURCE_ICONS: Record<string, string> = {
@@ -55,6 +56,8 @@ export function PlayerPanel({
   currentTurn,
   turnPhase,
   dice,
+  gameStatus,
+  isGameOver = false,
 }: PlayerPanelProps) {
   const { rollDice, endTurn, currentPlayerId } = useGame();
 
@@ -76,7 +79,7 @@ export function PlayerPanel({
             {dice[1] || "?"}
           </div>
         </div>
-         {isMyTurn && isRollPhase && (gameStatus === undefined || gameStatus === "PLAYING" || gameStatus === "GAME_STATUS_PLAYING") && (
+         {isMyTurn && isRollPhase && !isGameOver && (gameStatus === undefined || gameStatus === "PLAYING" || gameStatus === "GAME_STATUS_PLAYING") && (
           <button
             onClick={rollDice}
             className="btn btn-primary"
@@ -102,7 +105,7 @@ export function PlayerPanel({
             </span>
           </div>
         )}
-        {isMyTurn && !isRollPhase && (
+        {isMyTurn && !isRollPhase && !isGameOver && (
           <button
             onClick={endTurn}
             className="btn btn-secondary"
