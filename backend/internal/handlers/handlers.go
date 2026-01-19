@@ -1,6 +1,32 @@
 package handlers
 
-// (rest of the existing code from handlers.go follows, as previously written)
+import (
+	"log"
+
+	"github.com/jmoiron/sqlx"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	catanv1 "settlers_from_catan/gen/proto/catan/v1"
+	"settlers_from_catan/internal/game"
+	"settlers_from_catan/internal/hub"
+)
+
+type Handler struct {
+	hub *hub.Hub
+	db  *sqlx.DB
+}
+
+// sendError sends an error payload to the client and logs it.
+func (h *Handler) sendError(client *hub.Client, code, message string) {
+	log.Printf("Error [%s]: %s", code, message)
+	// NOOP: In production this would send a websocket/server message
+}
+
+// broadcastGameStateProto broadcasts the game state. (Stub)
+func (h *Handler) broadcastGameStateProto(gameID string, state *game.GameState) {
+	log.Printf("[STUB] broadcastGameStateProto for gameID %s", gameID)
+	// NOOP: In production this would serialize state and send to all clients in game
+}
 
 // --- Trading handlers ---
 // handleProposeTrade handles a player's trade proposal (player ↔ player).
@@ -24,7 +50,7 @@ func (h *Handler) handleProposeTrade(client *hub.Client, payload []byte) {
 	}
 
 	// Call game logic
-	err := game.ProposeTrade(&state, client.PlayerID, req.GetTargetId(), req.GetOffering(), req.GetRequesting())
+	_, err := game.ProposeTrade(&state, client.PlayerID, req.TargetId, req.GetOffering(), req.GetRequesting())
 	if err != nil {
 		h.sendError(client, "TRADE_PROPOSE_ERROR", err.Error())
 		return
@@ -66,11 +92,8 @@ func (h *Handler) handleRespondTrade(client *hub.Client, payload []byte) {
 		return
 	}
 	var err error
-	if req.Accept {
-		err = game.AcceptTrade(&state, req.GetTradeId(), client.PlayerID)
-	} else {
-		err = game.DeclineTrade(&state, req.GetTradeId(), client.PlayerID)
-	}
+	err = game.RespondTrade(&state, req.GetTradeId(), client.PlayerID, req.Accept)
+
 	if err != nil {
 		h.sendError(client, "TRADE_RESPOND_ERROR", err.Error())
 		return

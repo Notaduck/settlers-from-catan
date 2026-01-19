@@ -12,7 +12,7 @@ func makeTestPlayer(id string, resources *pb.ResourceCount) *pb.PlayerState {
 	}
 }
 
-func makeVertex(owner string, adj []*pb.HexCoord) *pb.Vertex {
+func makeRobberVertex(owner string, adj []*pb.HexCoord) *pb.Vertex {
 	return &pb.Vertex{
 		Building:      &pb.Building{OwnerId: owner, Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT},
 		AdjacentHexes: adj,
@@ -62,7 +62,7 @@ func TestStealFromPlayer(t *testing.T) {
 			Hexes:     []*pb.Hex{{Coord: robberHex}},
 			RobberHex: robberHex,
 			Vertices: []*pb.Vertex{
-				makeVertex("vic", []*pb.HexCoord{adjHex}),
+				makeRobberVertex("vic", []*pb.HexCoord{adjHex}),
 			},
 		},
 		Players: []*pb.PlayerState{
@@ -99,7 +99,7 @@ func TestStealFromPlayer_NotAdjacent(t *testing.T) {
 			Hexes:     []*pb.Hex{{Coord: robHex}},
 			RobberHex: robHex,
 			Vertices: []*pb.Vertex{
-				makeVertex("vic", []*pb.HexCoord{{Q: 2, R: 2}}), // Not adjacent
+				makeRobberVertex("vic", []*pb.HexCoord{{Q: 2, R: 2}}), // Not adjacent
 			},
 		},
 		Players: []*pb.PlayerState{
@@ -175,7 +175,7 @@ func TestStealFromPlayer_MultiResource(t *testing.T) {
 			Board: &pb.BoardState{
 				Hexes:     []*pb.Hex{{Coord: robberHex}},
 				RobberHex: robberHex,
-				Vertices:  []*pb.Vertex{makeVertex(victimID, []*pb.HexCoord{adjHex})},
+				Vertices:  []*pb.Vertex{makeRobberVertex(victimID, []*pb.HexCoord{adjHex})},
 			},
 			Players:     []*pb.PlayerState{thief, victim},
 			RobberPhase: &pb.RobberPhase{StealPendingPlayerId: ptr(thiefID)},
