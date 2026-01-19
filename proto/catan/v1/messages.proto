@@ -1,0 +1,169 @@
+syntax = "proto3";
+
+package catan.v1;
+
+option go_package = "settlers_from_catan/gen/proto/catan/v1;catanv1";
+
+import "catan/v1/types.proto";
+
+// ==================== Client -> Server Messages ====================
+
+message JoinGameMessage {
+  string game_id = 1;
+}
+
+message StartGameMessage {}
+
+message RollDiceMessage {}
+
+message BuildStructureMessage {
+  StructureType structure_type = 1;
+  string location = 2; // Vertex ID for buildings, Edge ID for roads
+}
+
+message ProposeTradeMessage {
+  optional string target_id = 1; // Empty = open to all
+  ResourceCount offering = 2;
+  ResourceCount requesting = 3;
+}
+
+message RespondTradeMessage {
+  string trade_id = 1;
+  bool accept = 2;
+}
+
+message MoveRobberMessage {
+  HexCoord hex = 1;
+  optional string victim_id = 2; // Player to steal from
+}
+
+message EndTurnMessage {}
+
+message PlayerReadyMessage {
+  bool ready = 1;
+}
+
+message PlayDevCardMessage {
+  DevCardType card_type = 1;
+  // Additional fields depending on card type
+  optional Resource target_resource = 2; // For monopoly
+  repeated Resource resources = 3; // For year of plenty (2 resources)
+}
+
+// Wrapper for all client messages
+message ClientMessage {
+  oneof message {
+    JoinGameMessage join_game = 1;
+    StartGameMessage start_game = 2;
+    RollDiceMessage roll_dice = 3;
+    BuildStructureMessage build_structure = 4;
+    ProposeTradeMessage propose_trade = 5;
+    RespondTradeMessage respond_trade = 6;
+    MoveRobberMessage move_robber = 7;
+    EndTurnMessage end_turn = 8;
+    PlayDevCardMessage play_dev_card = 9;
+    PlayerReadyMessage player_ready = 10;
+  }
+}
+
+// ==================== Server -> Client Messages ====================
+
+message GameStatePayload {
+  GameState state = 1;
+}
+
+message PlayerJoinedPayload {
+  PlayerState player = 1;
+}
+
+message PlayerLeftPayload {
+  string player_id = 1;
+}
+
+message ResourceDistribution {
+  string player_id = 1;
+  ResourceCount resources = 2;
+}
+
+message DiceRolledPayload {
+  string player_id = 1;
+  repeated int32 values = 2; // 2 dice values
+  repeated ResourceDistribution resources_distributed = 3;
+}
+
+message BuildingPlacedPayload {
+  string player_id = 1;
+  BuildingType building_type = 2;
+  string vertex_id = 3;
+}
+
+message RoadPlacedPayload {
+  string player_id = 1;
+  string edge_id = 2;
+}
+
+message TradeProposedPayload {
+  TradeOffer trade = 1;
+}
+
+message TradeResolvedPayload {
+  string trade_id = 1;
+  bool accepted = 2;
+  optional string accepted_by = 3;
+}
+
+message RobberMovedPayload {
+  string player_id = 1;
+  HexCoord hex = 2;
+  optional string victim_id = 3;
+  optional Resource stolen_resource = 4; // Only visible to thief and victim
+}
+
+message TurnChangedPayload {
+  string active_player_id = 1;
+  TurnPhase phase = 2;
+}
+
+message GameStartedPayload {
+  GameState state = 1;
+}
+
+message PlayerReadyChangedPayload {
+  string player_id = 1;
+  bool is_ready = 2;
+}
+
+message PlayerScore {
+  string player_id = 1;
+  int32 points = 2;
+}
+
+message GameOverPayload {
+  string winner_id = 1;
+  repeated PlayerScore scores = 2;
+}
+
+message ErrorPayload {
+  string code = 1;
+  string message = 2;
+}
+
+// Wrapper for all server messages
+message ServerMessage {
+  oneof message {
+    GameStatePayload game_state = 1;
+    PlayerJoinedPayload player_joined = 2;
+    PlayerLeftPayload player_left = 3;
+    DiceRolledPayload dice_rolled = 4;
+    BuildingPlacedPayload building_placed = 5;
+    RoadPlacedPayload road_placed = 6;
+    TradeProposedPayload trade_proposed = 7;
+    TradeResolvedPayload trade_resolved = 8;
+    RobberMovedPayload robber_moved = 9;
+    TurnChangedPayload turn_changed = 10;
+    GameStartedPayload game_started = 11;
+    GameOverPayload game_over = 12;
+    ErrorPayload error = 13;
+    PlayerReadyChangedPayload player_ready_changed = 14;
+  }
+}

@@ -1,0 +1,218 @@
+syntax = "proto3";
+
+package catan.v1;
+
+option go_package = "settlers_from_catan/gen/proto/catan/v1;catanv1";
+
+// ==================== Enums ====================
+
+enum Resource {
+  RESOURCE_UNSPECIFIED = 0;
+  RESOURCE_WOOD = 1;
+  RESOURCE_BRICK = 2;
+  RESOURCE_SHEEP = 3;
+  RESOURCE_WHEAT = 4;
+  RESOURCE_ORE = 5;
+}
+
+enum TileResource {
+  TILE_RESOURCE_UNSPECIFIED = 0;
+  TILE_RESOURCE_WOOD = 1;
+  TILE_RESOURCE_BRICK = 2;
+  TILE_RESOURCE_SHEEP = 3;
+  TILE_RESOURCE_WHEAT = 4;
+  TILE_RESOURCE_ORE = 5;
+  TILE_RESOURCE_DESERT = 6;
+}
+
+enum BuildingType {
+  BUILDING_TYPE_UNSPECIFIED = 0;
+  BUILDING_TYPE_SETTLEMENT = 1;
+  BUILDING_TYPE_CITY = 2;
+}
+
+enum StructureType {
+  STRUCTURE_TYPE_UNSPECIFIED = 0;
+  STRUCTURE_TYPE_SETTLEMENT = 1;
+  STRUCTURE_TYPE_CITY = 2;
+  STRUCTURE_TYPE_ROAD = 3;
+}
+
+enum GameStatus {
+  GAME_STATUS_UNSPECIFIED = 0;
+  GAME_STATUS_WAITING = 1;
+  GAME_STATUS_SETUP = 2;
+  GAME_STATUS_PLAYING = 3;
+  GAME_STATUS_FINISHED = 4;
+}
+
+enum TurnPhase {
+  TURN_PHASE_UNSPECIFIED = 0;
+  TURN_PHASE_ROLL = 1;
+  TURN_PHASE_TRADE = 2;
+  TURN_PHASE_BUILD = 3;
+}
+
+enum PlayerColor {
+  PLAYER_COLOR_UNSPECIFIED = 0;
+  PLAYER_COLOR_RED = 1;
+  PLAYER_COLOR_BLUE = 2;
+  PLAYER_COLOR_GREEN = 3;
+  PLAYER_COLOR_ORANGE = 4;
+}
+
+enum DevCardType {
+  DEV_CARD_TYPE_UNSPECIFIED = 0;
+  DEV_CARD_TYPE_KNIGHT = 1;
+  DEV_CARD_TYPE_ROAD_BUILDING = 2;
+  DEV_CARD_TYPE_YEAR_OF_PLENTY = 3;
+  DEV_CARD_TYPE_MONOPOLY = 4;
+  DEV_CARD_TYPE_VICTORY_POINT = 5;
+}
+
+enum TradeStatus {
+  TRADE_STATUS_UNSPECIFIED = 0;
+  TRADE_STATUS_PENDING = 1;
+  TRADE_STATUS_ACCEPTED = 2;
+  TRADE_STATUS_REJECTED = 3;
+  TRADE_STATUS_CANCELLED = 4;
+}
+
+// ==================== Core Types ====================
+
+// Axial coordinates for hex grid
+message HexCoord {
+  int32 q = 1;
+  int32 r = 2;
+}
+
+// A hex tile on the board
+message Hex {
+  HexCoord coord = 1;
+  TileResource resource = 2;
+  int32 number = 3; // 2-12, 0 for desert
+}
+
+// A settlement or city
+message Building {
+  BuildingType type = 1;
+  string owner_id = 2;
+}
+
+// A road segment
+message Road {
+  string owner_id = 1;
+}
+
+// A corner where buildings can be placed
+message Vertex {
+  string id = 1;
+  repeated HexCoord adjacent_hexes = 2;
+  optional Building building = 3;
+}
+
+// A side where roads can be placed
+message Edge {
+  string id = 1;
+  repeated string vertices = 2; // Always 2 vertex IDs
+  optional Road road = 3;
+}
+
+// Count of each resource
+message ResourceCount {
+  int32 wood = 1;
+  int32 brick = 2;
+  int32 sheep = 3;
+  int32 wheat = 4;
+  int32 ore = 5;
+}
+
+// A player's current state
+message PlayerState {
+  string id = 1;
+  string name = 2;
+  PlayerColor color = 3;
+  ResourceCount resources = 4;
+  int32 dev_card_count = 5; // Hidden from other players
+  int32 knights_played = 6;
+  int32 victory_points = 7;
+  bool connected = 8;
+  bool is_ready = 9; // Ready to start the game (lobby only)
+  bool is_host = 10; // Host can start game when all ready
+}
+
+// The game board state
+message BoardState {
+  repeated Hex hexes = 1;
+  repeated Vertex vertices = 2;
+  repeated Edge edges = 3;
+  HexCoord robber_hex = 4;
+}
+
+// Complete game state
+message GameState {
+  string id = 1;
+  string code = 2; // 6-character join code
+  BoardState board = 3;
+  repeated PlayerState players = 4;
+  int32 current_turn = 5; // Index of current player
+  TurnPhase turn_phase = 6;
+  repeated int32 dice = 7; // Always 2 values
+  GameStatus status = 8;
+  optional string longest_road_player_id = 9;
+  optional string largest_army_player_id = 10;
+  optional SetupPhase setup_phase = 11; // Present during setup status
+}
+
+// A trade offer between players
+message TradeOffer {
+  string id = 1;
+  string proposer_id = 2;
+  optional string target_id = 3; // Empty = open to all
+  ResourceCount offering = 4;
+  ResourceCount requesting = 5;
+  TradeStatus status = 6;
+}
+
+// Setup phase tracking for initial placement
+message SetupPhase {
+  int32 round = 1; // 1 or 2
+  int32 placements_in_turn = 2; // 0 = need settlement, 1 = need road
+}
+
+// ==================== REST API Types ====================
+
+message CreateGameRequest {
+  string player_name = 1;
+}
+
+message CreateGameResponse {
+  string game_id = 1;
+  string code = 2;
+  string session_token = 3;
+  string player_id = 4;
+}
+
+message JoinGameRequest {
+  string player_name = 1;
+}
+
+message JoinGameResponse {
+  string game_id = 1;
+  string session_token = 2;
+  string player_id = 3;
+  repeated PlayerInfo players = 4;
+}
+
+message PlayerInfo {
+  string id = 1;
+  string name = 2;
+  PlayerColor color = 3;
+}
+
+message GameInfoResponse {
+  string code = 1;
+  GameStatus status = 2;
+  int32 player_count = 3;
+  repeated PlayerInfo players = 4;
+}

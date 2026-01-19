@@ -1,0 +1,148 @@
+.player-panel {
+  background: linear-gradient(180deg, #1a1a2e 0%, #15152a 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 280px;
+  max-width: 320px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.player-panel h3 {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dice-section {
+  text-align: center;
+}
+
+.dice-display {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.die {
+  width: 48px;
+  height: 48px;
+  background: #f5f5dc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.turn-section {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.current-player {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.turn-phase {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.player-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.resources-section {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.resource-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  background: #16162a;
+  border-radius: 6px;
+}
+
+.resource-icon {
+  font-size: 1.25rem;
+}
+
+.resource-count {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.players-section {
+  margin-top: 0;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.player-row.is-me {
+  background: #16162a;
+}
+
+.player-name {
+  flex: 1;
+}
+
+.player-vp {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.btn {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.btn-primary {
+  background: #646cff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #535bf2;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}

@@ -1,0 +1,17 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package
+      module: buf.build/settlers/catan
+      value: settlers_from_catan/gen/proto
+plugins:
+  # Go generation
+  - remote: buf.build/protocolbuffers/go
+    out: ../backend/gen/proto
+    opt:
+      - paths=source_relative
+
+  # TypeScript generation using ts-proto (generates nice TS interfaces)
+  - remote: buf.build/community/timostamm-protobuf-ts
+    out: ../frontend/src/gen/proto

@@ -1,0 +1,867 @@
+asyncapi: 3.0.0
+info:
+  title: Settlers from Catan WebSocket API
+  version: 1.0.0
+  description: |
+    Real-time WebSocket API for Settlers from Catan multiplayer game.
+
+    ## Connection
+    Connect to `/ws?token={sessionToken}` after joining a game.
+
+    ## Message Format
+    All messages are JSON with a `type` field and optional `payload`.
+
+servers:
+  development:
+    host: localhost:8080
+    protocol: ws
+    description: Local development server
+
+channels:
+  game:
+    address: /ws
+    description: Main game WebSocket channel
+    messages:
+      # Client -> Server messages
+      joinGame:
+        $ref: "#/components/messages/JoinGame"
+      startGame:
+        $ref: "#/components/messages/StartGame"
+      rollDice:
+        $ref: "#/components/messages/RollDice"
+      buildStructure:
+        $ref: "#/components/messages/BuildStructure"
+      proposeTrade:
+        $ref: "#/components/messages/ProposeTrade"
+      respondTrade:
+        $ref: "#/components/messages/RespondTrade"
+      moveRobber:
+        $ref: "#/components/messages/MoveRobber"
+      endTurn:
+        $ref: "#/components/messages/EndTurn"
+      playDevCard:
+        $ref: "#/components/messages/PlayDevCard"
+
+      # Server -> Client messages
+      gameState:
+        $ref: "#/components/messages/GameState"
+      playerJoined:
+        $ref: "#/components/messages/PlayerJoined"
+      playerLeft:
+        $ref: "#/components/messages/PlayerLeft"
+      diceRolled:
+        $ref: "#/components/messages/DiceRolled"
+      buildingPlaced:
+        $ref: "#/components/messages/BuildingPlaced"
+      roadPlaced:
+        $ref: "#/components/messages/RoadPlaced"
+      tradeProposed:
+        $ref: "#/components/messages/TradeProposed"
+      tradeResolved:
+        $ref: "#/components/messages/TradeResolved"
+      robberMoved:
+        $ref: "#/components/messages/RobberMoved"
+      turnChanged:
+        $ref: "#/components/messages/TurnChanged"
+      gameStarted:
+        $ref: "#/components/messages/GameStarted"
+      gameOver:
+        $ref: "#/components/messages/GameOver"
+      error:
+        $ref: "#/components/messages/Error"
+
+components:
+  messages:
+    # ==================== Client -> Server ====================
+    JoinGame:
+      name: JoinGame
+      title: Join Game
+      summary: Client requests to join a game
+      payload:
+        $ref: "#/components/schemas/JoinGameMessage"
+
+    StartGame:
+      name: StartGame
+      title: Start Game
+      summary: Host starts the game
+      payload:
+        $ref: "#/components/schemas/StartGameMessage"
+
+    RollDice:
+      name: RollDice
+      title: Roll Dice
+      summary: Current player rolls the dice
+      payload:
+        $ref: "#/components/schemas/RollDiceMessage"
+
+    BuildStructure:
+      name: BuildStructure
+      title: Build Structure
+      summary: Player builds a settlement, city, or road
+      payload:
+        $ref: "#/components/schemas/BuildStructureMessage"
+
+    ProposeTrade:
+      name: ProposeTrade
+      title: Propose Trade
+      summary: Player proposes a trade
+      payload:
+        $ref: "#/components/schemas/ProposeTradeMessage"
+
+    RespondTrade:
+      name: RespondTrade
+      title: Respond to Trade
+      summary: Player accepts or rejects a trade
+      payload:
+        $ref: "#/components/schemas/RespondTradeMessage"
+
+    MoveRobber:
+      name: MoveRobber
+      title: Move Robber
+      summary: Player moves the robber after rolling 7
+      payload:
+        $ref: "#/components/schemas/MoveRobberMessage"
+
+    EndTurn:
+      name: EndTurn
+      title: End Turn
+      summary: Current player ends their turn
+      payload:
+        $ref: "#/components/schemas/EndTurnMessage"
+
+    PlayDevCard:
+      name: PlayDevCard
+      title: Play Development Card
+      summary: Player plays a development card
+      payload:
+        $ref: "#/components/schemas/PlayDevCardMessage"
+
+    # ==================== Server -> Client ====================
+    GameState:
+      name: GameState
+      title: Game State
+      summary: Full game state sent on connect or major changes
+      payload:
+        $ref: "#/components/schemas/GameStateMessage"
+
+    PlayerJoined:
+      name: PlayerJoined
+      title: Player Joined
+      summary: A new player joined the game
+      payload:
+        $ref: "#/components/schemas/PlayerJoinedMessage"
+
+    PlayerLeft:
+      name: PlayerLeft
+      title: Player Left
+      summary: A player left the game
+      payload:
+        $ref: "#/components/schemas/PlayerLeftMessage"
+
+    DiceRolled:
+      name: DiceRolled
+      title: Dice Rolled
+      summary: Dice were rolled, includes resource distribution
+      payload:
+        $ref: "#/components/schemas/DiceRolledMessage"
+
+    BuildingPlaced:
+      name: BuildingPlaced
+      title: Building Placed
+      summary: A settlement or city was placed
+      payload:
+        $ref: "#/components/schemas/BuildingPlacedMessage"
+
+    RoadPlaced:
+      name: RoadPlaced
+      title: Road Placed
+      summary: A road was placed
+      payload:
+        $ref: "#/components/schemas/RoadPlacedMessage"
+
+    TradeProposed:
+      name: TradeProposed
+      title: Trade Proposed
+      summary: A trade offer was proposed
+      payload:
+        $ref: "#/components/schemas/TradeProposedMessage"
+
+    TradeResolved:
+      name: TradeResolved
+      title: Trade Resolved
+      summary: A trade was accepted or rejected
+      payload:
+        $ref: "#/components/schemas/TradeResolvedMessage"
+
+    RobberMoved:
+      name: RobberMoved
+      title: Robber Moved
+      summary: The robber was moved
+      payload:
+        $ref: "#/components/schemas/RobberMovedMessage"
+
+    TurnChanged:
+      name: TurnChanged
+      title: Turn Changed
+      summary: Turn changed to a new player
+      payload:
+        $ref: "#/components/schemas/TurnChangedMessage"
+
+    GameStarted:
+      name: GameStarted
+      title: Game Started
+      summary: The game has started
+      payload:
+        $ref: "#/components/schemas/GameStartedMessage"
+
+    GameOver:
+      name: GameOver
+      title: Game Over
+      summary: The game has ended
+      payload:
+        $ref: "#/components/schemas/GameOverMessage"
+
+    Error:
+      name: Error
+      title: Error
+      summary: An error occurred
+      payload:
+        $ref: "#/components/schemas/ErrorMessage"
+
+  schemas:
+    # ==================== Enums ====================
+    Resource:
+      type: string
+      enum: [wood, brick, sheep, wheat, ore]
+      description: Resource types (excluding desert)
+
+    TileResource:
+      type: string
+      enum: [wood, brick, sheep, wheat, ore, desert]
+      description: Tile resource types (including desert)
+
+    BuildingType:
+      type: string
+      enum: [settlement, city]
+      description: Building types
+
+    StructureType:
+      type: string
+      enum: [settlement, city, road]
+      description: All structure types including roads
+
+    GameStatus:
+      type: string
+      enum: [waiting, setup, playing, finished]
+      description: Game status phases
+
+    TurnPhase:
+      type: string
+      enum: [roll, trade, build]
+      description: Phases within a turn
+
+    PlayerColor:
+      type: string
+      enum: [red, blue, green, orange]
+      description: Player colors
+
+    DevCardType:
+      type: string
+      enum: [knight, road_building, year_of_plenty, monopoly, victory_point]
+      description: Development card types
+
+    # ==================== Core Types ====================
+    HexCoord:
+      type: object
+      description: Axial coordinates for hex grid
+      required: [q, r]
+      properties:
+        q:
+          type: integer
+          description: Q coordinate (column)
+        r:
+          type: integer
+          description: R coordinate (row)
+
+    Hex:
+      type: object
+      description: A hex tile on the board
+      required: [coord, resource, number]
+      properties:
+        coord:
+          $ref: "#/components/schemas/HexCoord"
+        resource:
+          $ref: "#/components/schemas/TileResource"
+        number:
+          type: integer
+          minimum: 0
+          maximum: 12
+          description: Dice number (0 for desert)
+
+    Building:
+      type: object
+      description: A settlement or city
+      required: [type, ownerId]
+      properties:
+        type:
+          $ref: "#/components/schemas/BuildingType"
+        ownerId:
+          type: string
+
+    Road:
+      type: object
+      description: A road segment
+      required: [ownerId]
+      properties:
+        ownerId:
+          type: string
+
+    Vertex:
+      type: object
+      description: A corner where buildings can be placed
+      required: [id, adjacentHexes]
+      properties:
+        id:
+          type: string
+        adjacentHexes:
+          type: array
+          items:
+            $ref: "#/components/schemas/HexCoord"
+        building:
+          $ref: "#/components/schemas/Building"
+
+    Edge:
+      type: object
+      description: A side where roads can be placed
+      required: [id, vertices]
+      properties:
+        id:
+          type: string
+        vertices:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+        road:
+          $ref: "#/components/schemas/Road"
+
+    ResourceCount:
+      type: object
+      description: Count of each resource
+      properties:
+        wood:
+          type: integer
+          default: 0
+        brick:
+          type: integer
+          default: 0
+        sheep:
+          type: integer
+          default: 0
+        wheat:
+          type: integer
+          default: 0
+        ore:
+          type: integer
+          default: 0
+
+    PlayerState:
+      type: object
+      description: A player's current state
+      required: [id, name, color, resources, victoryPoints]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          $ref: "#/components/schemas/PlayerColor"
+        resources:
+          $ref: "#/components/schemas/ResourceCount"
+        devCardCount:
+          type: integer
+          description: Number of dev cards (hidden from other players)
+        knightsPlayed:
+          type: integer
+        victoryPoints:
+          type: integer
+        connected:
+          type: boolean
+          description: Whether player is currently connected
+
+    BoardState:
+      type: object
+      description: The game board state
+      required: [hexes, vertices, edges, robberHex]
+      properties:
+        hexes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hex"
+        vertices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vertex"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/Edge"
+        robberHex:
+          $ref: "#/components/schemas/HexCoord"
+
+    GameState:
+      type: object
+      description: Complete game state
+      required: [id, code, board, players, currentTurn, turnPhase, dice, status]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+          description: 6-character join code
+        board:
+          $ref: "#/components/schemas/BoardState"
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerState"
+        currentTurn:
+          type: integer
+          description: Index of current player
+        turnPhase:
+          $ref: "#/components/schemas/TurnPhase"
+        dice:
+          type: array
+          items:
+            type: integer
+          minItems: 2
+          maxItems: 2
+        status:
+          $ref: "#/components/schemas/GameStatus"
+        longestRoadPlayerId:
+          type: string
+        largestArmyPlayerId:
+          type: string
+        setupPhaseRound:
+          type: integer
+          description: Current round in setup phase (1 or 2)
+
+    TradeOffer:
+      type: object
+      description: A trade offer between players
+      required: [id, proposerId, offering, requesting, status]
+      properties:
+        id:
+          type: string
+        proposerId:
+          type: string
+        targetId:
+          type: string
+          description: Specific target player, or empty for open offer
+        offering:
+          $ref: "#/components/schemas/ResourceCount"
+        requesting:
+          $ref: "#/components/schemas/ResourceCount"
+        status:
+          type: string
+          enum: [pending, accepted, rejected, cancelled]
+
+    # ==================== Client -> Server Message Schemas ====================
+    JoinGameMessage:
+      type: object
+      required: [type, gameId]
+      properties:
+        type:
+          type: string
+          const: JOIN_GAME
+        gameId:
+          type: string
+
+    StartGameMessage:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: START_GAME
+
+    RollDiceMessage:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: ROLL_DICE
+
+    BuildStructureMessage:
+      type: object
+      required: [type, structureType, location]
+      properties:
+        type:
+          type: string
+          const: BUILD
+        structureType:
+          $ref: "#/components/schemas/StructureType"
+        location:
+          type: string
+          description: Vertex ID for buildings, Edge ID for roads
+
+    ProposeTradeMessage:
+      type: object
+      required: [type, offering, requesting]
+      properties:
+        type:
+          type: string
+          const: PROPOSE_TRADE
+        targetId:
+          type: string
+          description: Optional specific target player
+        offering:
+          $ref: "#/components/schemas/ResourceCount"
+        requesting:
+          $ref: "#/components/schemas/ResourceCount"
+
+    RespondTradeMessage:
+      type: object
+      required: [type, tradeId, accept]
+      properties:
+        type:
+          type: string
+          const: RESPOND_TRADE
+        tradeId:
+          type: string
+        accept:
+          type: boolean
+
+    MoveRobberMessage:
+      type: object
+      required: [type, hex]
+      properties:
+        type:
+          type: string
+          const: MOVE_ROBBER
+        hex:
+          $ref: "#/components/schemas/HexCoord"
+        victimId:
+          type: string
+          description: Player to steal from (if any adjacent)
+
+    EndTurnMessage:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: END_TURN
+
+    PlayDevCardMessage:
+      type: object
+      required: [type, cardType]
+      properties:
+        type:
+          type: string
+          const: PLAY_DEV_CARD
+        cardType:
+          $ref: "#/components/schemas/DevCardType"
+        # Additional fields depending on card type
+        targetResource:
+          $ref: "#/components/schemas/Resource"
+          description: For monopoly
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resource"
+          description: For year of plenty (2 resources)
+
+    # ==================== Server -> Client Message Schemas ====================
+    GameStateMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: GAME_STATE
+        payload:
+          $ref: "#/components/schemas/GameState"
+
+    PlayerJoinedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: PLAYER_JOINED
+        payload:
+          type: object
+          required: [player]
+          properties:
+            player:
+              $ref: "#/components/schemas/PlayerState"
+
+    PlayerLeftMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: PLAYER_LEFT
+        payload:
+          type: object
+          required: [playerId]
+          properties:
+            playerId:
+              type: string
+
+    DiceRolledMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: DICE_ROLLED
+        payload:
+          type: object
+          required: [playerId, values]
+          properties:
+            playerId:
+              type: string
+            values:
+              type: array
+              items:
+                type: integer
+              minItems: 2
+              maxItems: 2
+            resourcesDistributed:
+              type: array
+              items:
+                type: object
+                properties:
+                  playerId:
+                    type: string
+                  resources:
+                    $ref: "#/components/schemas/ResourceCount"
+
+    BuildingPlacedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: BUILDING_PLACED
+        payload:
+          type: object
+          required: [playerId, buildingType, vertexId]
+          properties:
+            playerId:
+              type: string
+            buildingType:
+              $ref: "#/components/schemas/BuildingType"
+            vertexId:
+              type: string
+
+    RoadPlacedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: ROAD_PLACED
+        payload:
+          type: object
+          required: [playerId, edgeId]
+          properties:
+            playerId:
+              type: string
+            edgeId:
+              type: string
+
+    TradeProposedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: TRADE_PROPOSED
+        payload:
+          $ref: "#/components/schemas/TradeOffer"
+
+    TradeResolvedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: TRADE_RESOLVED
+        payload:
+          type: object
+          required: [tradeId, accepted]
+          properties:
+            tradeId:
+              type: string
+            accepted:
+              type: boolean
+            acceptedBy:
+              type: string
+              description: Player who accepted (if accepted)
+
+    RobberMovedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: ROBBER_MOVED
+        payload:
+          type: object
+          required: [playerId, hex]
+          properties:
+            playerId:
+              type: string
+            hex:
+              $ref: "#/components/schemas/HexCoord"
+            victimId:
+              type: string
+            stolenResource:
+              $ref: "#/components/schemas/Resource"
+              description: Only visible to thief and victim
+
+    TurnChangedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: TURN_CHANGED
+        payload:
+          type: object
+          required: [activePlayerId, phase]
+          properties:
+            activePlayerId:
+              type: string
+            phase:
+              $ref: "#/components/schemas/TurnPhase"
+
+    GameStartedMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: GAME_STARTED
+        payload:
+          $ref: "#/components/schemas/GameState"
+
+    GameOverMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: GAME_OVER
+        payload:
+          type: object
+          required: [winnerId, scores]
+          properties:
+            winnerId:
+              type: string
+            scores:
+              type: array
+              items:
+                type: object
+                required: [playerId, points]
+                properties:
+                  playerId:
+                    type: string
+                  points:
+                    type: integer
+
+    ErrorMessage:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: ERROR
+        payload:
+          type: object
+          required: [message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    # ==================== REST API Schemas ====================
+    CreateGameRequest:
+      type: object
+      required: [playerName]
+      properties:
+        playerName:
+          type: string
+          minLength: 1
+          maxLength: 20
+
+    CreateGameResponse:
+      type: object
+      required: [gameId, code, sessionToken, playerId]
+      properties:
+        gameId:
+          type: string
+        code:
+          type: string
+        sessionToken:
+          type: string
+        playerId:
+          type: string
+
+    JoinGameRequest:
+      type: object
+      required: [playerName]
+      properties:
+        playerName:
+          type: string
+          minLength: 1
+          maxLength: 20
+
+    JoinGameResponse:
+      type: object
+      required: [gameId, sessionToken, playerId, players]
+      properties:
+        gameId:
+          type: string
+        sessionToken:
+          type: string
+        playerId:
+          type: string
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              color:
+                $ref: "#/components/schemas/PlayerColor"
+
+    GameInfoResponse:
+      type: object
+      required: [code, status, playerCount, players]
+      properties:
+        code:
+          type: string
+        status:
+          $ref: "#/components/schemas/GameStatus"
+        playerCount:
+          type: integer
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              color:
+                $ref: "#/components/schemas/PlayerColor"

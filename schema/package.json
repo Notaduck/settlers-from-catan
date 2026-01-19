@@ -1,0 +1,19 @@
+{
+  "name": "settlers-schema",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Schema and type generation for Settlers from Catan",
+  "scripts": {
+    "generate:ts": "node scripts/generate-ts.mjs",
+    "generate:go": "node scripts/generate-go.mjs",
+    "generate": "npm run generate:ts && npm run generate:go",
+    "docs": "npx @asyncapi/generator asyncapi.yaml @asyncapi/html-template -o ../docs/api"
+  },
+  "dependencies": {
+    "yaml": "^2.4.1"
+  },
+  "devDependencies": {
+    "@asyncapi/generator": "^2.5.0",
+    "@asyncapi/html-template": "^2.3.0"
+  }
+}

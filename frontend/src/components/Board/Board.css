@@ -1,0 +1,32 @@
+.board-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0a3d62 0%, #0d4a75 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  min-height: 550px;
+  min-width: 550px;
+  flex: 1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.board-svg {
+  width: 100%;
+  height: auto;
+  min-height: 500px;
+}
+
+.hex-tile {
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.hex-tile:hover .hex-polygon {
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.robber {
+  pointer-events: none;
+}

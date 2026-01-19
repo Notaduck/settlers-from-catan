@@ -1,0 +1,389 @@
+{
+  "stats": {
+    "suites": 7,
+    "tests": 8,
+    "passes": 0,
+    "pending": 0,
+    "failures": 8,
+    "start": "2026-01-15T20:33:13.656Z",
+    "end": "2026-01-15T20:37:14.824Z",
+    "duration": 241168,
+    "testsRegistered": 8,
+    "passPercent": 0,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "247ce55c-024f-44af-a0e5-1283edcf1311",
+      "title": "",
+      "fullFile": "cypress/e2e/game-flow.cy.ts",
+      "file": "cypress/e2e/game-flow.cy.ts",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "ef4a7f1b-5387-4ce5-a9f9-65b8621ca3c3",
+          "title": "Catan Game Flow",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [],
+          "suites": [
+            {
+              "uuid": "f2dbdc45-b70d-4842-86df-11c0f1df9204",
+              "title": "Lobby",
+              "fullFile": "",
+              "file": "",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "should create a new game and show lobby",
+                  "fullTitle": "Catan Game Flow Lobby should create a new game and show lobby",
+                  "timedOut": null,
+                  "duration": 30115,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "cy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"Player1\" },\n}).then(function (response) {\n    var _a = response.body, code = _a.code, sessionToken = _a.sessionToken, playerId = _a.playerId;\n    visitAsPlayer(code, sessionToken, playerId);\n    // Should show the game lobby\n    waitForLobby();\n    cy.contains(\"Player1\").should(\"be.visible\");\n    cy.contains(\"Game Code\").should(\"be.visible\");\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:50:8)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "e075a4eb-9362-453e-86b9-c12a89861ac7",
+                  "parentUUID": "f2dbdc45-b70d-4842-86df-11c0f1df9204",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "should join an existing game",
+                  "fullTitle": "Catan Game Flow Lobby should join an existing game",
+                  "timedOut": null,
+                  "duration": 30115,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "// First create a game via API\ncy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"Host\" },\n}).then(function (response) {\n    var gameCode = response.body.code;\n    var hostToken = response.body.sessionToken;\n    var hostPlayerId = response.body.playerId;\n    return cy\n        .request({\n        method: \"POST\",\n        url: \"http://localhost:8080/api/games/\".concat(gameCode, \"/join\"),\n        body: { playerName: \"Player2\" },\n    })\n        .then(function (joinResponse) {\n        var _a = joinResponse.body, sessionToken = _a.sessionToken, playerId = _a.playerId;\n        visitAsPlayer(gameCode, sessionToken, playerId);\n        // Should see the lobby with both players\n        waitForLobby();\n        cy.contains(\"Player2\").should(\"be.visible\");\n        cy.contains(\"Host\").should(\"be.visible\");\n    })\n        .then(function () {\n        // Ensure host can also see lobby if needed\n        visitAsPlayer(gameCode, hostToken, hostPlayerId);\n    });\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:78:12)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "f347e576-0c62-4538-b5ad-32ef65c34417",
+                  "parentUUID": "f2dbdc45-b70d-4842-86df-11c0f1df9204",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [],
+              "failures": [
+                "e075a4eb-9362-453e-86b9-c12a89861ac7",
+                "f347e576-0c62-4538-b5ad-32ef65c34417"
+              ],
+              "pending": [],
+              "skipped": [],
+              "duration": 60230,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 2000
+            },
+            {
+              "uuid": "e1030f8b-318f-4870-a1f3-251dd8b92c58",
+              "title": "Ready System",
+              "fullFile": "",
+              "file": "",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "should allow players to toggle ready state",
+                  "fullTitle": "Catan Game Flow Ready System should allow players to toggle ready state",
+                  "timedOut": null,
+                  "duration": 30125,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "cy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"TestPlayer\" },\n}).then(function (response) {\n    var _a = response.body, code = _a.code, sessionToken = _a.sessionToken, playerId = _a.playerId;\n    visitAsPlayer(code, sessionToken, playerId);\n    // Wait for lobby to load\n    waitForLobby();\n});\n// Player should see Ready button\ncy.get(\"button\").contains(\"I'm Ready\").should(\"be.visible\");\n// Click ready\ncy.get(\"button\").contains(\"I'm Ready\").click();\n// Should show as ready (button changes to \"Not Ready\" or shows checkmark)\ncy.get(\"button\").contains(\"Cancel Ready\").should(\"be.visible\");\ncy.contains(\"✓ Ready\").should(\"be.visible\");",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:101:8)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "6deca9c0-b9bf-4390-87b8-cc84f3f54168",
+                  "parentUUID": "e1030f8b-318f-4870-a1f3-251dd8b92c58",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [],
+              "failures": [
+                "6deca9c0-b9bf-4390-87b8-cc84f3f54168"
+              ],
+              "pending": [],
+              "skipped": [],
+              "duration": 30125,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 2000
+            },
+            {
+              "uuid": "f65c37ca-bffe-4a67-ad17-c76593f8d6cc",
+              "title": "Two Player Lobby",
+              "fullFile": "",
+              "file": "",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "should show both players in lobby",
+                  "fullTitle": "Catan Game Flow Two Player Lobby should show both players in lobby",
+                  "timedOut": null,
+                  "duration": 30121,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "// This test simulates two browser windows\n// First, create a game and store the code\nvar gameCode;\nvar hostToken;\ncy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"Host\" },\n})\n    .then(function (response) {\n    gameCode = response.body.code;\n    hostToken = response.body.sessionToken;\n    // Join as second player\n    return cy.request({\n        method: \"POST\",\n        url: \"http://localhost:8080/api/games/\".concat(gameCode, \"/join\"),\n        body: { playerName: \"Guest\" },\n    });\n})\n    .then(function (joinResponse) {\n    var guestToken = joinResponse.body.sessionToken;\n    var guestPlayerId = joinResponse.body.playerId;\n    // Visit as guest\n    visitAsPlayer(gameCode, guestToken, guestPlayerId);\n    // Should auto-connect and show lobby\n    waitForLobby();\n    cy.contains(\"Host\").should(\"be.visible\");\n    cy.contains(\"Guest\").should(\"be.visible\");\n    // Both players should be listed\n    cy.get(\".player-item\").should(\"have.length\", 2);\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:147:10)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "d77ba908-96df-4d72-8b85-3da4b4b7c636",
+                  "parentUUID": "f65c37ca-bffe-4a67-ad17-c76593f8d6cc",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [],
+              "failures": [
+                "d77ba908-96df-4d72-8b85-3da4b4b7c636"
+              ],
+              "pending": [],
+              "skipped": [],
+              "duration": 30121,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 2000
+            },
+            {
+              "uuid": "5c3aca0e-1d49-400c-a509-8539cde55c85",
+              "title": "Board Rendering",
+              "fullFile": "",
+              "file": "",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "should load the lobby after creating a game",
+                  "fullTitle": "Catan Game Flow Board Rendering should load the lobby after creating a game",
+                  "timedOut": null,
+                  "duration": 30128,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "// Create game with enough players and start it\nvar gameCode;\ncy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"Host\" },\n}).then(function (response) {\n    gameCode = response.body.code;\n    var hostToken = response.body.sessionToken;\n    var hostPlayerId = response.body.playerId;\n    // Join as second player\n    return cy\n        .request({\n        method: \"POST\",\n        url: \"http://localhost:8080/api/games/\".concat(gameCode, \"/join\"),\n        body: { playerName: \"Guest\" },\n    })\n        .then(function () {\n        // Use host's session to view the game\n        visitAsPlayer(gameCode, hostToken, hostPlayerId);\n        // Wait for lobby\n        waitForLobby();\n        // Mark self as ready\n        cy.get(\"button\").contains(\"I'm Ready\").click();\n        // Check that both players are in the list\n        cy.get(\".player-item\").should(\"have.length\", 2);\n    });\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:183:12)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "39584493-b1ad-4bdb-8dd1-d3d7237692a9",
+                  "parentUUID": "5c3aca0e-1d49-400c-a509-8539cde55c85",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "should load the lobby for a two-player game",
+                  "fullTitle": "Catan Game Flow Board Rendering should load the lobby for a two-player game",
+                  "timedOut": null,
+                  "duration": 30120,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "cy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"TestHost\" },\n}).then(function (response) {\n    var _a = response.body, code = _a.code, sessionToken = _a.sessionToken, playerId = _a.playerId;\n    // Add second player\n    return cy\n        .request({\n        method: \"POST\",\n        url: \"http://localhost:8080/api/games/\".concat(code, \"/join\"),\n        body: { playerName: \"TestGuest\" },\n    })\n        .then(function () {\n        visitAsPlayer(code, sessionToken, playerId);\n        waitForLobby();\n    });\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:213:12)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "72d01e06-689f-4d53-9805-e651092b673d",
+                  "parentUUID": "5c3aca0e-1d49-400c-a509-8539cde55c85",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [],
+              "failures": [
+                "39584493-b1ad-4bdb-8dd1-d3d7237692a9",
+                "72d01e06-689f-4d53-9805-e651092b673d"
+              ],
+              "pending": [],
+              "skipped": [],
+              "duration": 60248,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 2000
+            },
+            {
+              "uuid": "7a146e46-64b3-40d7-bab0-a3709889fb64",
+              "title": "Full Game Flow Visual Test",
+              "fullFile": "",
+              "file": "",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "should complete a full lobby to game transition",
+                  "fullTitle": "Catan Game Flow Full Game Flow Visual Test should complete a full lobby to game transition",
+                  "timedOut": null,
+                  "duration": 30116,
+                  "state": "failed",
+                  "speed": null,
+                  "pass": false,
+                  "fail": true,
+                  "pending": false,
+                  "context": null,
+                  "code": "cy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"Alice\" },\n}).then(function (response) {\n    var _a = response.body, code = _a.code, sessionToken = _a.sessionToken, playerId = _a.playerId;\n    visitAsPlayer(code, sessionToken, playerId);\n    // Verify the UI state\n    waitForLobby();\n    cy.contains(\"Alice\").should(\"be.visible\");\n    cy.contains(\"Players (1/4)\").should(\"be.visible\");\n    // The Ready button should be visible\n    cy.get(\"button\").contains(\"I'm Ready\").should(\"be.visible\");\n    // Start Game button should NOT be visible with only 1 player\n    cy.get(\"button\").contains(\"Start Game\").should(\"not.exist\");\n});",
+                  "err": {
+                    "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                    "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:33:7)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:228:8)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                    "diff": null
+                  },
+                  "uuid": "0a8856e3-8ee6-4f35-b430-995df531ffdf",
+                  "parentUUID": "7a146e46-64b3-40d7-bab0-a3709889fb64",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [],
+              "failures": [
+                "0a8856e3-8ee6-4f35-b430-995df531ffdf"
+              ],
+              "pending": [],
+              "skipped": [],
+              "duration": 30116,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 2000
+            }
+          ],
+          "passes": [],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 0,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        },
+        {
+          "uuid": "b6e28927-4ac8-4686-bff1-1a619f123d97",
+          "title": "Board Visual Tests",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "should render hexes without NaN coordinates",
+              "fullTitle": "Board Visual Tests should render hexes without NaN coordinates",
+              "timedOut": null,
+              "duration": 30141,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
+              "pending": false,
+              "context": null,
+              "code": "// Setup: Create and join game, then check board\ncy.request({\n    method: \"POST\",\n    url: \"http://localhost:8080/api/games\",\n    body: { playerName: \"BoardTest\" },\n}).then(function (response) {\n    var _a = response.body, sessionToken = _a.sessionToken, playerId = _a.playerId;\n    // For this test we need to manually trigger game start\n    // by updating game status in DB or using WebSocket\n    visitAsPlayer(response.body.code, sessionToken, playerId);\n    // Wait for page to load\n    waitForLobby();\n    // Verify we're on the game page\n    cy.url().should(\"include\", \"/\");\n});",
+              "err": {
+                "message": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer",
+                "estack": "CypressError: `cy.visit()` failed trying to load:\n\nhttp://localhost:3000/\n\nWe attempted to make an http request to this URL but the request failed without a response.\n\nWe received this error at the network level:\n\n  > Error: ESOCKETTIMEDOUT\n\nCommon situations why this would fail:\n  - you don't have internet access\n  - you forgot to run / boot your web server\n  - your web server isn't accessible\n  - you have weird network configuration settings on your computer\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134880:74)\n    at visitFailedByErr (http://localhost:3000/__cypress/runner/cypress_runner.js:134454:12)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:134879:11)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1667:18)\n    at _drainQueueStep (http://localhost:3000/__cypress/runner/cypress_runner.js:2377:12)\n    at _drainQueue (http://localhost:3000/__cypress/runner/cypress_runner.js:2370:9)\n    at Async._drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2386:5)\n    at Async.drainQueues (http://localhost:3000/__cypress/runner/cypress_runner.js:2256:14)\nFrom Your Spec Code:\n    at visitAsPlayer (webpack://frontend/./cypress/e2e/game-flow.cy.ts:8:5)\n    at Context.eval (webpack://frontend/./cypress/e2e/game-flow.cy.ts:257:6)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122690:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122701:66)\n    at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:122952:21)\n    at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146050:19)\n\nFrom Node.js Internals:\n  Error: ESOCKETTIMEDOUT\n      at ClientRequest.<anonymous> (<embedded>:314:116346)\n      at Object.onceWrapper (node:events:633:28)\n      at ClientRequest.emit (node:events:519:28)\n      at Socket.emitRequestTimeout (node:_http_client:863:9)\n      at Object.onceWrapper (node:events:633:28)\n      at Socket.emit (node:events:531:35)\n      at Socket._onTimeout (node:net:604:8)\n      at listOnTimeout (node:internal/timers:588:17)\n      at process.processTimers (node:internal/timers:523:7)",
+                "diff": null
+              },
+              "uuid": "71b7a9e6-74ab-4ece-a167-a9f34824bc78",
+              "parentUUID": "b6e28927-4ac8-4686-bff1-1a619f123d97",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [],
+          "failures": [
+            "71b7a9e6-74ab-4ece-a167-a9f34824bc78"
+          ],
+          "pending": [],
+          "skipped": [],
+          "duration": 30141,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.4"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress/results",
+        "overwrite": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.3.2"
+    }
+  }
+}

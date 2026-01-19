@@ -1,0 +1,8 @@
+**/node_modules/*
+**/vendor/*
+**/.git/*
+**/dist/*
+**/build/*
+**/*.exe
+**/*.test
+**/*.out

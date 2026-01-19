@@ -1,0 +1,143 @@
+.lobby {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.lobby-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-card h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #e0e0e0;
+}
+
+.lobby-error {
+  background: #ff4444;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.lobby-form {
+  margin-bottom: 1.5rem;
+}
+
+.lobby-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #b0b0b0;
+}
+
+.lobby-form input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #16162a;
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.lobby-form input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lobby-section h3 {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.lobby-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lobby-divider::before,
+.lobby-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #333;
+}
+
+.lobby-divider span {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.join-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.code-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #16162a;
+  color: #e0e0e0;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.code-input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  width: 100%;
+  background: #646cff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #535bf2;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #e0e0e0;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #444;
+}

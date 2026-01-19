@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+frontend/dist/
+backend/bin/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+*.local
+
+# Testing
+coverage/
+
+# Misc
+.tmp/
+tmp/
