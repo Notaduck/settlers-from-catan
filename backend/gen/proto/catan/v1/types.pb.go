@@ -1126,7 +1126,8 @@ type GameState struct {
 	Status              GameStatus             `protobuf:"varint,8,opt,name=status,proto3,enum=catan.v1.GameStatus" json:"status,omitempty"`
 	LongestRoadPlayerId *string                `protobuf:"bytes,9,opt,name=longest_road_player_id,json=longestRoadPlayerId,proto3,oneof" json:"longest_road_player_id,omitempty"`
 	LargestArmyPlayerId *string                `protobuf:"bytes,10,opt,name=largest_army_player_id,json=largestArmyPlayerId,proto3,oneof" json:"largest_army_player_id,omitempty"`
-	SetupPhase          *SetupPhase            `protobuf:"bytes,11,opt,name=setup_phase,json=setupPhase,proto3,oneof" json:"setup_phase,omitempty"` // Present during setup status
+	SetupPhase          *SetupPhase            `protobuf:"bytes,11,opt,name=setup_phase,json=setupPhase,proto3,oneof" json:"setup_phase,omitempty"`    // Present during setup status
+	RobberPhase         *RobberPhase           `protobuf:"bytes,12,opt,name=robber_phase,json=robberPhase,proto3,oneof" json:"robber_phase,omitempty"` // Present during robber actions
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1238,6 +1239,86 @@ func (x *GameState) GetSetupPhase() *SetupPhase {
 	return nil
 }
 
+func (x *GameState) GetRobberPhase() *RobberPhase {
+	if x != nil {
+		return x.RobberPhase
+	}
+	return nil
+}
+
+// Tracks the Robber phase state, including pending discards and steps.
+type RobberPhase struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Player IDs still required to discard (if >7 cards when 7 is rolled).
+	DiscardPending []string `protobuf:"bytes,1,rep,name=discard_pending,json=discardPending,proto3" json:"discard_pending,omitempty"`
+	// How many cards each player must discard.
+	DiscardRequired map[string]int32 `protobuf:"bytes,2,rep,name=discard_required,json=discardRequired,proto3" json:"discard_required,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	// Player ID currently expected to move the robber (usually the roller).
+	MovePendingPlayerId *string `protobuf:"bytes,3,opt,name=move_pending_player_id,json=movePendingPlayerId,proto3,oneof" json:"move_pending_player_id,omitempty"`
+	// Player ID currently expected to perform a steal (if any).
+	StealPendingPlayerId *string `protobuf:"bytes,4,opt,name=steal_pending_player_id,json=stealPendingPlayerId,proto3,oneof" json:"steal_pending_player_id,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *RobberPhase) Reset() {
+	*x = RobberPhase{}
+	mi := &file_catan_v1_types_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RobberPhase) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RobberPhase) ProtoMessage() {}
+
+func (x *RobberPhase) ProtoReflect() protoreflect.Message {
+	mi := &file_catan_v1_types_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RobberPhase.ProtoReflect.Descriptor instead.
+func (*RobberPhase) Descriptor() ([]byte, []int) {
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RobberPhase) GetDiscardPending() []string {
+	if x != nil {
+		return x.DiscardPending
+	}
+	return nil
+}
+
+func (x *RobberPhase) GetDiscardRequired() map[string]int32 {
+	if x != nil {
+		return x.DiscardRequired
+	}
+	return nil
+}
+
+func (x *RobberPhase) GetMovePendingPlayerId() string {
+	if x != nil && x.MovePendingPlayerId != nil {
+		return *x.MovePendingPlayerId
+	}
+	return ""
+}
+
+func (x *RobberPhase) GetStealPendingPlayerId() string {
+	if x != nil && x.StealPendingPlayerId != nil {
+		return *x.StealPendingPlayerId
+	}
+	return ""
+}
+
 // A trade offer between players
 type TradeOffer struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1253,7 +1334,7 @@ type TradeOffer struct {
 
 func (x *TradeOffer) Reset() {
 	*x = TradeOffer{}
-	mi := &file_catan_v1_types_proto_msgTypes[10]
+	mi := &file_catan_v1_types_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1265,7 +1346,7 @@ func (x *TradeOffer) String() string {
 func (*TradeOffer) ProtoMessage() {}
 
 func (x *TradeOffer) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[10]
+	mi := &file_catan_v1_types_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1278,7 +1359,7 @@ func (x *TradeOffer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeOffer.ProtoReflect.Descriptor instead.
 func (*TradeOffer) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{10}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TradeOffer) GetId() string {
@@ -1334,7 +1415,7 @@ type SetupPhase struct {
 
 func (x *SetupPhase) Reset() {
 	*x = SetupPhase{}
-	mi := &file_catan_v1_types_proto_msgTypes[11]
+	mi := &file_catan_v1_types_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1346,7 +1427,7 @@ func (x *SetupPhase) String() string {
 func (*SetupPhase) ProtoMessage() {}
 
 func (x *SetupPhase) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[11]
+	mi := &file_catan_v1_types_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1440,7 @@ func (x *SetupPhase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetupPhase.ProtoReflect.Descriptor instead.
 func (*SetupPhase) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{11}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SetupPhase) GetRound() int32 {
@@ -1385,7 +1466,7 @@ type CreateGameRequest struct {
 
 func (x *CreateGameRequest) Reset() {
 	*x = CreateGameRequest{}
-	mi := &file_catan_v1_types_proto_msgTypes[12]
+	mi := &file_catan_v1_types_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1478,7 @@ func (x *CreateGameRequest) String() string {
 func (*CreateGameRequest) ProtoMessage() {}
 
 func (x *CreateGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[12]
+	mi := &file_catan_v1_types_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1491,7 @@ func (x *CreateGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGameRequest.ProtoReflect.Descriptor instead.
 func (*CreateGameRequest) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{12}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CreateGameRequest) GetPlayerName() string {
@@ -1432,7 +1513,7 @@ type CreateGameResponse struct {
 
 func (x *CreateGameResponse) Reset() {
 	*x = CreateGameResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[13]
+	mi := &file_catan_v1_types_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1444,7 +1525,7 @@ func (x *CreateGameResponse) String() string {
 func (*CreateGameResponse) ProtoMessage() {}
 
 func (x *CreateGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[13]
+	mi := &file_catan_v1_types_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1457,7 +1538,7 @@ func (x *CreateGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGameResponse.ProtoReflect.Descriptor instead.
 func (*CreateGameResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{13}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateGameResponse) GetGameId() string {
@@ -1497,7 +1578,7 @@ type JoinGameRequest struct {
 
 func (x *JoinGameRequest) Reset() {
 	*x = JoinGameRequest{}
-	mi := &file_catan_v1_types_proto_msgTypes[14]
+	mi := &file_catan_v1_types_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1509,7 +1590,7 @@ func (x *JoinGameRequest) String() string {
 func (*JoinGameRequest) ProtoMessage() {}
 
 func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[14]
+	mi := &file_catan_v1_types_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1522,7 +1603,7 @@ func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameRequest.ProtoReflect.Descriptor instead.
 func (*JoinGameRequest) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{14}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *JoinGameRequest) GetPlayerName() string {
@@ -1544,7 +1625,7 @@ type JoinGameResponse struct {
 
 func (x *JoinGameResponse) Reset() {
 	*x = JoinGameResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[15]
+	mi := &file_catan_v1_types_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1556,7 +1637,7 @@ func (x *JoinGameResponse) String() string {
 func (*JoinGameResponse) ProtoMessage() {}
 
 func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[15]
+	mi := &file_catan_v1_types_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1569,7 +1650,7 @@ func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameResponse.ProtoReflect.Descriptor instead.
 func (*JoinGameResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{15}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *JoinGameResponse) GetGameId() string {
@@ -1611,7 +1692,7 @@ type PlayerInfo struct {
 
 func (x *PlayerInfo) Reset() {
 	*x = PlayerInfo{}
-	mi := &file_catan_v1_types_proto_msgTypes[16]
+	mi := &file_catan_v1_types_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1623,7 +1704,7 @@ func (x *PlayerInfo) String() string {
 func (*PlayerInfo) ProtoMessage() {}
 
 func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[16]
+	mi := &file_catan_v1_types_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1636,7 +1717,7 @@ func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerInfo.ProtoReflect.Descriptor instead.
 func (*PlayerInfo) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{16}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PlayerInfo) GetId() string {
@@ -1672,7 +1753,7 @@ type GameInfoResponse struct {
 
 func (x *GameInfoResponse) Reset() {
 	*x = GameInfoResponse{}
-	mi := &file_catan_v1_types_proto_msgTypes[17]
+	mi := &file_catan_v1_types_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1684,7 +1765,7 @@ func (x *GameInfoResponse) String() string {
 func (*GameInfoResponse) ProtoMessage() {}
 
 func (x *GameInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_types_proto_msgTypes[17]
+	mi := &file_catan_v1_types_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1697,7 +1778,7 @@ func (x *GameInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameInfoResponse.ProtoReflect.Descriptor instead.
 func (*GameInfoResponse) Descriptor() ([]byte, []int) {
-	return file_catan_v1_types_proto_rawDescGZIP(), []int{17}
+	return file_catan_v1_types_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GameInfoResponse) GetCode() string {
@@ -1779,7 +1860,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\bvertices\x18\x02 \x03(\v2\x10.catan.v1.VertexR\bvertices\x12$\n" +
 	"\x05edges\x18\x03 \x03(\v2\x0e.catan.v1.EdgeR\x05edges\x121\n" +
 	"\n" +
-	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\"\x9b\x04\n" +
+	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\"\xeb\x04\n" +
 	"\tGameState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12*\n" +
@@ -1794,10 +1875,22 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x16largest_army_player_id\x18\n" +
 	" \x01(\tH\x01R\x13largestArmyPlayerId\x88\x01\x01\x12:\n" +
 	"\vsetup_phase\x18\v \x01(\v2\x14.catan.v1.SetupPhaseH\x02R\n" +
-	"setupPhase\x88\x01\x01B\x19\n" +
+	"setupPhase\x88\x01\x01\x12=\n" +
+	"\frobber_phase\x18\f \x01(\v2\x15.catan.v1.RobberPhaseH\x03R\vrobberPhase\x88\x01\x01B\x19\n" +
 	"\x17_longest_road_player_idB\x19\n" +
 	"\x17_largest_army_player_idB\x0e\n" +
-	"\f_setup_phase\"\x8a\x02\n" +
+	"\f_setup_phaseB\x0f\n" +
+	"\r_robber_phase\"\xfe\x02\n" +
+	"\vRobberPhase\x12'\n" +
+	"\x0fdiscard_pending\x18\x01 \x03(\tR\x0ediscardPending\x12U\n" +
+	"\x10discard_required\x18\x02 \x03(\v2*.catan.v1.RobberPhase.DiscardRequiredEntryR\x0fdiscardRequired\x128\n" +
+	"\x16move_pending_player_id\x18\x03 \x01(\tH\x00R\x13movePendingPlayerId\x88\x01\x01\x12:\n" +
+	"\x17steal_pending_player_id\x18\x04 \x01(\tH\x01R\x14stealPendingPlayerId\x88\x01\x01\x1aB\n" +
+	"\x14DiscardRequiredEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01B\x19\n" +
+	"\x17_move_pending_player_idB\x1a\n" +
+	"\x18_steal_pending_player_id\"\x8a\x02\n" +
 	"\n" +
 	"TradeOffer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
@@ -1912,7 +2005,7 @@ func file_catan_v1_types_proto_rawDescGZIP() []byte {
 }
 
 var file_catan_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
-var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_catan_v1_types_proto_goTypes = []any{
 	(Resource)(0),              // 0: catan.v1.Resource
 	(TileResource)(0),          // 1: catan.v1.TileResource
@@ -1933,14 +2026,16 @@ var file_catan_v1_types_proto_goTypes = []any{
 	(*PlayerState)(nil),        // 16: catan.v1.PlayerState
 	(*BoardState)(nil),         // 17: catan.v1.BoardState
 	(*GameState)(nil),          // 18: catan.v1.GameState
-	(*TradeOffer)(nil),         // 19: catan.v1.TradeOffer
-	(*SetupPhase)(nil),         // 20: catan.v1.SetupPhase
-	(*CreateGameRequest)(nil),  // 21: catan.v1.CreateGameRequest
-	(*CreateGameResponse)(nil), // 22: catan.v1.CreateGameResponse
-	(*JoinGameRequest)(nil),    // 23: catan.v1.JoinGameRequest
-	(*JoinGameResponse)(nil),   // 24: catan.v1.JoinGameResponse
-	(*PlayerInfo)(nil),         // 25: catan.v1.PlayerInfo
-	(*GameInfoResponse)(nil),   // 26: catan.v1.GameInfoResponse
+	(*RobberPhase)(nil),        // 19: catan.v1.RobberPhase
+	(*TradeOffer)(nil),         // 20: catan.v1.TradeOffer
+	(*SetupPhase)(nil),         // 21: catan.v1.SetupPhase
+	(*CreateGameRequest)(nil),  // 22: catan.v1.CreateGameRequest
+	(*CreateGameResponse)(nil), // 23: catan.v1.CreateGameResponse
+	(*JoinGameRequest)(nil),    // 24: catan.v1.JoinGameRequest
+	(*JoinGameResponse)(nil),   // 25: catan.v1.JoinGameResponse
+	(*PlayerInfo)(nil),         // 26: catan.v1.PlayerInfo
+	(*GameInfoResponse)(nil),   // 27: catan.v1.GameInfoResponse
+	nil,                        // 28: catan.v1.RobberPhase.DiscardRequiredEntry
 }
 var file_catan_v1_types_proto_depIdxs = []int32{
 	9,  // 0: catan.v1.Hex.coord:type_name -> catan.v1.HexCoord
@@ -1959,19 +2054,21 @@ var file_catan_v1_types_proto_depIdxs = []int32{
 	16, // 13: catan.v1.GameState.players:type_name -> catan.v1.PlayerState
 	5,  // 14: catan.v1.GameState.turn_phase:type_name -> catan.v1.TurnPhase
 	4,  // 15: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
-	20, // 16: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
-	15, // 17: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
-	15, // 18: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
-	8,  // 19: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
-	25, // 20: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
-	6,  // 21: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
-	4,  // 22: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
-	25, // 23: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	21, // 16: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
+	19, // 17: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
+	28, // 18: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
+	15, // 19: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
+	15, // 20: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
+	8,  // 21: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
+	26, // 22: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
+	6,  // 23: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
+	4,  // 24: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
+	26, // 25: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_catan_v1_types_proto_init() }
@@ -1983,13 +2080,14 @@ func file_catan_v1_types_proto_init() {
 	file_catan_v1_types_proto_msgTypes[5].OneofWrappers = []any{}
 	file_catan_v1_types_proto_msgTypes[9].OneofWrappers = []any{}
 	file_catan_v1_types_proto_msgTypes[10].OneofWrappers = []any{}
+	file_catan_v1_types_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catan_v1_types_proto_rawDesc), len(file_catan_v1_types_proto_rawDesc)),
 			NumEnums:      9,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

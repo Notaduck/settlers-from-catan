@@ -50,6 +50,11 @@ message PlayDevCardMessage {
   repeated Resource resources = 3; // For year of plenty (2 resources)
 }
 
+// Client sends this to discard cards for the robber phase.
+message DiscardCardsMessage {
+  ResourceCount resources = 1;
+}
+
 // Wrapper for all client messages
 message ClientMessage {
   oneof message {
@@ -63,6 +68,7 @@ message ClientMessage {
     EndTurnMessage end_turn = 8;
     PlayDevCardMessage play_dev_card = 9;
     PlayerReadyMessage player_ready = 10;
+    DiscardCardsMessage discard_cards = 11;
   }
 }
 
@@ -148,6 +154,12 @@ message ErrorPayload {
   string message = 2;
 }
 
+// Server confirms that a player has discarded cards (could be broadcasted).
+message DiscardedCardsPayload {
+  string player_id = 1;
+  ResourceCount resources = 2;
+}
+
 // Wrapper for all server messages
 message ServerMessage {
   oneof message {
@@ -165,5 +177,6 @@ message ServerMessage {
     GameOverPayload game_over = 12;
     ErrorPayload error = 13;
     PlayerReadyChangedPayload player_ready_changed = 14;
+    DiscardedCardsPayload discarded_cards = 15;
   }
 }

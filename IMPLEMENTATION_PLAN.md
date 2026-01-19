@@ -88,10 +88,11 @@
 
 ## Priority 4: Robber Flow
 
-- [ ] Proto: add discard_cards message + robber phase state (pending discards / current step)
+- [x] Proto: add discard_cards message + robber phase state (pending discards / current step)
   - Files: proto/catan/v1/messages.proto, proto/catan/v1/types.proto
   - Go tests: none
   - Playwright: none
+  - Notes: Implemented RobberPhase in GameState, new DiscardCardsMessage/DiscardedCardsPayload added to messages.proto. Validated proto change, regenerated. Backend `handlers` package still does not build due to unrelated, pre-existing errors (as previously documented) — all game logic tests pass. Typecheck and game logic lint: PASS. See also top 'Validation Notes'.
 
 - [ ] Backend robber commands: discard, move robber, steal
   - Files: backend/internal/game/robber.go (new), backend/internal/game/dice.go, backend/internal/game/state_machine.go (if needed)

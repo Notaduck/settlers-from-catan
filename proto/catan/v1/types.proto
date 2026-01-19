@@ -162,7 +162,21 @@ message GameState {
   optional string longest_road_player_id = 9;
   optional string largest_army_player_id = 10;
   optional SetupPhase setup_phase = 11; // Present during setup status
+  optional RobberPhase robber_phase = 12; // Present during robber actions
 }
+
+// Tracks the Robber phase state, including pending discards and steps.
+message RobberPhase {
+  // Player IDs still required to discard (if >7 cards when 7 is rolled).
+  repeated string discard_pending = 1;
+  // How many cards each player must discard.
+  map<string, int32> discard_required = 2;
+  // Player ID currently expected to move the robber (usually the roller).
+  optional string move_pending_player_id = 3;
+  // Player ID currently expected to perform a steal (if any).
+  optional string steal_pending_player_id = 4;
+}
+
 
 // A trade offer between players
 message TradeOffer {

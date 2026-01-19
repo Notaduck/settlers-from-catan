@@ -257,6 +257,43 @@ export interface GameState {
      * @generated from protobuf field: optional catan.v1.SetupPhase setup_phase = 11
      */
     setupPhase?: SetupPhase; // Present during setup status
+    /**
+     * @generated from protobuf field: optional catan.v1.RobberPhase robber_phase = 12
+     */
+    robberPhase?: RobberPhase; // Present during robber actions
+}
+/**
+ * Tracks the Robber phase state, including pending discards and steps.
+ *
+ * @generated from protobuf message catan.v1.RobberPhase
+ */
+export interface RobberPhase {
+    /**
+     * Player IDs still required to discard (if >7 cards when 7 is rolled).
+     *
+     * @generated from protobuf field: repeated string discard_pending = 1
+     */
+    discardPending: string[];
+    /**
+     * How many cards each player must discard.
+     *
+     * @generated from protobuf field: map<string, int32> discard_required = 2
+     */
+    discardRequired: {
+        [key: string]: number;
+    };
+    /**
+     * Player ID currently expected to move the robber (usually the roller).
+     *
+     * @generated from protobuf field: optional string move_pending_player_id = 3
+     */
+    movePendingPlayerId?: string;
+    /**
+     * Player ID currently expected to perform a steal (if any).
+     *
+     * @generated from protobuf field: optional string steal_pending_player_id = 4
+     */
+    stealPendingPlayerId?: string;
 }
 /**
  * A trade offer between players
@@ -1255,7 +1292,8 @@ class GameState$Type extends MessageType<GameState> {
             { no: 8, name: "status", kind: "enum", T: () => ["catan.v1.GameStatus", GameStatus, "GAME_STATUS_"] },
             { no: 9, name: "longest_road_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
             { no: 10, name: "largest_army_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
-            { no: 11, name: "setup_phase", kind: "message", T: () => SetupPhase }
+            { no: 11, name: "setup_phase", kind: "message", T: () => SetupPhase },
+            { no: 12, name: "robber_phase", kind: "message", T: () => RobberPhase }
         ]);
     }
     create(value?: PartialMessage<GameState>): GameState {
@@ -1313,6 +1351,9 @@ class GameState$Type extends MessageType<GameState> {
                 case /* optional catan.v1.SetupPhase setup_phase */ 11:
                     message.setupPhase = SetupPhase.internalBinaryRead(reader, reader.uint32(), options, message.setupPhase);
                     break;
+                case /* optional catan.v1.RobberPhase robber_phase */ 12:
+                    message.robberPhase = RobberPhase.internalBinaryRead(reader, reader.uint32(), options, message.robberPhase);
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1362,6 +1403,9 @@ class GameState$Type extends MessageType<GameState> {
         /* optional catan.v1.SetupPhase setup_phase = 11; */
         if (message.setupPhase)
             SetupPhase.internalBinaryWrite(message.setupPhase, writer.tag(11, WireType.LengthDelimited).fork(), options).join();
+        /* optional catan.v1.RobberPhase robber_phase = 12; */
+        if (message.robberPhase)
+            RobberPhase.internalBinaryWrite(message.robberPhase, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1372,6 +1416,91 @@ class GameState$Type extends MessageType<GameState> {
  * @generated MessageType for protobuf message catan.v1.GameState
  */
 export const GameState = new GameState$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class RobberPhase$Type extends MessageType<RobberPhase> {
+    constructor() {
+        super("catan.v1.RobberPhase", [
+            { no: 1, name: "discard_pending", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "discard_required", kind: "map", K: 9 /*ScalarType.STRING*/, V: { kind: "scalar", T: 5 /*ScalarType.INT32*/ } },
+            { no: 3, name: "move_pending_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "steal_pending_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<RobberPhase>): RobberPhase {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.discardPending = [];
+        message.discardRequired = {};
+        if (value !== undefined)
+            reflectionMergePartial<RobberPhase>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: RobberPhase): RobberPhase {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated string discard_pending */ 1:
+                    message.discardPending.push(reader.string());
+                    break;
+                case /* map<string, int32> discard_required */ 2:
+                    this.binaryReadMap2(message.discardRequired, reader, options);
+                    break;
+                case /* optional string move_pending_player_id */ 3:
+                    message.movePendingPlayerId = reader.string();
+                    break;
+                case /* optional string steal_pending_player_id */ 4:
+                    message.stealPendingPlayerId = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    private binaryReadMap2(map: RobberPhase["discardRequired"], reader: IBinaryReader, options: BinaryReadOptions): void {
+        let len = reader.uint32(), end = reader.pos + len, key: keyof RobberPhase["discardRequired"] | undefined, val: RobberPhase["discardRequired"][any] | undefined;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case 1:
+                    key = reader.string();
+                    break;
+                case 2:
+                    val = reader.int32();
+                    break;
+                default: throw new globalThis.Error("unknown map entry field for catan.v1.RobberPhase.discard_required");
+            }
+        }
+        map[key ?? ""] = val ?? 0;
+    }
+    internalBinaryWrite(message: RobberPhase, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated string discard_pending = 1; */
+        for (let i = 0; i < message.discardPending.length; i++)
+            writer.tag(1, WireType.LengthDelimited).string(message.discardPending[i]);
+        /* map<string, int32> discard_required = 2; */
+        for (let k of globalThis.Object.keys(message.discardRequired))
+            writer.tag(2, WireType.LengthDelimited).fork().tag(1, WireType.LengthDelimited).string(k).tag(2, WireType.Varint).int32(message.discardRequired[k]).join();
+        /* optional string move_pending_player_id = 3; */
+        if (message.movePendingPlayerId !== undefined)
+            writer.tag(3, WireType.LengthDelimited).string(message.movePendingPlayerId);
+        /* optional string steal_pending_player_id = 4; */
+        if (message.stealPendingPlayerId !== undefined)
+            writer.tag(4, WireType.LengthDelimited).string(message.stealPendingPlayerId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.RobberPhase
+ */
+export const RobberPhase = new RobberPhase$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class TradeOffer$Type extends MessageType<TradeOffer> {
     constructor() {

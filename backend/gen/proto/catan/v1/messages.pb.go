@@ -494,6 +494,51 @@ func (x *PlayDevCardMessage) GetResources() []Resource {
 	return nil
 }
 
+// Client sends this to discard cards for the robber phase.
+type DiscardCardsMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resources     *ResourceCount         `protobuf:"bytes,1,opt,name=resources,proto3" json:"resources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiscardCardsMessage) Reset() {
+	*x = DiscardCardsMessage{}
+	mi := &file_catan_v1_messages_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiscardCardsMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiscardCardsMessage) ProtoMessage() {}
+
+func (x *DiscardCardsMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_catan_v1_messages_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiscardCardsMessage.ProtoReflect.Descriptor instead.
+func (*DiscardCardsMessage) Descriptor() ([]byte, []int) {
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DiscardCardsMessage) GetResources() *ResourceCount {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
 // Wrapper for all client messages
 type ClientMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -509,6 +554,7 @@ type ClientMessage struct {
 	//	*ClientMessage_EndTurn
 	//	*ClientMessage_PlayDevCard
 	//	*ClientMessage_PlayerReady
+	//	*ClientMessage_DiscardCards
 	Message       isClientMessage_Message `protobuf_oneof:"message"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -516,7 +562,7 @@ type ClientMessage struct {
 
 func (x *ClientMessage) Reset() {
 	*x = ClientMessage{}
-	mi := &file_catan_v1_messages_proto_msgTypes[10]
+	mi := &file_catan_v1_messages_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -528,7 +574,7 @@ func (x *ClientMessage) String() string {
 func (*ClientMessage) ProtoMessage() {}
 
 func (x *ClientMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[10]
+	mi := &file_catan_v1_messages_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -541,7 +587,7 @@ func (x *ClientMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientMessage.ProtoReflect.Descriptor instead.
 func (*ClientMessage) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{10}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClientMessage) GetMessage() isClientMessage_Message {
@@ -641,6 +687,15 @@ func (x *ClientMessage) GetPlayerReady() *PlayerReadyMessage {
 	return nil
 }
 
+func (x *ClientMessage) GetDiscardCards() *DiscardCardsMessage {
+	if x != nil {
+		if x, ok := x.Message.(*ClientMessage_DiscardCards); ok {
+			return x.DiscardCards
+		}
+	}
+	return nil
+}
+
 type isClientMessage_Message interface {
 	isClientMessage_Message()
 }
@@ -685,6 +740,10 @@ type ClientMessage_PlayerReady struct {
 	PlayerReady *PlayerReadyMessage `protobuf:"bytes,10,opt,name=player_ready,json=playerReady,proto3,oneof"`
 }
 
+type ClientMessage_DiscardCards struct {
+	DiscardCards *DiscardCardsMessage `protobuf:"bytes,11,opt,name=discard_cards,json=discardCards,proto3,oneof"`
+}
+
 func (*ClientMessage_JoinGame) isClientMessage_Message() {}
 
 func (*ClientMessage_StartGame) isClientMessage_Message() {}
@@ -705,6 +764,8 @@ func (*ClientMessage_PlayDevCard) isClientMessage_Message() {}
 
 func (*ClientMessage_PlayerReady) isClientMessage_Message() {}
 
+func (*ClientMessage_DiscardCards) isClientMessage_Message() {}
+
 type GameStatePayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	State         *GameState             `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
@@ -714,7 +775,7 @@ type GameStatePayload struct {
 
 func (x *GameStatePayload) Reset() {
 	*x = GameStatePayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[11]
+	mi := &file_catan_v1_messages_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -726,7 +787,7 @@ func (x *GameStatePayload) String() string {
 func (*GameStatePayload) ProtoMessage() {}
 
 func (x *GameStatePayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[11]
+	mi := &file_catan_v1_messages_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +800,7 @@ func (x *GameStatePayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameStatePayload.ProtoReflect.Descriptor instead.
 func (*GameStatePayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{11}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GameStatePayload) GetState() *GameState {
@@ -758,7 +819,7 @@ type PlayerJoinedPayload struct {
 
 func (x *PlayerJoinedPayload) Reset() {
 	*x = PlayerJoinedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[12]
+	mi := &file_catan_v1_messages_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -770,7 +831,7 @@ func (x *PlayerJoinedPayload) String() string {
 func (*PlayerJoinedPayload) ProtoMessage() {}
 
 func (x *PlayerJoinedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[12]
+	mi := &file_catan_v1_messages_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -783,7 +844,7 @@ func (x *PlayerJoinedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerJoinedPayload.ProtoReflect.Descriptor instead.
 func (*PlayerJoinedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{12}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PlayerJoinedPayload) GetPlayer() *PlayerState {
@@ -802,7 +863,7 @@ type PlayerLeftPayload struct {
 
 func (x *PlayerLeftPayload) Reset() {
 	*x = PlayerLeftPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[13]
+	mi := &file_catan_v1_messages_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +875,7 @@ func (x *PlayerLeftPayload) String() string {
 func (*PlayerLeftPayload) ProtoMessage() {}
 
 func (x *PlayerLeftPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[13]
+	mi := &file_catan_v1_messages_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,7 +888,7 @@ func (x *PlayerLeftPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerLeftPayload.ProtoReflect.Descriptor instead.
 func (*PlayerLeftPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{13}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *PlayerLeftPayload) GetPlayerId() string {
@@ -847,7 +908,7 @@ type ResourceDistribution struct {
 
 func (x *ResourceDistribution) Reset() {
 	*x = ResourceDistribution{}
-	mi := &file_catan_v1_messages_proto_msgTypes[14]
+	mi := &file_catan_v1_messages_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +920,7 @@ func (x *ResourceDistribution) String() string {
 func (*ResourceDistribution) ProtoMessage() {}
 
 func (x *ResourceDistribution) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[14]
+	mi := &file_catan_v1_messages_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -872,7 +933,7 @@ func (x *ResourceDistribution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceDistribution.ProtoReflect.Descriptor instead.
 func (*ResourceDistribution) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{14}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ResourceDistribution) GetPlayerId() string {
@@ -900,7 +961,7 @@ type DiceRolledPayload struct {
 
 func (x *DiceRolledPayload) Reset() {
 	*x = DiceRolledPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[15]
+	mi := &file_catan_v1_messages_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -912,7 +973,7 @@ func (x *DiceRolledPayload) String() string {
 func (*DiceRolledPayload) ProtoMessage() {}
 
 func (x *DiceRolledPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[15]
+	mi := &file_catan_v1_messages_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -925,7 +986,7 @@ func (x *DiceRolledPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiceRolledPayload.ProtoReflect.Descriptor instead.
 func (*DiceRolledPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{15}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DiceRolledPayload) GetPlayerId() string {
@@ -960,7 +1021,7 @@ type BuildingPlacedPayload struct {
 
 func (x *BuildingPlacedPayload) Reset() {
 	*x = BuildingPlacedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[16]
+	mi := &file_catan_v1_messages_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1033,7 @@ func (x *BuildingPlacedPayload) String() string {
 func (*BuildingPlacedPayload) ProtoMessage() {}
 
 func (x *BuildingPlacedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[16]
+	mi := &file_catan_v1_messages_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1046,7 @@ func (x *BuildingPlacedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildingPlacedPayload.ProtoReflect.Descriptor instead.
 func (*BuildingPlacedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{16}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *BuildingPlacedPayload) GetPlayerId() string {
@@ -1019,7 +1080,7 @@ type RoadPlacedPayload struct {
 
 func (x *RoadPlacedPayload) Reset() {
 	*x = RoadPlacedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[17]
+	mi := &file_catan_v1_messages_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1031,7 +1092,7 @@ func (x *RoadPlacedPayload) String() string {
 func (*RoadPlacedPayload) ProtoMessage() {}
 
 func (x *RoadPlacedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[17]
+	mi := &file_catan_v1_messages_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1044,7 +1105,7 @@ func (x *RoadPlacedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoadPlacedPayload.ProtoReflect.Descriptor instead.
 func (*RoadPlacedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{17}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RoadPlacedPayload) GetPlayerId() string {
@@ -1070,7 +1131,7 @@ type TradeProposedPayload struct {
 
 func (x *TradeProposedPayload) Reset() {
 	*x = TradeProposedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[18]
+	mi := &file_catan_v1_messages_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1082,7 +1143,7 @@ func (x *TradeProposedPayload) String() string {
 func (*TradeProposedPayload) ProtoMessage() {}
 
 func (x *TradeProposedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[18]
+	mi := &file_catan_v1_messages_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1095,7 +1156,7 @@ func (x *TradeProposedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeProposedPayload.ProtoReflect.Descriptor instead.
 func (*TradeProposedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{18}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TradeProposedPayload) GetTrade() *TradeOffer {
@@ -1116,7 +1177,7 @@ type TradeResolvedPayload struct {
 
 func (x *TradeResolvedPayload) Reset() {
 	*x = TradeResolvedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[19]
+	mi := &file_catan_v1_messages_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1128,7 +1189,7 @@ func (x *TradeResolvedPayload) String() string {
 func (*TradeResolvedPayload) ProtoMessage() {}
 
 func (x *TradeResolvedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[19]
+	mi := &file_catan_v1_messages_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1141,7 +1202,7 @@ func (x *TradeResolvedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeResolvedPayload.ProtoReflect.Descriptor instead.
 func (*TradeResolvedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{19}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TradeResolvedPayload) GetTradeId() string {
@@ -1177,7 +1238,7 @@ type RobberMovedPayload struct {
 
 func (x *RobberMovedPayload) Reset() {
 	*x = RobberMovedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[20]
+	mi := &file_catan_v1_messages_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1189,7 +1250,7 @@ func (x *RobberMovedPayload) String() string {
 func (*RobberMovedPayload) ProtoMessage() {}
 
 func (x *RobberMovedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[20]
+	mi := &file_catan_v1_messages_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1202,7 +1263,7 @@ func (x *RobberMovedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RobberMovedPayload.ProtoReflect.Descriptor instead.
 func (*RobberMovedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{20}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RobberMovedPayload) GetPlayerId() string {
@@ -1243,7 +1304,7 @@ type TurnChangedPayload struct {
 
 func (x *TurnChangedPayload) Reset() {
 	*x = TurnChangedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[21]
+	mi := &file_catan_v1_messages_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1316,7 @@ func (x *TurnChangedPayload) String() string {
 func (*TurnChangedPayload) ProtoMessage() {}
 
 func (x *TurnChangedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[21]
+	mi := &file_catan_v1_messages_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1329,7 @@ func (x *TurnChangedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnChangedPayload.ProtoReflect.Descriptor instead.
 func (*TurnChangedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{21}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *TurnChangedPayload) GetActivePlayerId() string {
@@ -1294,7 +1355,7 @@ type GameStartedPayload struct {
 
 func (x *GameStartedPayload) Reset() {
 	*x = GameStartedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[22]
+	mi := &file_catan_v1_messages_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1306,7 +1367,7 @@ func (x *GameStartedPayload) String() string {
 func (*GameStartedPayload) ProtoMessage() {}
 
 func (x *GameStartedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[22]
+	mi := &file_catan_v1_messages_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1319,7 +1380,7 @@ func (x *GameStartedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameStartedPayload.ProtoReflect.Descriptor instead.
 func (*GameStartedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{22}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GameStartedPayload) GetState() *GameState {
@@ -1339,7 +1400,7 @@ type PlayerReadyChangedPayload struct {
 
 func (x *PlayerReadyChangedPayload) Reset() {
 	*x = PlayerReadyChangedPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[23]
+	mi := &file_catan_v1_messages_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1351,7 +1412,7 @@ func (x *PlayerReadyChangedPayload) String() string {
 func (*PlayerReadyChangedPayload) ProtoMessage() {}
 
 func (x *PlayerReadyChangedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[23]
+	mi := &file_catan_v1_messages_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1364,7 +1425,7 @@ func (x *PlayerReadyChangedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerReadyChangedPayload.ProtoReflect.Descriptor instead.
 func (*PlayerReadyChangedPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{23}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PlayerReadyChangedPayload) GetPlayerId() string {
@@ -1391,7 +1452,7 @@ type PlayerScore struct {
 
 func (x *PlayerScore) Reset() {
 	*x = PlayerScore{}
-	mi := &file_catan_v1_messages_proto_msgTypes[24]
+	mi := &file_catan_v1_messages_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1403,7 +1464,7 @@ func (x *PlayerScore) String() string {
 func (*PlayerScore) ProtoMessage() {}
 
 func (x *PlayerScore) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[24]
+	mi := &file_catan_v1_messages_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1416,7 +1477,7 @@ func (x *PlayerScore) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerScore.ProtoReflect.Descriptor instead.
 func (*PlayerScore) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{24}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *PlayerScore) GetPlayerId() string {
@@ -1443,7 +1504,7 @@ type GameOverPayload struct {
 
 func (x *GameOverPayload) Reset() {
 	*x = GameOverPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[25]
+	mi := &file_catan_v1_messages_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1455,7 +1516,7 @@ func (x *GameOverPayload) String() string {
 func (*GameOverPayload) ProtoMessage() {}
 
 func (x *GameOverPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[25]
+	mi := &file_catan_v1_messages_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1468,7 +1529,7 @@ func (x *GameOverPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameOverPayload.ProtoReflect.Descriptor instead.
 func (*GameOverPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{25}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GameOverPayload) GetWinnerId() string {
@@ -1495,7 +1556,7 @@ type ErrorPayload struct {
 
 func (x *ErrorPayload) Reset() {
 	*x = ErrorPayload{}
-	mi := &file_catan_v1_messages_proto_msgTypes[26]
+	mi := &file_catan_v1_messages_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1507,7 +1568,7 @@ func (x *ErrorPayload) String() string {
 func (*ErrorPayload) ProtoMessage() {}
 
 func (x *ErrorPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[26]
+	mi := &file_catan_v1_messages_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1520,7 +1581,7 @@ func (x *ErrorPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorPayload.ProtoReflect.Descriptor instead.
 func (*ErrorPayload) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{26}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ErrorPayload) GetCode() string {
@@ -1535,6 +1596,59 @@ func (x *ErrorPayload) GetMessage() string {
 		return x.Message
 	}
 	return ""
+}
+
+// Server confirms that a player has discarded cards (could be broadcasted).
+type DiscardedCardsPayload struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Resources     *ResourceCount         `protobuf:"bytes,2,opt,name=resources,proto3" json:"resources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiscardedCardsPayload) Reset() {
+	*x = DiscardedCardsPayload{}
+	mi := &file_catan_v1_messages_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiscardedCardsPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiscardedCardsPayload) ProtoMessage() {}
+
+func (x *DiscardedCardsPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_catan_v1_messages_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiscardedCardsPayload.ProtoReflect.Descriptor instead.
+func (*DiscardedCardsPayload) Descriptor() ([]byte, []int) {
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DiscardedCardsPayload) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *DiscardedCardsPayload) GetResources() *ResourceCount {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
 }
 
 // Wrapper for all server messages
@@ -1556,6 +1670,7 @@ type ServerMessage struct {
 	//	*ServerMessage_GameOver
 	//	*ServerMessage_Error
 	//	*ServerMessage_PlayerReadyChanged
+	//	*ServerMessage_DiscardedCards
 	Message       isServerMessage_Message `protobuf_oneof:"message"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1563,7 +1678,7 @@ type ServerMessage struct {
 
 func (x *ServerMessage) Reset() {
 	*x = ServerMessage{}
-	mi := &file_catan_v1_messages_proto_msgTypes[27]
+	mi := &file_catan_v1_messages_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1575,7 +1690,7 @@ func (x *ServerMessage) String() string {
 func (*ServerMessage) ProtoMessage() {}
 
 func (x *ServerMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_catan_v1_messages_proto_msgTypes[27]
+	mi := &file_catan_v1_messages_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1588,7 +1703,7 @@ func (x *ServerMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerMessage.ProtoReflect.Descriptor instead.
 func (*ServerMessage) Descriptor() ([]byte, []int) {
-	return file_catan_v1_messages_proto_rawDescGZIP(), []int{27}
+	return file_catan_v1_messages_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ServerMessage) GetMessage() isServerMessage_Message {
@@ -1724,6 +1839,15 @@ func (x *ServerMessage) GetPlayerReadyChanged() *PlayerReadyChangedPayload {
 	return nil
 }
 
+func (x *ServerMessage) GetDiscardedCards() *DiscardedCardsPayload {
+	if x != nil {
+		if x, ok := x.Message.(*ServerMessage_DiscardedCards); ok {
+			return x.DiscardedCards
+		}
+	}
+	return nil
+}
+
 type isServerMessage_Message interface {
 	isServerMessage_Message()
 }
@@ -1784,6 +1908,10 @@ type ServerMessage_PlayerReadyChanged struct {
 	PlayerReadyChanged *PlayerReadyChangedPayload `protobuf:"bytes,14,opt,name=player_ready_changed,json=playerReadyChanged,proto3,oneof"`
 }
 
+type ServerMessage_DiscardedCards struct {
+	DiscardedCards *DiscardedCardsPayload `protobuf:"bytes,15,opt,name=discarded_cards,json=discardedCards,proto3,oneof"`
+}
+
 func (*ServerMessage_GameState) isServerMessage_Message() {}
 
 func (*ServerMessage_PlayerJoined) isServerMessage_Message() {}
@@ -1811,6 +1939,8 @@ func (*ServerMessage_GameOver) isServerMessage_Message() {}
 func (*ServerMessage_Error) isServerMessage_Message() {}
 
 func (*ServerMessage_PlayerReadyChanged) isServerMessage_Message() {}
+
+func (*ServerMessage_DiscardedCards) isServerMessage_Message() {}
 
 var File_catan_v1_messages_proto protoreflect.FileDescriptor
 
@@ -1847,7 +1977,9 @@ const file_catan_v1_messages_proto_rawDesc = "" +
 	"\tcard_type\x18\x01 \x01(\x0e2\x15.catan.v1.DevCardTypeR\bcardType\x12@\n" +
 	"\x0ftarget_resource\x18\x02 \x01(\x0e2\x12.catan.v1.ResourceH\x00R\x0etargetResource\x88\x01\x01\x120\n" +
 	"\tresources\x18\x03 \x03(\x0e2\x12.catan.v1.ResourceR\tresourcesB\x12\n" +
-	"\x10_target_resource\"\xa1\x05\n" +
+	"\x10_target_resource\"L\n" +
+	"\x13DiscardCardsMessage\x125\n" +
+	"\tresources\x18\x01 \x01(\v2\x17.catan.v1.ResourceCountR\tresources\"\xe7\x05\n" +
 	"\rClientMessage\x128\n" +
 	"\tjoin_game\x18\x01 \x01(\v2\x19.catan.v1.JoinGameMessageH\x00R\bjoinGame\x12;\n" +
 	"\n" +
@@ -1861,7 +1993,8 @@ const file_catan_v1_messages_proto_rawDesc = "" +
 	"\bend_turn\x18\b \x01(\v2\x18.catan.v1.EndTurnMessageH\x00R\aendTurn\x12B\n" +
 	"\rplay_dev_card\x18\t \x01(\v2\x1c.catan.v1.PlayDevCardMessageH\x00R\vplayDevCard\x12A\n" +
 	"\fplayer_ready\x18\n" +
-	" \x01(\v2\x1c.catan.v1.PlayerReadyMessageH\x00R\vplayerReadyB\t\n" +
+	" \x01(\v2\x1c.catan.v1.PlayerReadyMessageH\x00R\vplayerReady\x12D\n" +
+	"\rdiscard_cards\x18\v \x01(\v2\x1d.catan.v1.DiscardCardsMessageH\x00R\fdiscardCardsB\t\n" +
 	"\amessage\"=\n" +
 	"\x10GameStatePayload\x12)\n" +
 	"\x05state\x18\x01 \x01(\v2\x13.catan.v1.GameStateR\x05state\"D\n" +
@@ -1915,7 +2048,10 @@ const file_catan_v1_messages_proto_rawDesc = "" +
 	"\x06scores\x18\x02 \x03(\v2\x15.catan.v1.PlayerScoreR\x06scores\"<\n" +
 	"\fErrorPayload\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xc7\a\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"k\n" +
+	"\x15DiscardedCardsPayload\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x125\n" +
+	"\tresources\x18\x02 \x01(\v2\x17.catan.v1.ResourceCountR\tresources\"\x93\b\n" +
 	"\rServerMessage\x12;\n" +
 	"\n" +
 	"game_state\x18\x01 \x01(\v2\x1a.catan.v1.GameStatePayloadH\x00R\tgameState\x12D\n" +
@@ -1935,7 +2071,8 @@ const file_catan_v1_messages_proto_rawDesc = "" +
 	"\fgame_started\x18\v \x01(\v2\x1c.catan.v1.GameStartedPayloadH\x00R\vgameStarted\x128\n" +
 	"\tgame_over\x18\f \x01(\v2\x19.catan.v1.GameOverPayloadH\x00R\bgameOver\x12.\n" +
 	"\x05error\x18\r \x01(\v2\x16.catan.v1.ErrorPayloadH\x00R\x05error\x12W\n" +
-	"\x14player_ready_changed\x18\x0e \x01(\v2#.catan.v1.PlayerReadyChangedPayloadH\x00R\x12playerReadyChangedB\t\n" +
+	"\x14player_ready_changed\x18\x0e \x01(\v2#.catan.v1.PlayerReadyChangedPayloadH\x00R\x12playerReadyChanged\x12J\n" +
+	"\x0fdiscarded_cards\x18\x0f \x01(\v2\x1f.catan.v1.DiscardedCardsPayloadH\x00R\x0ediscardedCardsB\t\n" +
 	"\amessageB\x8e\x01\n" +
 	"\fcom.catan.v1B\rMessagesProtoP\x01Z.settlers_from_catan/gen/proto/catan/v1;catanv1\xa2\x02\x03CXX\xaa\x02\bCatan.V1\xca\x02\bCatan\\V1\xe2\x02\x14Catan\\V1\\GPBMetadata\xea\x02\tCatan::V1b\x06proto3"
 
@@ -1951,7 +2088,7 @@ func file_catan_v1_messages_proto_rawDescGZIP() []byte {
 	return file_catan_v1_messages_proto_rawDescData
 }
 
-var file_catan_v1_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_catan_v1_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_catan_v1_messages_proto_goTypes = []any{
 	(*JoinGameMessage)(nil),           // 0: catan.v1.JoinGameMessage
 	(*StartGameMessage)(nil),          // 1: catan.v1.StartGameMessage
@@ -1963,83 +2100,89 @@ var file_catan_v1_messages_proto_goTypes = []any{
 	(*EndTurnMessage)(nil),            // 7: catan.v1.EndTurnMessage
 	(*PlayerReadyMessage)(nil),        // 8: catan.v1.PlayerReadyMessage
 	(*PlayDevCardMessage)(nil),        // 9: catan.v1.PlayDevCardMessage
-	(*ClientMessage)(nil),             // 10: catan.v1.ClientMessage
-	(*GameStatePayload)(nil),          // 11: catan.v1.GameStatePayload
-	(*PlayerJoinedPayload)(nil),       // 12: catan.v1.PlayerJoinedPayload
-	(*PlayerLeftPayload)(nil),         // 13: catan.v1.PlayerLeftPayload
-	(*ResourceDistribution)(nil),      // 14: catan.v1.ResourceDistribution
-	(*DiceRolledPayload)(nil),         // 15: catan.v1.DiceRolledPayload
-	(*BuildingPlacedPayload)(nil),     // 16: catan.v1.BuildingPlacedPayload
-	(*RoadPlacedPayload)(nil),         // 17: catan.v1.RoadPlacedPayload
-	(*TradeProposedPayload)(nil),      // 18: catan.v1.TradeProposedPayload
-	(*TradeResolvedPayload)(nil),      // 19: catan.v1.TradeResolvedPayload
-	(*RobberMovedPayload)(nil),        // 20: catan.v1.RobberMovedPayload
-	(*TurnChangedPayload)(nil),        // 21: catan.v1.TurnChangedPayload
-	(*GameStartedPayload)(nil),        // 22: catan.v1.GameStartedPayload
-	(*PlayerReadyChangedPayload)(nil), // 23: catan.v1.PlayerReadyChangedPayload
-	(*PlayerScore)(nil),               // 24: catan.v1.PlayerScore
-	(*GameOverPayload)(nil),           // 25: catan.v1.GameOverPayload
-	(*ErrorPayload)(nil),              // 26: catan.v1.ErrorPayload
-	(*ServerMessage)(nil),             // 27: catan.v1.ServerMessage
-	(StructureType)(0),                // 28: catan.v1.StructureType
-	(*ResourceCount)(nil),             // 29: catan.v1.ResourceCount
-	(*HexCoord)(nil),                  // 30: catan.v1.HexCoord
-	(DevCardType)(0),                  // 31: catan.v1.DevCardType
-	(Resource)(0),                     // 32: catan.v1.Resource
-	(*GameState)(nil),                 // 33: catan.v1.GameState
-	(*PlayerState)(nil),               // 34: catan.v1.PlayerState
-	(BuildingType)(0),                 // 35: catan.v1.BuildingType
-	(*TradeOffer)(nil),                // 36: catan.v1.TradeOffer
-	(TurnPhase)(0),                    // 37: catan.v1.TurnPhase
+	(*DiscardCardsMessage)(nil),       // 10: catan.v1.DiscardCardsMessage
+	(*ClientMessage)(nil),             // 11: catan.v1.ClientMessage
+	(*GameStatePayload)(nil),          // 12: catan.v1.GameStatePayload
+	(*PlayerJoinedPayload)(nil),       // 13: catan.v1.PlayerJoinedPayload
+	(*PlayerLeftPayload)(nil),         // 14: catan.v1.PlayerLeftPayload
+	(*ResourceDistribution)(nil),      // 15: catan.v1.ResourceDistribution
+	(*DiceRolledPayload)(nil),         // 16: catan.v1.DiceRolledPayload
+	(*BuildingPlacedPayload)(nil),     // 17: catan.v1.BuildingPlacedPayload
+	(*RoadPlacedPayload)(nil),         // 18: catan.v1.RoadPlacedPayload
+	(*TradeProposedPayload)(nil),      // 19: catan.v1.TradeProposedPayload
+	(*TradeResolvedPayload)(nil),      // 20: catan.v1.TradeResolvedPayload
+	(*RobberMovedPayload)(nil),        // 21: catan.v1.RobberMovedPayload
+	(*TurnChangedPayload)(nil),        // 22: catan.v1.TurnChangedPayload
+	(*GameStartedPayload)(nil),        // 23: catan.v1.GameStartedPayload
+	(*PlayerReadyChangedPayload)(nil), // 24: catan.v1.PlayerReadyChangedPayload
+	(*PlayerScore)(nil),               // 25: catan.v1.PlayerScore
+	(*GameOverPayload)(nil),           // 26: catan.v1.GameOverPayload
+	(*ErrorPayload)(nil),              // 27: catan.v1.ErrorPayload
+	(*DiscardedCardsPayload)(nil),     // 28: catan.v1.DiscardedCardsPayload
+	(*ServerMessage)(nil),             // 29: catan.v1.ServerMessage
+	(StructureType)(0),                // 30: catan.v1.StructureType
+	(*ResourceCount)(nil),             // 31: catan.v1.ResourceCount
+	(*HexCoord)(nil),                  // 32: catan.v1.HexCoord
+	(DevCardType)(0),                  // 33: catan.v1.DevCardType
+	(Resource)(0),                     // 34: catan.v1.Resource
+	(*GameState)(nil),                 // 35: catan.v1.GameState
+	(*PlayerState)(nil),               // 36: catan.v1.PlayerState
+	(BuildingType)(0),                 // 37: catan.v1.BuildingType
+	(*TradeOffer)(nil),                // 38: catan.v1.TradeOffer
+	(TurnPhase)(0),                    // 39: catan.v1.TurnPhase
 }
 var file_catan_v1_messages_proto_depIdxs = []int32{
-	28, // 0: catan.v1.BuildStructureMessage.structure_type:type_name -> catan.v1.StructureType
-	29, // 1: catan.v1.ProposeTradeMessage.offering:type_name -> catan.v1.ResourceCount
-	29, // 2: catan.v1.ProposeTradeMessage.requesting:type_name -> catan.v1.ResourceCount
-	30, // 3: catan.v1.MoveRobberMessage.hex:type_name -> catan.v1.HexCoord
-	31, // 4: catan.v1.PlayDevCardMessage.card_type:type_name -> catan.v1.DevCardType
-	32, // 5: catan.v1.PlayDevCardMessage.target_resource:type_name -> catan.v1.Resource
-	32, // 6: catan.v1.PlayDevCardMessage.resources:type_name -> catan.v1.Resource
-	0,  // 7: catan.v1.ClientMessage.join_game:type_name -> catan.v1.JoinGameMessage
-	1,  // 8: catan.v1.ClientMessage.start_game:type_name -> catan.v1.StartGameMessage
-	2,  // 9: catan.v1.ClientMessage.roll_dice:type_name -> catan.v1.RollDiceMessage
-	3,  // 10: catan.v1.ClientMessage.build_structure:type_name -> catan.v1.BuildStructureMessage
-	4,  // 11: catan.v1.ClientMessage.propose_trade:type_name -> catan.v1.ProposeTradeMessage
-	5,  // 12: catan.v1.ClientMessage.respond_trade:type_name -> catan.v1.RespondTradeMessage
-	6,  // 13: catan.v1.ClientMessage.move_robber:type_name -> catan.v1.MoveRobberMessage
-	7,  // 14: catan.v1.ClientMessage.end_turn:type_name -> catan.v1.EndTurnMessage
-	9,  // 15: catan.v1.ClientMessage.play_dev_card:type_name -> catan.v1.PlayDevCardMessage
-	8,  // 16: catan.v1.ClientMessage.player_ready:type_name -> catan.v1.PlayerReadyMessage
-	33, // 17: catan.v1.GameStatePayload.state:type_name -> catan.v1.GameState
-	34, // 18: catan.v1.PlayerJoinedPayload.player:type_name -> catan.v1.PlayerState
-	29, // 19: catan.v1.ResourceDistribution.resources:type_name -> catan.v1.ResourceCount
-	14, // 20: catan.v1.DiceRolledPayload.resources_distributed:type_name -> catan.v1.ResourceDistribution
-	35, // 21: catan.v1.BuildingPlacedPayload.building_type:type_name -> catan.v1.BuildingType
-	36, // 22: catan.v1.TradeProposedPayload.trade:type_name -> catan.v1.TradeOffer
-	30, // 23: catan.v1.RobberMovedPayload.hex:type_name -> catan.v1.HexCoord
-	32, // 24: catan.v1.RobberMovedPayload.stolen_resource:type_name -> catan.v1.Resource
-	37, // 25: catan.v1.TurnChangedPayload.phase:type_name -> catan.v1.TurnPhase
-	33, // 26: catan.v1.GameStartedPayload.state:type_name -> catan.v1.GameState
-	24, // 27: catan.v1.GameOverPayload.scores:type_name -> catan.v1.PlayerScore
-	11, // 28: catan.v1.ServerMessage.game_state:type_name -> catan.v1.GameStatePayload
-	12, // 29: catan.v1.ServerMessage.player_joined:type_name -> catan.v1.PlayerJoinedPayload
-	13, // 30: catan.v1.ServerMessage.player_left:type_name -> catan.v1.PlayerLeftPayload
-	15, // 31: catan.v1.ServerMessage.dice_rolled:type_name -> catan.v1.DiceRolledPayload
-	16, // 32: catan.v1.ServerMessage.building_placed:type_name -> catan.v1.BuildingPlacedPayload
-	17, // 33: catan.v1.ServerMessage.road_placed:type_name -> catan.v1.RoadPlacedPayload
-	18, // 34: catan.v1.ServerMessage.trade_proposed:type_name -> catan.v1.TradeProposedPayload
-	19, // 35: catan.v1.ServerMessage.trade_resolved:type_name -> catan.v1.TradeResolvedPayload
-	20, // 36: catan.v1.ServerMessage.robber_moved:type_name -> catan.v1.RobberMovedPayload
-	21, // 37: catan.v1.ServerMessage.turn_changed:type_name -> catan.v1.TurnChangedPayload
-	22, // 38: catan.v1.ServerMessage.game_started:type_name -> catan.v1.GameStartedPayload
-	25, // 39: catan.v1.ServerMessage.game_over:type_name -> catan.v1.GameOverPayload
-	26, // 40: catan.v1.ServerMessage.error:type_name -> catan.v1.ErrorPayload
-	23, // 41: catan.v1.ServerMessage.player_ready_changed:type_name -> catan.v1.PlayerReadyChangedPayload
-	42, // [42:42] is the sub-list for method output_type
-	42, // [42:42] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	30, // 0: catan.v1.BuildStructureMessage.structure_type:type_name -> catan.v1.StructureType
+	31, // 1: catan.v1.ProposeTradeMessage.offering:type_name -> catan.v1.ResourceCount
+	31, // 2: catan.v1.ProposeTradeMessage.requesting:type_name -> catan.v1.ResourceCount
+	32, // 3: catan.v1.MoveRobberMessage.hex:type_name -> catan.v1.HexCoord
+	33, // 4: catan.v1.PlayDevCardMessage.card_type:type_name -> catan.v1.DevCardType
+	34, // 5: catan.v1.PlayDevCardMessage.target_resource:type_name -> catan.v1.Resource
+	34, // 6: catan.v1.PlayDevCardMessage.resources:type_name -> catan.v1.Resource
+	31, // 7: catan.v1.DiscardCardsMessage.resources:type_name -> catan.v1.ResourceCount
+	0,  // 8: catan.v1.ClientMessage.join_game:type_name -> catan.v1.JoinGameMessage
+	1,  // 9: catan.v1.ClientMessage.start_game:type_name -> catan.v1.StartGameMessage
+	2,  // 10: catan.v1.ClientMessage.roll_dice:type_name -> catan.v1.RollDiceMessage
+	3,  // 11: catan.v1.ClientMessage.build_structure:type_name -> catan.v1.BuildStructureMessage
+	4,  // 12: catan.v1.ClientMessage.propose_trade:type_name -> catan.v1.ProposeTradeMessage
+	5,  // 13: catan.v1.ClientMessage.respond_trade:type_name -> catan.v1.RespondTradeMessage
+	6,  // 14: catan.v1.ClientMessage.move_robber:type_name -> catan.v1.MoveRobberMessage
+	7,  // 15: catan.v1.ClientMessage.end_turn:type_name -> catan.v1.EndTurnMessage
+	9,  // 16: catan.v1.ClientMessage.play_dev_card:type_name -> catan.v1.PlayDevCardMessage
+	8,  // 17: catan.v1.ClientMessage.player_ready:type_name -> catan.v1.PlayerReadyMessage
+	10, // 18: catan.v1.ClientMessage.discard_cards:type_name -> catan.v1.DiscardCardsMessage
+	35, // 19: catan.v1.GameStatePayload.state:type_name -> catan.v1.GameState
+	36, // 20: catan.v1.PlayerJoinedPayload.player:type_name -> catan.v1.PlayerState
+	31, // 21: catan.v1.ResourceDistribution.resources:type_name -> catan.v1.ResourceCount
+	15, // 22: catan.v1.DiceRolledPayload.resources_distributed:type_name -> catan.v1.ResourceDistribution
+	37, // 23: catan.v1.BuildingPlacedPayload.building_type:type_name -> catan.v1.BuildingType
+	38, // 24: catan.v1.TradeProposedPayload.trade:type_name -> catan.v1.TradeOffer
+	32, // 25: catan.v1.RobberMovedPayload.hex:type_name -> catan.v1.HexCoord
+	34, // 26: catan.v1.RobberMovedPayload.stolen_resource:type_name -> catan.v1.Resource
+	39, // 27: catan.v1.TurnChangedPayload.phase:type_name -> catan.v1.TurnPhase
+	35, // 28: catan.v1.GameStartedPayload.state:type_name -> catan.v1.GameState
+	25, // 29: catan.v1.GameOverPayload.scores:type_name -> catan.v1.PlayerScore
+	31, // 30: catan.v1.DiscardedCardsPayload.resources:type_name -> catan.v1.ResourceCount
+	12, // 31: catan.v1.ServerMessage.game_state:type_name -> catan.v1.GameStatePayload
+	13, // 32: catan.v1.ServerMessage.player_joined:type_name -> catan.v1.PlayerJoinedPayload
+	14, // 33: catan.v1.ServerMessage.player_left:type_name -> catan.v1.PlayerLeftPayload
+	16, // 34: catan.v1.ServerMessage.dice_rolled:type_name -> catan.v1.DiceRolledPayload
+	17, // 35: catan.v1.ServerMessage.building_placed:type_name -> catan.v1.BuildingPlacedPayload
+	18, // 36: catan.v1.ServerMessage.road_placed:type_name -> catan.v1.RoadPlacedPayload
+	19, // 37: catan.v1.ServerMessage.trade_proposed:type_name -> catan.v1.TradeProposedPayload
+	20, // 38: catan.v1.ServerMessage.trade_resolved:type_name -> catan.v1.TradeResolvedPayload
+	21, // 39: catan.v1.ServerMessage.robber_moved:type_name -> catan.v1.RobberMovedPayload
+	22, // 40: catan.v1.ServerMessage.turn_changed:type_name -> catan.v1.TurnChangedPayload
+	23, // 41: catan.v1.ServerMessage.game_started:type_name -> catan.v1.GameStartedPayload
+	26, // 42: catan.v1.ServerMessage.game_over:type_name -> catan.v1.GameOverPayload
+	27, // 43: catan.v1.ServerMessage.error:type_name -> catan.v1.ErrorPayload
+	24, // 44: catan.v1.ServerMessage.player_ready_changed:type_name -> catan.v1.PlayerReadyChangedPayload
+	28, // 45: catan.v1.ServerMessage.discarded_cards:type_name -> catan.v1.DiscardedCardsPayload
+	46, // [46:46] is the sub-list for method output_type
+	46, // [46:46] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_catan_v1_messages_proto_init() }
@@ -2051,7 +2194,7 @@ func file_catan_v1_messages_proto_init() {
 	file_catan_v1_messages_proto_msgTypes[4].OneofWrappers = []any{}
 	file_catan_v1_messages_proto_msgTypes[6].OneofWrappers = []any{}
 	file_catan_v1_messages_proto_msgTypes[9].OneofWrappers = []any{}
-	file_catan_v1_messages_proto_msgTypes[10].OneofWrappers = []any{
+	file_catan_v1_messages_proto_msgTypes[11].OneofWrappers = []any{
 		(*ClientMessage_JoinGame)(nil),
 		(*ClientMessage_StartGame)(nil),
 		(*ClientMessage_RollDice)(nil),
@@ -2062,10 +2205,11 @@ func file_catan_v1_messages_proto_init() {
 		(*ClientMessage_EndTurn)(nil),
 		(*ClientMessage_PlayDevCard)(nil),
 		(*ClientMessage_PlayerReady)(nil),
+		(*ClientMessage_DiscardCards)(nil),
 	}
-	file_catan_v1_messages_proto_msgTypes[19].OneofWrappers = []any{}
 	file_catan_v1_messages_proto_msgTypes[20].OneofWrappers = []any{}
-	file_catan_v1_messages_proto_msgTypes[27].OneofWrappers = []any{
+	file_catan_v1_messages_proto_msgTypes[21].OneofWrappers = []any{}
+	file_catan_v1_messages_proto_msgTypes[29].OneofWrappers = []any{
 		(*ServerMessage_GameState)(nil),
 		(*ServerMessage_PlayerJoined)(nil),
 		(*ServerMessage_PlayerLeft)(nil),
@@ -2080,6 +2224,7 @@ func file_catan_v1_messages_proto_init() {
 		(*ServerMessage_GameOver)(nil),
 		(*ServerMessage_Error)(nil),
 		(*ServerMessage_PlayerReadyChanged)(nil),
+		(*ServerMessage_DiscardedCards)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2087,7 +2232,7 @@ func file_catan_v1_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catan_v1_messages_proto_rawDesc), len(file_catan_v1_messages_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

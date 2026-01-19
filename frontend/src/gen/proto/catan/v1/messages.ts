@@ -131,6 +131,17 @@ export interface PlayDevCardMessage {
     resources: Resource[]; // For year of plenty (2 resources)
 }
 /**
+ * Client sends this to discard cards for the robber phase.
+ *
+ * @generated from protobuf message catan.v1.DiscardCardsMessage
+ */
+export interface DiscardCardsMessage {
+    /**
+     * @generated from protobuf field: catan.v1.ResourceCount resources = 1
+     */
+    resources?: ResourceCount;
+}
+/**
  * Wrapper for all client messages
  *
  * @generated from protobuf message catan.v1.ClientMessage
@@ -199,6 +210,12 @@ export interface ClientMessage {
          * @generated from protobuf field: catan.v1.PlayerReadyMessage player_ready = 10
          */
         playerReady: PlayerReadyMessage;
+    } | {
+        oneofKind: "discardCards";
+        /**
+         * @generated from protobuf field: catan.v1.DiscardCardsMessage discard_cards = 11
+         */
+        discardCards: DiscardCardsMessage;
     } | {
         oneofKind: undefined;
     };
@@ -414,6 +431,21 @@ export interface ErrorPayload {
     message: string;
 }
 /**
+ * Server confirms that a player has discarded cards (could be broadcasted).
+ *
+ * @generated from protobuf message catan.v1.DiscardedCardsPayload
+ */
+export interface DiscardedCardsPayload {
+    /**
+     * @generated from protobuf field: string player_id = 1
+     */
+    playerId: string;
+    /**
+     * @generated from protobuf field: catan.v1.ResourceCount resources = 2
+     */
+    resources?: ResourceCount;
+}
+/**
  * Wrapper for all server messages
  *
  * @generated from protobuf message catan.v1.ServerMessage
@@ -506,6 +538,12 @@ export interface ServerMessage {
          * @generated from protobuf field: catan.v1.PlayerReadyChangedPayload player_ready_changed = 14
          */
         playerReadyChanged: PlayerReadyChangedPayload;
+    } | {
+        oneofKind: "discardedCards";
+        /**
+         * @generated from protobuf field: catan.v1.DiscardedCardsPayload discarded_cards = 15
+         */
+        discardedCards: DiscardedCardsPayload;
     } | {
         oneofKind: undefined;
     };
@@ -1012,6 +1050,52 @@ class PlayDevCardMessage$Type extends MessageType<PlayDevCardMessage> {
  */
 export const PlayDevCardMessage = new PlayDevCardMessage$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class DiscardCardsMessage$Type extends MessageType<DiscardCardsMessage> {
+    constructor() {
+        super("catan.v1.DiscardCardsMessage", [
+            { no: 1, name: "resources", kind: "message", T: () => ResourceCount }
+        ]);
+    }
+    create(value?: PartialMessage<DiscardCardsMessage>): DiscardCardsMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<DiscardCardsMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DiscardCardsMessage): DiscardCardsMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* catan.v1.ResourceCount resources */ 1:
+                    message.resources = ResourceCount.internalBinaryRead(reader, reader.uint32(), options, message.resources);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DiscardCardsMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* catan.v1.ResourceCount resources = 1; */
+        if (message.resources)
+            ResourceCount.internalBinaryWrite(message.resources, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.DiscardCardsMessage
+ */
+export const DiscardCardsMessage = new DiscardCardsMessage$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ClientMessage$Type extends MessageType<ClientMessage> {
     constructor() {
         super("catan.v1.ClientMessage", [
@@ -1024,7 +1108,8 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
             { no: 7, name: "move_robber", kind: "message", oneof: "message", T: () => MoveRobberMessage },
             { no: 8, name: "end_turn", kind: "message", oneof: "message", T: () => EndTurnMessage },
             { no: 9, name: "play_dev_card", kind: "message", oneof: "message", T: () => PlayDevCardMessage },
-            { no: 10, name: "player_ready", kind: "message", oneof: "message", T: () => PlayerReadyMessage }
+            { no: 10, name: "player_ready", kind: "message", oneof: "message", T: () => PlayerReadyMessage },
+            { no: 11, name: "discard_cards", kind: "message", oneof: "message", T: () => DiscardCardsMessage }
         ]);
     }
     create(value?: PartialMessage<ClientMessage>): ClientMessage {
@@ -1099,6 +1184,12 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
                         playerReady: PlayerReadyMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).playerReady)
                     };
                     break;
+                case /* catan.v1.DiscardCardsMessage discard_cards */ 11:
+                    message.message = {
+                        oneofKind: "discardCards",
+                        discardCards: DiscardCardsMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).discardCards)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1141,6 +1232,9 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
         /* catan.v1.PlayerReadyMessage player_ready = 10; */
         if (message.message.oneofKind === "playerReady")
             PlayerReadyMessage.internalBinaryWrite(message.message.playerReady, writer.tag(10, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.DiscardCardsMessage discard_cards = 11; */
+        if (message.message.oneofKind === "discardCards")
+            DiscardCardsMessage.internalBinaryWrite(message.message.discardCards, writer.tag(11, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -2031,6 +2125,60 @@ class ErrorPayload$Type extends MessageType<ErrorPayload> {
  */
 export const ErrorPayload = new ErrorPayload$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class DiscardedCardsPayload$Type extends MessageType<DiscardedCardsPayload> {
+    constructor() {
+        super("catan.v1.DiscardedCardsPayload", [
+            { no: 1, name: "player_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "resources", kind: "message", T: () => ResourceCount }
+        ]);
+    }
+    create(value?: PartialMessage<DiscardedCardsPayload>): DiscardedCardsPayload {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.playerId = "";
+        if (value !== undefined)
+            reflectionMergePartial<DiscardedCardsPayload>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DiscardedCardsPayload): DiscardedCardsPayload {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string player_id */ 1:
+                    message.playerId = reader.string();
+                    break;
+                case /* catan.v1.ResourceCount resources */ 2:
+                    message.resources = ResourceCount.internalBinaryRead(reader, reader.uint32(), options, message.resources);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DiscardedCardsPayload, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string player_id = 1; */
+        if (message.playerId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.playerId);
+        /* catan.v1.ResourceCount resources = 2; */
+        if (message.resources)
+            ResourceCount.internalBinaryWrite(message.resources, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.DiscardedCardsPayload
+ */
+export const DiscardedCardsPayload = new DiscardedCardsPayload$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ServerMessage$Type extends MessageType<ServerMessage> {
     constructor() {
         super("catan.v1.ServerMessage", [
@@ -2047,7 +2195,8 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
             { no: 11, name: "game_started", kind: "message", oneof: "message", T: () => GameStartedPayload },
             { no: 12, name: "game_over", kind: "message", oneof: "message", T: () => GameOverPayload },
             { no: 13, name: "error", kind: "message", oneof: "message", T: () => ErrorPayload },
-            { no: 14, name: "player_ready_changed", kind: "message", oneof: "message", T: () => PlayerReadyChangedPayload }
+            { no: 14, name: "player_ready_changed", kind: "message", oneof: "message", T: () => PlayerReadyChangedPayload },
+            { no: 15, name: "discarded_cards", kind: "message", oneof: "message", T: () => DiscardedCardsPayload }
         ]);
     }
     create(value?: PartialMessage<ServerMessage>): ServerMessage {
@@ -2146,6 +2295,12 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
                         playerReadyChanged: PlayerReadyChangedPayload.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).playerReadyChanged)
                     };
                     break;
+                case /* catan.v1.DiscardedCardsPayload discarded_cards */ 15:
+                    message.message = {
+                        oneofKind: "discardedCards",
+                        discardedCards: DiscardedCardsPayload.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).discardedCards)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -2200,6 +2355,9 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
         /* catan.v1.PlayerReadyChangedPayload player_ready_changed = 14; */
         if (message.message.oneofKind === "playerReadyChanged")
             PlayerReadyChangedPayload.internalBinaryWrite(message.message.playerReadyChanged, writer.tag(14, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.DiscardedCardsPayload discarded_cards = 15; */
+        if (message.message.oneofKind === "discardedCards")
+            DiscardedCardsPayload.internalBinaryWrite(message.message.discardedCards, writer.tag(15, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
