@@ -4,43 +4,106 @@
 
 ----
 
-## STATUS SUMMARY (2026-01-20)
+## STATUS SUMMARY (2026-01-20 - Updated)
 
 **All 8 priority spec features are BACKEND COMPLETE:**
 - ✅ Interactive Board
 - ✅ Setup Phase UI
 - ✅ Victory Flow
-- ✅ Robber Flow
-- ✅ Trading System
-- ✅ Development Cards
-- ✅ Longest Road
-- ✅ Ports
+- ✅ Robber Flow (MoveRobber, Steal, Discard all implemented)
+- ✅ Trading System (ProposeTrade, AcceptTrade, DeclineTrade all implemented)
+- ✅ Development Cards (all 5 types implemented)
+- ✅ Longest Road (DFS algorithm complete)
+- ✅ Ports (generation, trade ratios all implemented)
 
-**Backend health:**
-- ✅ All Go unit tests pass (make test-backend)
+**Backend health (VERIFIED 2026-01-20):**
+- ✅ All Go unit tests pass (make test-backend) - 12 test files, 100% pass
 - ✅ All builds pass (make build)
 - ✅ TypeScript passes (make typecheck)
 - ✅ Lint passes with 2 acceptable warnings (make lint)
 
 **E2E Test Coverage:**
-- ✅ Interactive board (full implementation)
-- ✅ Setup phase (full implementation)
-- ⚠️ Victory flow (placeholder only)
-- ⚠️ Robber flow (placeholder only)
-- ⚠️ Trading (placeholder only)
-- ⚠️ Development cards (placeholder only)
-- ❌ Longest road (not created)
-- ❌ Ports (not created)
+- ✅ Interactive board (COMPLETE - 268 lines, comprehensive)
+- ✅ Setup phase (COMPLETE - 182 lines, comprehensive)
+- ⚠️ Victory flow (PLACEHOLDER - 30 lines, needs expansion)
+- ⚠️ Robber flow (PLACEHOLDER - 69 lines with window.__test stubs)
+- ⚠️ Trading (PLACEHOLDER - 40 lines, test stubs only)
+- ⚠️ Development cards (PLACEHOLDER - 118 lines, test stubs only)
+- ❌ Longest road (NOT CREATED - missing file)
+- ❌ Ports (NOT CREATED - missing file)
 
 **Frontend UI Gaps:**
-- ⚠️ ProposeTradeModal (stub/TODO)
-- ⚠️ IncomingTradeModal (stub/TODO)
-- ⚠️ Knight card → robber move integration (missing)
-- ⚠️ Road Building → free placement mode (missing)
+- ⚠️ ProposeTradeModal (21-line STUB with TODO comment)
+- ⚠️ IncomingTradeModal (24-line STUB with TODO comment)
+- ⚠️ Knight card → robber move integration (backend ready, UI hookup missing)
+- ⚠️ Road Building → free placement mode (backend ready, UI mode missing)
+- ⚠️ Game.tsx has 3 TODO comments (lines 37, 256, 270)
 
 ----
 
 ## REMAINING WORK
+
+### PRIORITY 0: E2E TEST INFRASTRUCTURE (BLOCKER)
+
+Before implementing comprehensive E2E tests, we need proper test infrastructure to avoid brittle tests and window.__test anti-patterns.
+
+#### Task 0.1: Create E2E Test Helper Functions
+**Blocker for:** All E2E test tasks (1.1-1.6)
+
+**Current state:** Only basic helpers exist (createGame, joinGame, setPlayerReady, startGame)
+
+**Required helpers:**
+- [ ] `completeSetupPhase(page, numPlayers)` - Fast-forward through setup placements
+- [ ] `grantResources(page, playerId, resources)` - Backend endpoint to add resources for testing
+- [ ] `advanceToPhase(page, phase)` - Jump to specific game phase (TRADE, BUILD, etc.)
+- [ ] `placeStructure(page, type, location)` - Helper to place settlement/city/road
+- [ ] `rollDice(page, forcedValue?)` - Roll dice with optional forced value for testing
+- [ ] `waitForGamePhase(page, phase)` - Wait until game reaches specific phase
+
+**Implementation approach:**
+1. Add backend test endpoints (only enabled in test/dev mode):
+   - `POST /test/grant-resources` - Grant resources to player
+   - `POST /test/set-game-state` - Jump to specific game state
+   - `POST /test/force-dice-roll` - Force next dice roll value
+2. Add helper functions in `frontend/tests/helpers.ts`
+3. Ensure helpers are robust with proper waits and error handling
+
+**Files to create/modify:**
+- `backend/internal/handlers/test_handlers.go` (NEW - test-only endpoints)
+- `frontend/tests/helpers.ts` (expand with new helpers)
+- `backend/cmd/server/main.go` (conditionally register test handlers if DEV_MODE)
+
+**Validation:**
+- Helpers work in isolation
+- Helpers enable fast, reliable test setup
+- `make e2e` passes with helper-based tests
+
+**Notes:**
+- Test endpoints should ONLY be available when `DEV_MODE=true` or similar flag
+- Consider: middleware to reject test endpoints in production builds
+- Alternative: Use game state manipulation via websocket debug commands
+
+---
+
+#### Task 0.2: Remove window.__test Anti-Patterns from Existing Tests
+**Blocker for:** Tasks 1.2 (Robber E2E)
+
+**Current state:** 4 window.__test calls in robber.spec.ts that reference non-existent APIs
+
+**Required changes:**
+- [ ] Replace `window.__test.grantCards()` with `grantResources()` helper
+- [ ] Replace `window.__test.forceRoll(7)` with `rollDice(page, 7)` helper
+- [ ] Replace `window.__test.jumpToRobberMove()` with proper game flow
+- [ ] Replace `window.__test.jumpToRobberSteal()` with proper game flow
+
+**Files to modify:**
+- `frontend/tests/robber.spec.ts` (remove all window.__test calls)
+
+**Validation:**
+- `make e2e` passes robber tests without window.__test
+- Tests use real game flow with helpers
+
+---
 
 ### PRIORITY 1: E2E TEST IMPLEMENTATION
 
@@ -76,7 +139,9 @@ All backend logic is complete. Focus now shifts to comprehensive E2E test covera
 **Spec:** `specs/robber-flow.md`
 **File:** `frontend/tests/robber.spec.ts`
 
-**Current state:** Placeholder tests with window.__test stubs (69 lines)
+**Current state:** Placeholder tests with window.__test stubs (69 lines, 4 window.__test calls)
+
+**CRITICAL:** Current tests use `window.__test` stubs (grantCards, forceRoll, jumpToRobberMove, jumpToRobberSteal). These are NOT implemented in the app and tests will fail. Must replace with real game flow using helper functions.
 
 **Required tests:**
 - [ ] Rolling 7 shows discard modal for players with >7 cards
@@ -88,8 +153,11 @@ All backend logic is complete. Focus now shifts to comprehensive E2E test covera
 - [ ] Stealing transfers a resource
 
 **Implementation notes:**
-- Replace `window.__test` stubs with real game flow
-- Use test helpers to grant >7 cards to players
+- Replace `window.__test` stubs with real game flow (use helpers like in interactive-board.spec.ts)
+- Use existing helper pattern: `createGame`, `joinGame`, `setPlayerReady`, `startGame`
+- Complete setup phase to reach PLAYING state
+- Manually grant resources via test backend endpoint OR simulate resource accumulation
+- Use actual dice roll mechanism or backend test endpoint to trigger robber
 - Verify discard count calculation (half, rounded down)
 - Verify robber placement restrictions (cannot place on same hex)
 
@@ -247,28 +315,35 @@ Complete stub/TODO UI components to enable full E2E testing.
 **Spec:** `specs/development-cards.md` (Road Building effect)
 **Blocker for:** Task 1.4 (Dev cards E2E)
 
-**Current state:** Road Building card plays via `playDevCard` but does not enable free road placement
+**Current state:** Road Building card plays via `playDevCard` in backend but frontend has no free placement mode
+
+**Required investigation:**
+- [ ] Verify backend: Does `PlayDevCard(ROAD_BUILDING)` grant free placements or just validate?
+- [ ] Check proto: Is there a `free_placement_count` field or special build mode?
+- [ ] Determine approach: Client-side mode tracking vs server-managed placement state
 
 **Required implementation:**
 - [ ] After Road Building played, enter "place 2 roads" mode
 - [ ] Highlight valid road placements (same as normal)
-- [ ] Roads placed without resource cost
+- [ ] Roads placed without resource cost (server validates)
 - [ ] Track roads placed count (2 max)
 - [ ] Exit mode after 2 roads placed
 - [ ] Normal road placement rules still apply (adjacency, etc.)
 
 **Files to modify:**
-- `frontend/src/components/Game/Game.tsx` (add Road Building placement mode)
+- `frontend/src/components/Game/Game.tsx` (add Road Building placement mode UI)
 - `frontend/src/context/GameContext.tsx` (track free road placement state)
-- Backend handler may need `free_placement` flag or separate message type
+- Possibly: `backend/internal/game/devcards.go` (if free placement logic needed)
+- Possibly: `proto/catan/v1/types.proto` (if placement mode field needed)
 
 **Backend considerations:**
-- `PlayDevCard` for Road Building validates card but doesn't grant resources
-- May need separate `PlaceRoadFree` message or flag in `BuildStructure`
-- Review `backend/internal/handlers/handlers.go` for free placement support
+- ✅ `PlayDevCard` for Road Building exists in devcards.go
+- ❓ No evidence of `PlaceRoadFree` handler found in handlers.go (needs investigation)
+- May need to add placement mode to GameState or rely on client-side tracking
 
 **Validation:**
-- E2E test: Road Building → place 2 roads → resources not deducted
+- Unit test: Road Building card places 2 roads without resource deduction
+- E2E test: Road Building → place 2 roads → resources remain unchanged
 - `make test-backend` passes
 - `make e2e` passes
 
@@ -445,39 +520,111 @@ After each task:
 - ✅ TypeScript build errors (all 55+ errors fixed)
 - ✅ Lint errors (ProposeTradeModal, IncomingTradeModal, GameContext)
 
-**NO CURRENT BLOCKERS**
+**CURRENT BLOCKERS (2026-01-20):**
+
+⚠️ **E2E Test Infrastructure Gap:** Many placeholder tests use `window.__test` API patterns that do not exist in the app:
+- `frontend/tests/robber.spec.ts` - 4 calls to undefined window.__test methods
+- Tests will fail when run against real app
+- **Resolution:** Replace with real game flow using helper pattern from interactive-board.spec.ts
+- **Impact:** Tasks 1.2, 1.3, 1.4 blocked until window.__test patterns removed
+
+⚠️ **Test Helper Gaps:** Need additional helper functions for complex E2E scenarios:
+- No helper to fast-forward through setup phase (needed for victory/robber/trading tests)
+- No helper to grant specific resources to players (needed for robber >7 card scenario)
+- No helper to advance to specific game phases (TRADE, BUILD, etc.)
+- **Resolution:** Create test helpers in `frontend/tests/helpers.ts` or backend test endpoints
+- **Impact:** E2E tests will be brittle/slow without helpers
 
 ----
 
 ## NOTES
 
+**Backend Status (Verified 2026-01-20):**
 - Backend implementation is **COMPLETE** for all 8 priority specs
-- All Go unit tests pass
-- Focus now on **E2E test coverage** and **frontend UI completion**
+- All Go unit tests pass (12 test files, 100% pass rate)
+- All game logic is deterministic and well-tested
+- No TODOs or FIXMEs found in backend game logic files
+
+**Frontend Status:**
+- Interactive board and setup phase E2E tests are COMPLETE and comprehensive
+- 4 placeholder E2E test files exist but need real implementation
+- 2 E2E test files missing entirely (longest-road, ports)
 - ProposeTradeModal and IncomingTradeModal are stubs but do not block gameplay (just testing)
 - Knight and Road Building cards need UI integration to complete dev card flow
-- 3D board is optional enhancement, not required for playable game
+- Game.tsx has 3 TODO comments (lines 37, 256, 270) for trade hookups
+
+**Test Infrastructure Gaps (NEW - 2026-01-20):**
+- window.__test anti-pattern found in robber.spec.ts (4 undefined API calls)
+- No helpers for complex test scenarios (fast-forward setup, grant resources, force dice)
+- E2E tests will be brittle without proper infrastructure
+- **RECOMMENDATION:** Build test infrastructure FIRST (Priority 0) before expanding E2E tests
+
+**3D Board (Optional):**
+- 3D board is optional enhancement per specs/3d-board.md (marked HIGH priority in spec)
+- Game is fully playable with current 2D SVG board
+- 3D board adds visual polish but no gameplay value
+- Defer until after all E2E tests complete
+
+**Key Architectural Decisions:**
+- All game state is server-authoritative (correct design)
+- Frontend is render-only, sends commands, receives updates (correct)
+- Protobuf contract is stable and well-defined
+- Websocket hub pattern works reliably
 
 ----
 
-# Plan Validation (2026-01-20)
+# Plan Validation (2026-01-20 - Updated)
 
-**Gap Analysis Complete:**
+**Gap Analysis Complete and Verified:**
 
-1. **Backend:** ✅ No gaps. All game logic implemented and tested.
-2. **Frontend UI:** ⚠️ 4 components stub/incomplete (ProposeTradeModal, IncomingTradeModal, Knight→robber, RoadBuilding→free placement)
-3. **E2E Tests:** ⚠️ 6 of 8 specs have placeholder tests only; 2 specs missing tests entirely
+1. **Backend:** ✅ No gaps. All game logic implemented and tested (12 test files, all passing).
+2. **Frontend UI:** ⚠️ 4 components stub/incomplete:
+   - ProposeTradeModal (21 lines, TODO comment)
+   - IncomingTradeModal (24 lines, TODO comment)
+   - Knight→robber UI integration (backend ready, UI hookup missing)
+   - RoadBuilding→free placement UI mode (backend ready, UI mode missing)
+3. **E2E Tests:** ⚠️ 6 of 8 specs have placeholder tests; 2 specs missing entirely:
+   - Interactive board: ✅ COMPLETE (268 lines)
+   - Setup phase: ✅ COMPLETE (182 lines)
+   - Victory: ⚠️ PLACEHOLDER (30 lines)
+   - Robber: ⚠️ PLACEHOLDER (69 lines, uses window.__test anti-pattern)
+   - Trading: ⚠️ PLACEHOLDER (40 lines)
+   - Dev cards: ⚠️ PLACEHOLDER (118 lines)
+   - Longest road: ❌ MISSING FILE
+   - Ports: ❌ MISSING FILE
+4. **Test Infrastructure:** ⚠️ NEW GAP IDENTIFIED:
+   - No test helpers for complex scenarios (fast-forward, grant resources, etc.)
+   - window.__test anti-patterns in robber.spec.ts (4 calls to undefined APIs)
+   - Need backend test endpoints or state manipulation helpers
 
 **Prioritization Rationale:**
-- E2E tests are highest priority to validate end-to-end user flows
-- Frontend UI stubs block E2E test implementation (must complete first where needed)
-- Code quality/polish tasks are low priority (game is playable, just needs cleanup)
-- 3D board is optional enhancement (game fully playable with 2D board)
+- **Priority 0 (NEW):** Test infrastructure must be built first to enable reliable E2E tests
+- **Priority 1:** E2E tests validate end-to-end user flows (highest value after infrastructure)
+- **Priority 2:** Frontend UI stubs block certain E2E tests (must complete for Tasks 1.3, 1.4)
+- **Priority 3:** Code quality/polish tasks are low priority (game is playable, just needs cleanup)
+- **Priority 4:** 3D board is optional enhancement (game fully playable with 2D board)
 
-**Next Steps:**
-1. Complete frontend UI stubs (Priority 2: Tasks 2.1-2.4)
-2. Implement comprehensive E2E tests (Priority 1: Tasks 1.1-1.6)
-3. Code cleanup (Priority 3: Tasks 3.1-3.2)
-4. Consider 3D board enhancement (Priority 4: Task 4.1)
+**Critical Dependencies:**
+- Task 0.1 (Test helpers) → BLOCKS Tasks 1.1-1.6 (all E2E implementation)
+- Task 0.2 (Remove window.__test) → BLOCKS Task 1.2 (Robber E2E)
+- Task 2.3 (ProposeTradeModal) → BLOCKS Task 1.3 (Trading E2E)
+- Task 2.4 (IncomingTradeModal) → BLOCKS Task 1.3 (Trading E2E)
+- Task 2.1 (Knight→robber) → BLOCKS Task 1.4 (Dev cards E2E, Knight test)
+- Task 2.2 (Road Building) → BLOCKS Task 1.4 (Dev cards E2E, Road Building test)
 
-This plan is complete and actionable as of 2026-01-20.
+**Next Steps (In Order):**
+1. ✅ Complete this plan update (Task 0.0 - DONE)
+2. Build test infrastructure (Task 0.1 - test helpers)
+3. Remove window.__test anti-patterns (Task 0.2)
+4. Complete frontend UI stubs (Tasks 2.1-2.4)
+5. Implement comprehensive E2E tests (Tasks 1.1-1.6)
+6. Code cleanup (Tasks 3.1-3.2)
+7. Consider 3D board enhancement (Task 4.1)
+
+**Risk Assessment:**
+- **LOW RISK:** Backend is solid, all unit tests pass
+- **MEDIUM RISK:** E2E test infrastructure gaps may slow progress
+- **LOW RISK:** Frontend UI stubs are small, well-scoped changes
+- **HIGH VALUE:** Comprehensive E2E coverage will ensure playability and prevent regressions
+
+This plan is complete, verified, and actionable as of 2026-01-20.
