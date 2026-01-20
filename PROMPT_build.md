@@ -42,11 +42,26 @@ make lint
 # Verify the projects build
 make build
 
-# E2E tests - SKIP if servers not running. Note in plan and continue.
-# Do NOT start servers yourself. E2E will be validated separately.
+# E2E tests - run if frontend changed (loop.sh handles servers)
+# The loop will auto-start servers and run E2E if frontend/src/* changed
 ```
 
-If backend tests or typecheck fail, fix them. If e2e fails due to servers not running, note it and continue.
+If backend tests or typecheck fail, fix them before committing.
+
+## 2a. E2E Test Requirements
+
+**When modifying frontend/src/**, you MUST:
+
+1. Ensure related user flows have Playwright coverage in `frontend/tests/*.spec.ts`
+2. Add `data-cy="..."` attributes to interactive elements (buttons, inputs, etc.)
+3. Test the happy path at minimum
+
+**E2E testing philosophy:**
+
+- Test real user flows, not implementation details
+- One spec file per major flow (game-flow, setup-phase, trading, etc.)
+- Use `data-cy` selectors for stability
+- Wait for WebSocket state changes explicitly
 
 ## 3. Update Plan
 
