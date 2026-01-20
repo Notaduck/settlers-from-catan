@@ -88,7 +88,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount/unmount
 
-  const players = gameState?.players ?? [];
+  // Memoize players array to prevent unnecessary re-renders
+  const players = useMemo(() => gameState?.players ?? [], [gameState?.players]);
 
   // Find current player's state
   const currentPlayer = useMemo(
