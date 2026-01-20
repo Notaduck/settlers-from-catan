@@ -33,11 +33,11 @@
 - ⚠️ Development cards (PLACEHOLDER - 118 lines, test stubs only)
 
 **Frontend UI Gaps:**
-- ⚠️ ProposeTradeModal (21-line STUB with TODO comment)
+- ✅ ProposeTradeModal (COMPLETE - 227 lines full implementation)
 - ⚠️ IncomingTradeModal (24-line STUB with TODO comment)
 - ⚠️ Knight card → robber move integration (backend ready, UI hookup missing)
 - ⚠️ Road Building → free placement mode (backend ready, UI mode missing)
-- ⚠️ Game.tsx has 3 TODO comments (lines 37, 256, 270)
+- ⚠️ Game.tsx has 2 TODO comments (lines 37, 256) - down from 3, line 270 resolved
 
 ----
 
@@ -464,37 +464,64 @@ Complete stub/TODO UI components to enable full E2E testing.
 
 ---
 
-#### Task 2.3: Complete ProposeTradeModal UI
+#### Task 2.3: Complete ProposeTradeModal UI ✅ COMPLETE
 **Spec:** `specs/trading.md`
 **Blocker for:** Task 1.3 (Trading E2E)
 
-**Current state:** Stub implementation with TODO comment
+**Status: COMPLETE (2026-01-20)**
 
-**Required implementation:**
-- [ ] Resource offer selection UI (increment/decrement buttons per resource)
-- [ ] Resource request selection UI (increment/decrement buttons per resource)
-- [ ] Player target selection (dropdown or buttons: specific player or "All")
-- [ ] Validation: cannot offer resources player doesn't have
-- [ ] Submit button calls `proposeTrade` from GameContext
-- [ ] Cancel button closes modal
+**Completed implementation:**
+- ✅ Resource offer selection UI (increment/decrement buttons per resource)
+- ✅ Resource request selection UI (increment/decrement buttons per resource)
+- ✅ Player target selection (dropdown: specific player or "All Players")
+- ✅ Validation: cannot offer resources player doesn't have
+- ✅ Submit button calls `proposeTrade` from GameContext
+- ✅ Cancel button closes modal and resets state
+- ✅ All required data-cy attributes implemented per spec
 
-**Files to modify:**
-- `frontend/src/components/Game/ProposeTradeModal.tsx` (full implementation)
+**Files modified:**
+- `frontend/src/components/Game/ProposeTradeModal.tsx` (rewritten from 21-line stub to 227 lines full implementation)
+- `frontend/src/context/GameContext.tsx` (added `proposeTrade` and `respondTrade` methods)
+- `frontend/src/components/Game/Game.tsx` (hooked up `proposeTrade` call, removed TODO comment)
 
-**Data attributes:**
-- `data-cy="propose-trade-modal"`
-- `data-cy="trade-offer-{resource}"`
-- `data-cy="trade-request-{resource}"`
-- `data-cy="propose-trade-submit-btn"`
-- `data-cy="propose-trade-cancel-btn"`
+**Implementation details:**
+- Uses same resource selection pattern as DiscardModal (increment/decrement buttons)
+- State management: tracks offering, requesting, and targetPlayerId
+- Validation: ensures player has resources to offer, requires at least 1 offered and 1 requested
+- Sends `ProposeTradeMessage` via websocket with offering, requesting, and optional targetId
+- Resets modal state on submit/cancel for clean next use
+- Displays helpful error messages when validation fails
 
-**Backend:** Already complete (`handleProposeTrade`, `ProposeTrade` command)
+**Data attributes implemented:**
+- ✅ `data-cy="propose-trade-modal"`
+- ✅ `data-cy="trade-target-select"`
+- ✅ `data-cy="trade-offer-{resource}"` (wood, brick, sheep, wheat, ore)
+- ✅ `data-cy="trade-request-{resource}"` (wood, brick, sheep, wheat, ore)
+- ✅ `data-cy="propose-trade-submit-btn"`
+- ✅ `data-cy="propose-trade-cancel-btn"`
+- ✅ `data-cy="propose-trade-error"` (validation error message)
+
+**Backend integration:**
+- Backend already complete: `ProposeTrade` command in `trading.go`
+- Backend already has `handleProposeTrade` handler
+- Proto message `ProposeTradeMessage` with targetId, offering, requesting
+- Trade offers stored in `gameState.pendingTrades[]`
 
 **Validation:**
-- E2E test: propose trade flow works
-- `make typecheck` passes
-- `make lint` passes
-- `make e2e` passes
+- ✅ All backend tests pass (make test-backend)
+- ✅ TypeScript typecheck passes (make typecheck)
+- ✅ Lint passes with 0 errors, 2 acceptable warnings (make lint)
+- ✅ Build succeeds (make build)
+- ⚠️ E2E tests not run (servers not started per instructions - will validate separately)
+
+**Notes:**
+- Removed TODO comment at line 270 in Game.tsx (now properly hooked up)
+- Added `respondTrade` to GameContext (prepared for Task 2.4 IncomingTradeModal)
+- Modal follows same patterns as BankTradeModal and DiscardModal for consistency
+- Ready for E2E testing in Task 1.3 (Trading E2E Tests)
+
+**Next steps:**
+- Task 2.4: Complete IncomingTradeModal UI (unblocks Trading E2E tests)
 
 ---
 

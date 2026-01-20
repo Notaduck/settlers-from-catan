@@ -68,6 +68,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
     // Dev cards
     buyDevCard,
     playDevCard,
+    // Trading
+    proposeTrade,
+    // respondTrade, // TODO: Will be used in IncomingTradeModal implementation (Task 2.4)
   } = useGame();
 
   // UI state (for modal closing)
@@ -266,15 +269,12 @@ export function Game({ gameCode, onLeave }: GameProps) {
         <ProposeTradeModal
           open={showProposeTrade}
           onClose={() => setShowProposeTrade(false)}
-          onSubmit={(offer, request) => {
-            // TODO: Hook up to trade send
+          onSubmit={(offer, request, targetPlayerId) => {
+            proposeTrade(offer, request, targetPlayerId);
             setShowProposeTrade(false);
-            // For demo: simulate incoming trade right away
-            setIncomingTrade({from:currentPlayer?.name||'Player',offer,request});
-            setShowIncomingTrade(true);
           }}
           players={players}
-          myResources={(currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}) as unknown as Record<string, number>}
+          myResources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
         />
       )}
       {/* INCOMING TRADE MODAL (stub/demo, always shows same test offer) */}
