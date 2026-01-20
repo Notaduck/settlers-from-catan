@@ -711,6 +711,14 @@ func (h *Handler) handlePlayDevCard(client *hub.Client, payload []byte) {
 		return
 	}
 
+	// Knight card triggers robber phase (move + optional steal)
+	if req.CardType == catanv1.DevCardType_DEV_CARD_TYPE_KNIGHT {
+		if state.RobberPhase == nil {
+			state.RobberPhase = &catanv1.RobberPhase{}
+		}
+		state.RobberPhase.MovePendingPlayerId = &client.PlayerID
+	}
+
 	if err := h.saveGameState(client.GameID, &state); err != nil {
 		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
 		return

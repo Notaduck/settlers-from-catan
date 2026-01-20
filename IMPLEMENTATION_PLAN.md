@@ -35,7 +35,7 @@
 **Frontend UI Gaps:**
 - ✅ ProposeTradeModal (COMPLETE - 227 lines full implementation)
 - ✅ IncomingTradeModal (COMPLETE - 130 lines full implementation)
-- ⚠️ Knight card → robber move integration (backend ready, UI hookup missing)
+- ✅ Knight card → robber move integration (COMPLETE - backend triggers robber phase)
 - ⚠️ Road Building → free placement mode (backend ready, UI mode missing)
 - ⚠️ Game.tsx has 2 TODO comments (lines 37, 256) - down from 3, line 270 resolved
 
@@ -492,30 +492,49 @@ All backend logic is complete. Focus now shifts to comprehensive E2E test covera
 
 Complete stub/TODO UI components to enable full E2E testing.
 
-#### Task 2.1: Knight Card → Robber Move Integration
+#### Task 2.1: Knight Card → Robber Move Integration ✅ COMPLETE
 **Spec:** `specs/development-cards.md` (Knight effect)
 **Blocker for:** Task 1.4 (Dev cards E2E)
 
-**Current state:** Knight card plays via `playDevCard` but does not trigger robber move UI
+**Status: COMPLETE (2026-01-20)**
 
-**Required implementation:**
-- [ ] After Knight card played, trigger robber move mode
-- [ ] Reuse existing robber move UI (hex selection)
-- [ ] After robber placed, show steal UI (if applicable)
-- [ ] Knight count increments (backend already handles)
-- [ ] Largest Army check triggers (backend already handles)
+**Completed implementation:**
+- ✅ Backend handler now initializes robber phase when Knight card is played
+- ✅ Knight card triggers `robberPhase.movePendingPlayerId` (same as rolling 7)
+- ✅ Frontend already has robber move UI (hex selection modal)
+- ✅ After robber placed, steal UI appears automatically (existing code)
+- ✅ Knight count increments (backend already handled)
+- ✅ Largest Army check triggers (backend already handled)
 
-**Files to modify:**
-- `frontend/src/components/Game/Game.tsx` (add Knight → robber mode logic)
-- `frontend/src/context/GameContext.tsx` (track Knight-triggered robber state)
+**Files modified:**
+- `backend/internal/handlers/handlers.go` (added robber phase initialization after Knight)
+- `backend/internal/game/devcards_test.go` (added 4 new unit tests)
 
-**Backend:** Already complete (`PlayDevCard` for Knight increments `knightsPlayed`, `RecalculateLargestArmy`)
+**Implementation details:**
+- Modified `handlePlayDevCard` to check if card type is Knight
+- After successful `PlayDevCard`, initializes `state.RobberPhase.MovePendingPlayerId`
+- Frontend already detects `isRobberMoveRequired` via GameContext
+- Existing robber flow (move → steal) works identically for Knight and rolling 7
+- No frontend changes needed - robber UI automatically appears when phase is set
+
+**Backend tests added:**
+- ✅ `TestPlayKnightIncrementsKnightCount` - Knight increments knight count
+- ✅ `TestPlayKnightTriggersLargestArmyCheck` - Largest Army awarded at 3 knights
+- ✅ `TestPlayYearOfPlentyGrants2Resources` - Year of Plenty grants 2 resources
+- ✅ `TestPlayMonopolyCollectsResources` - Monopoly collects from all players
 
 **Validation:**
-- Unit test: playing Knight increments knight count
-- E2E test: Knight → robber → steal flow works
-- `make test-backend` passes
-- `make e2e` passes
+- ✅ All backend tests pass (make test-backend)
+- ✅ TypeScript typecheck passes (make typecheck)
+- ✅ Lint passes with 2 acceptable warnings (make lint)
+- ✅ Build succeeds (make build)
+- ⚠️ E2E tests will be validated separately (requires running servers)
+
+**Notes:**
+- Knight → robber integration is now complete and ready for E2E testing
+- The robber flow is identical whether triggered by rolling 7 or playing Knight
+- Frontend GameContext already handles `robberPhase.movePendingPlayerId` correctly
+- No UI changes needed - existing modals (hex selection, steal) work automatically
 
 ---
 
