@@ -11,8 +11,8 @@ func PlaceSettlement(state *pb.GameState, playerID, vertexID string) error {
 		return ErrWrongPhase
 	}
 
-	// Verify it's build or trade phase
-	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD && state.TurnPhase != pb.TurnPhase_TURN_PHASE_TRADE {
+	// Verify it's build phase
+	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD {
 		return ErrWrongPhase
 	}
 
@@ -91,8 +91,8 @@ func PlaceCity(state *pb.GameState, playerID, vertexID string) error {
 		return ErrWrongPhase
 	}
 
-	// Verify it's build or trade phase
-	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD && state.TurnPhase != pb.TurnPhase_TURN_PHASE_TRADE {
+	// Verify it's build phase
+	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD {
 		return ErrWrongPhase
 	}
 
@@ -158,8 +158,8 @@ func PlaceRoad(state *pb.GameState, playerID, edgeID string) error {
 		return ErrWrongPhase
 	}
 
-	// Verify it's build or trade phase
-	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD && state.TurnPhase != pb.TurnPhase_TURN_PHASE_TRADE {
+	// Verify it's build phase
+	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD {
 		return ErrWrongPhase
 	}
 
