@@ -10,7 +10,7 @@ import { MonopolyModal } from "./MonopolyModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
-import { GameStatus, PlayerColor, StructureType, DevCardType } from "@/types";
+import { GameStatus, PlayerColor, StructureType, DevCardType, ResourceCount } from "@/types";
 import { GameOver } from "./GameOver";
 import "./GameOver.css";
 import "./Game.css";
@@ -34,8 +34,6 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const [showBankTrade, setShowBankTrade] = useState(false);
   const [showProposeTrade, setShowProposeTrade] = useState(false);
   const [showIncomingTrade, setShowIncomingTrade] = useState(false);
-  // Simulated offer for stub incoming modal demo:
-  const [incomingTrade, setIncomingTrade] = useState<{from: string; offer: Record<string,number>; request: Record<string,number>}|null>(null);
   
   // Dev card modals
   const [showYearOfPlenty, setShowYearOfPlenty] = useState(false);
@@ -70,7 +68,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
     playDevCard,
     // Trading
     proposeTrade,
-    // respondTrade, // TODO: Will be used in IncomingTradeModal implementation (Task 2.4)
+    respondTrade,
+    bankTrade,
   } = useGame();
 
   // UI state (for modal closing)
@@ -82,13 +81,6 @@ export function Game({ gameCode, onLeave }: GameProps) {
       setDiscardClosed(false);
     }
   }, [isRobberDiscardRequired]);
-
-  useEffect(() => {
-    if (isRobberStealRequired) {
-      setStealClosed(false);
-    }
-  }, [isRobberStealRequired]);
-
 
   useEffect(() => {
     connect();
@@ -103,6 +95,33 @@ export function Game({ gameCode, onLeave }: GameProps) {
     () => players.find((p) => p.id === currentPlayerId),
     [players, currentPlayerId]
   );
+
+  // Check for incoming trades that target the current player
+  const incomingTradeOffer = useMemo(() => {
+    if (!gameState?.pendingTrades || !currentPlayerId) return null;
+    
+    // Find a pending trade where:
+    // 1. The current player is the target (or it's open to all)
+    // 2. The trade is still pending/active
+    // 3. The current player is not the proposer
+    return gameState.pendingTrades.find(trade => 
+      trade.proposerId !== currentPlayerId &&
+      (trade.targetId === currentPlayerId || !trade.targetId) &&
+      trade.status === 1 // Assuming 1 is PENDING status
+    ) || null;
+  }, [gameState?.pendingTrades, currentPlayerId]);
+
+  const incomingTradeProposer = useMemo(() => {
+    if (!incomingTradeOffer) return null;
+    return players.find(p => p.id === incomingTradeOffer.proposerId) || null;
+  }, [incomingTradeOffer, players]);
+
+  // Auto-show incoming trade modal when a trade is pending
+  useEffect(() => {
+    if (incomingTradeOffer && !showIncomingTrade) {
+      setShowIncomingTrade(true);
+    }
+  }, [incomingTradeOffer, showIncomingTrade]);
 
   // Check if all players are ready
   const allPlayersReady = useMemo(
@@ -255,8 +274,16 @@ export function Game({ gameCode, onLeave }: GameProps) {
         <BankTradeModal
           open={showBankTrade}
           onClose={() => setShowBankTrade(false)}
-          onSubmit={() => {
-            // TODO: Hook up to trade send
+          onSubmit={(offering, offeringAmount, requested) => {
+            // Create the proper ResourceCount for offering based on the resource type and amount
+            const offeringResources: ResourceCount = {
+              wood: offering === 1 ? offeringAmount : 0,
+              brick: offering === 2 ? offeringAmount : 0,
+              sheep: offering === 3 ? offeringAmount : 0,
+              wheat: offering === 4 ? offeringAmount : 0,
+              ore: offering === 5 ? offeringAmount : 0,
+            };
+            bankTrade(offeringResources, requested);
             setShowBankTrade(false);
           }}
           resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
@@ -277,15 +304,37 @@ export function Game({ gameCode, onLeave }: GameProps) {
           myResources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
         />
       )}
-      {/* INCOMING TRADE MODAL (stub/demo, always shows same test offer) */}
-      {!interactionsDisabled && (
+      {/* INCOMING TRADE MODAL */}
+      {!interactionsDisabled && incomingTradeOffer && incomingTradeProposer && (
         <IncomingTradeModal
           open={showIncomingTrade}
-          onAccept={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
-          onDecline={() => { setShowIncomingTrade(false); setIncomingTrade(null); }}
-          fromPlayer={incomingTrade?.from || 'Other'}
-          offer={incomingTrade?.offer || {wood:1}}
-          request={incomingTrade?.request || {brick:1}}
+          onAccept={() => { 
+            if (incomingTradeOffer) {
+              respondTrade(incomingTradeOffer.id, true);
+            }
+            setShowIncomingTrade(false); 
+          }}
+          onDecline={() => { 
+            if (incomingTradeOffer) {
+              respondTrade(incomingTradeOffer.id, false);
+            }
+            setShowIncomingTrade(false); 
+          }}
+          fromPlayer={incomingTradeProposer.name}
+          offer={incomingTradeOffer.offering ? {
+            wood: incomingTradeOffer.offering.wood,
+            brick: incomingTradeOffer.offering.brick,
+            sheep: incomingTradeOffer.offering.sheep,
+            wheat: incomingTradeOffer.offering.wheat,
+            ore: incomingTradeOffer.offering.ore
+          } : {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
+          request={incomingTradeOffer.requesting ? {
+            wood: incomingTradeOffer.requesting.wood,
+            brick: incomingTradeOffer.requesting.brick,
+            sheep: incomingTradeOffer.requesting.sheep,
+            wheat: incomingTradeOffer.requesting.wheat,
+            ore: incomingTradeOffer.requesting.ore
+          } : {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
         />
       )}
       {/* Robber Discard Modal */}

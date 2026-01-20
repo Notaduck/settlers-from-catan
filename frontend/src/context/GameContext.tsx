@@ -145,6 +145,7 @@ interface GameContextValue extends GameContextState {
   // --- Trading ---
   proposeTrade: (offering: ResourceCount, requesting: ResourceCount, targetPlayerId?: string | null) => void;
   respondTrade: (tradeId: string, accept: boolean) => void;
+  bankTrade: (offering: ResourceCount, resourceRequested: Resource) => void;
 }
 
 
@@ -388,6 +389,21 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     [sendMessage]
   );
 
+  const bankTrade = useCallback(
+    (offering: ResourceCount, resourceRequested: Resource) => {
+      sendMessage({
+        message: {
+          oneofKind: "bankTrade",
+          bankTrade: {
+            offering,
+            resourceRequested,
+          },
+        },
+      } as ClientMessage);
+    },
+    [sendMessage]
+  );
+
   const value: GameContextValue = {
     ...state,
     isConnected,
@@ -417,6 +433,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     playDevCard,
     proposeTrade,
     respondTrade,
+    bankTrade,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
