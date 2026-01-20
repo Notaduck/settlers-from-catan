@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	pb "settlers_from_catan/gen/proto/catan/v1"
 	"settlers_from_catan/internal/game"
 )
 
@@ -149,18 +151,57 @@ func (h *Handler) HandleForceDiceRoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// NOTE: Force dice roll is not yet implemented
-	// The dice system needs to support forced values for testing
-	// For now, this endpoint is a placeholder
-	// TODO: Add a test-only dice override mechanism
+	// Convert total dice value to individual dice values
+	// For testing purposes, we'll split the value as evenly as possible
+	die1, die2 := splitDiceValue(req.DiceValue)
+
+	// Perform the dice roll with forced values
+	result, err := game.PerformDiceRollWithValues(&state, state.Players[state.CurrentTurn].Id, die1, die2)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to perform dice roll: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Save updated state
+	stateBytes, err := marshalOptions.Marshal(&state)
+	if err != nil {
+		http.Error(w, "Failed to serialize game state", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.db.Exec("UPDATE games SET state = ? WHERE code = ?", string(stateBytes), req.GameCode)
+	if err != nil {
+		http.Error(w, "Failed to update game state", http.StatusInternalServerError)
+		return
+	}
+
+	// Broadcast the dice roll result (same as normal dice roll handler)
+	distributions := make([]*pb.ResourceDistribution, 0, len(result.ResourcesGained))
+	for playerID, resources := range result.ResourcesGained {
+		distributions = append(distributions, &pb.ResourceDistribution{
+			PlayerId:  playerID,
+			Resources: resources,
+		})
+	}
+	rolledPayload := &pb.DiceRolledPayload{
+		PlayerId:             state.Players[state.CurrentTurn].Id,
+		Values:               []int32{int32(die1), int32(die2)},
+		ResourcesDistributed: distributions,
+	}
+	h.broadcastServerMessage(req.GameCode, "diceRolled", rolledPayload)
+	h.broadcastGameStateProto(req.GameCode, &state)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status":  "ok",
-		"warning": "Forced dice roll not yet implemented - needs dice system support",
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"result": map[string]interface{}{
+			"die1":  die1,
+			"die2":  die2,
+			"total": req.DiceValue,
+		},
 	})
 
-	log.Printf("[TEST] Force dice roll requested for game %s (not implemented)", req.GameCode)
+	log.Printf("[TEST] Forced dice roll %d (%d+%d) for game %s", req.DiceValue, die1, die2, req.GameCode)
 }
 
 // HandleSetGameState advances game to a specific phase (test endpoint only)
@@ -254,4 +295,34 @@ func (h *Handler) HandleSetGameState(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 
 	log.Printf("[TEST] Set game %s to phase=%s status=%s", req.GameCode, req.Phase, req.Status)
+}
+
+// splitDiceValue splits a total dice value (2-12) into two individual dice (1-6 each)
+// For testing purposes, distributes as evenly as possible
+func splitDiceValue(total int32) (int, int) {
+	// Ensure valid range
+	if total < 2 {
+		total = 2
+	}
+	if total > 12 {
+		total = 12
+	}
+
+	// Split evenly when possible, otherwise distribute with die1 getting the extra
+	if total <= 7 {
+		// For 2-7, distribute evenly or give extra to die1
+		die2 := int(total) / 2
+		die1 := int(total) - die2
+		return die1, die2
+	} else {
+		// For 8-12, start with 6 on one die and distribute remainder
+		die1 := 6
+		die2 := int(total) - 6
+		if die2 > 6 {
+			// If die2 would be > 6, redistribute
+			die1 = int(total) - 6
+			die2 = 6
+		}
+		return die1, die2
+	}
 }
