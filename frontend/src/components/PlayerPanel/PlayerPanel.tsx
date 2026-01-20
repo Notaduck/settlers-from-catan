@@ -79,6 +79,11 @@ export function PlayerPanel({
             {dice[1] || "?"}
           </div>
         </div>
+        {dice.length > 0 && dice[0] && dice[1] && (
+          <div className="dice-result" data-cy="dice-result">
+            Total: {dice[0] + dice[1]}
+          </div>
+        )}
          {isMyTurn && isRollPhase && !isGameOver && (gameStatus === undefined || gameStatus === "PLAYING" || gameStatus === "GAME_STATUS_PLAYING") && (
           <button
             onClick={rollDice}

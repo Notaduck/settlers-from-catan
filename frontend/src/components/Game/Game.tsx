@@ -387,6 +387,16 @@ export function Game({ gameCode, onLeave }: GameProps) {
         <div className="game-code" data-cy="game-code">
           Game Code: <strong>{gameCode}</strong>
         </div>
+        {/* Game Phase Indicator */}
+        {gameState?.status && (
+          <div className="game-phase" data-cy="game-phase">
+            {gameState.status === GameStatus.PLAYING ? "PLAYING" : 
+             gameState.status === GameStatus.SETUP ? "SETUP" :
+             gameState.status === GameStatus.WAITING ? "WAITING" :
+             gameState.status === GameStatus.FINISHED ? "FINISHED" :
+             String(gameState.status)}
+          </div>
+        )}
         <button
           onClick={onLeave}
           className="btn btn-small"
@@ -508,13 +518,13 @@ export function Game({ gameCode, onLeave }: GameProps) {
            {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
            {!interactionsDisabled && gameState?.status === GameStatus.PLAYING && gameState?.turnPhase === ("TURN_PHASE_TRADE" as unknown as typeof gameState.turnPhase) && currentPlayer?.id === currentPlayerId && (
              <div className="trade-phase-control">
-               <button
-                 className="btn btn-secondary"
-                 data-cy="trade-phase-btn"
-                 onClick={() => setShowBankTrade(true)}
-               >
-                 Trade with Bank
-               </button>
+                <button
+                  className="btn btn-secondary"
+                  data-cy="bank-trade-btn"
+                  onClick={() => setShowBankTrade(true)}
+                >
+                  Trade with Bank
+                </button>
                <button
                  className="btn btn-secondary"
                  data-cy="propose-trade-btn"
