@@ -119,21 +119,51 @@ Based on comprehensive analysis, all major features have E2E coverage:
 
 ### **PRIORITY 2: BACKEND POLISH** ⚠️ **MINOR ENHANCEMENTS**
 
-#### Task 2.1: Development Card Timing Rules
-**Spec Compliance**: Cards bought same turn shouldn't be playable immediately
+#### Task 2.1: Development Card Timing Rules ✅ COMPLETED
+**Status**: COMPLETE - Development card same-turn restriction implemented
 
-**Current Gap**: Backend allows same-turn dev card play (except this is actually correct for some cards)
+**Completed Changes:**
 
-**Analysis Required**: 
-- Verify if current implementation matches standard Catan rules
-- Some dev cards (VP cards) may be playable same turn
-- Knight/action cards typically have one-turn delay
+**Files modified:**
+- `proto/catan/v1/types.proto`:
+  ✅ Added `dev_cards_purchased_turn` field to PlayerState for tracking purchase turn
+  ✅ Added `turn_counter` field to GameState for global turn tracking
+- `backend/internal/game/devcards.go`:
+  ✅ Modified `BuyDevCard` to track purchase turn in new field
+  ✅ Modified `PlayDevCard` to check timing restrictions for action cards
+  ✅ Preserved Victory Point cards as immediately playable
+- `backend/internal/game/state_machine.go`:
+  ✅ Modified `EndTurn` to increment global turn counter
+- `backend/internal/game/devcards_test.go`:
+  ✅ Added comprehensive test coverage for timing restrictions
+  ✅ Tests confirm Knight cards can't be played same turn they're purchased
+  ✅ Tests confirm VP cards can be played immediately 
+  ✅ Tests confirm cards from previous turns are playable
+- `frontend/src/gen/proto/catan/v1/types.ts`:
+  ✅ Fixed TypeScript compilation issues with generated protobuf code
 
-**Files to potentially modify:**
-- `backend/internal/game/devcards.go`: Add turn tracking if needed
-- `backend/internal/game/types.go`: Track card purchase turn if needed
+**Validation Completed:**
+✅ Backend unit tests pass (`make test-backend`)
+✅ TypeScript compilation passes (`make typecheck`)
+✅ Build succeeds (`make build`)
+✅ Linting passes (`make lint`)
 
-**Priority**: LOW - Game is playable with current rules
+**Catan Rules Compliance:**
+- ✅ **Knight Cards**: Cannot be played on turn purchased (standard Catan rule)
+- ✅ **Road Building**: Cannot be played on turn purchased (standard Catan rule)
+- ✅ **Year of Plenty**: Cannot be played on turn purchased (standard Catan rule)
+- ✅ **Monopoly**: Cannot be played on turn purchased (standard Catan rule)
+- ✅ **Victory Point Cards**: Can be played immediately (standard Catan rule)
+
+**Technical Implementation Details:**
+- Added robust turn counter system tracking global game turn
+- Purchase turn is tracked per card type in player state
+- Timing check only applies to action cards, not VP cards
+- Maintains backwards compatibility with existing game states
+- Comprehensive test coverage validates all timing scenarios
+- Proper cleanup of tracking data when cards are played
+
+**Priority**: COMPLETED - Game now enforces proper development card timing rules
 
 #### Task 2.2: Add Missing Test Endpoint ✅ COMPLETED
 **Status**: COMPLETE - ForceDiceRoll test endpoint fully implemented and working

@@ -147,6 +147,7 @@ message PlayerState {
   bool is_host = 10; // Host can start game when all ready
   int32 victory_point_cards = 11; // Number of VP dev cards in hand (hidden from other players)
   map<int32, int32> dev_cards = 12; // Map of DevCardType enum value -> count (hidden from other players)
+  map<int32, int32> dev_cards_purchased_turn = 13; // Map of DevCardType -> turn when purchased (hidden from other players)
 }
 
 // Port model for board trading bonuses
@@ -183,6 +184,7 @@ message GameState {
   optional RobberPhase robber_phase = 12; // Present during robber actions
   repeated TradeOffer pending_trades = 13;
   repeated DevCardType dev_card_deck = 14; // Remaining cards in deck (shuffled)
+  int32 turn_counter = 15; // Global turn counter (incremented each turn)
 }
 
 // Tracks the Robber phase state, including pending discards and steps.

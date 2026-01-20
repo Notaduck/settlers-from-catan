@@ -185,3 +185,109 @@ func TestPlayMonopolyCollectsResources(t *testing.T) {
 		t.Errorf("expected P9 to have 0 wheat, got %d", state.Players[2].Resources.Wheat)
 	}
 }
+
+func TestPlayKnightSameTurnRestriction(t *testing.T) {
+	state := &pbb.GameState{
+		TurnCounter: 5, // Current turn counter
+		Players: []*pbb.PlayerState{{
+			Id:            "P1",
+			KnightsPlayed: 0,
+			DevCardCount:  1,
+			DevCards:      map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_KNIGHT): 1},
+			// Simulate card purchased this turn
+			DevCardsPurchasedTurn: map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_KNIGHT): 5},
+		}},
+	}
+
+	// Should not be able to play knight card purchased this turn
+	err := PlayDevCard(state, "P1", pbb.DevCardType_DEV_CARD_TYPE_KNIGHT, nil, nil)
+	if err == nil {
+		t.Fatalf("expected error for playing dev card purchased same turn")
+	}
+	if err.Error() != "cannot play development card purchased this turn" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+
+	// Player should still have the card
+	if state.Players[0].DevCards[int32(pbb.DevCardType_DEV_CARD_TYPE_KNIGHT)] != 1 {
+		t.Errorf("card should not have been removed from hand")
+	}
+}
+
+func TestPlayKnightPreviousTurnAllowed(t *testing.T) {
+	state := &pbb.GameState{
+		TurnCounter: 6, // Current turn counter
+		Players: []*pbb.PlayerState{{
+			Id:            "P1",
+			KnightsPlayed: 0,
+			DevCardCount:  1,
+			DevCards:      map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_KNIGHT): 1},
+			// Card purchased previous turn
+			DevCardsPurchasedTurn: map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_KNIGHT): 5},
+		}},
+	}
+
+	// Should be able to play knight card purchased previous turn
+	err := PlayDevCard(state, "P1", pbb.DevCardType_DEV_CARD_TYPE_KNIGHT, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error playing knight from previous turn: %v", err)
+	}
+
+	// Player should have played the card
+	if state.Players[0].KnightsPlayed != 1 {
+		t.Errorf("expected KnightsPlayed to be 1, got %d", state.Players[0].KnightsPlayed)
+	}
+	if state.Players[0].DevCardCount != 0 {
+		t.Errorf("expected DevCardCount to be 0, got %d", state.Players[0].DevCardCount)
+	}
+}
+
+func TestPlayVictoryPointCardSameTurnAllowed(t *testing.T) {
+	state := &pbb.GameState{
+		TurnCounter: 5, // Current turn counter
+		Players: []*pbb.PlayerState{{
+			Id:                "P1",
+			VictoryPointCards: 1,
+			DevCardCount:      1,
+			DevCards:          map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT): 1},
+			// VP card purchased this turn - should still be playable
+			DevCardsPurchasedTurn: map[int32]int32{int32(pbb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT): 5},
+		}},
+	}
+
+	// VP cards should be playable same turn they're purchased
+	err := PlayDevCard(state, "P1", pbb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error playing VP card same turn: %v", err)
+	}
+
+	// VP card should have been played
+	if state.Players[0].VictoryPointCards != 0 {
+		t.Errorf("expected VictoryPointCards to be 0, got %d", state.Players[0].VictoryPointCards)
+	}
+}
+
+func TestBuyDevCardTracksPurchaseTurn(t *testing.T) {
+	state := &pbb.GameState{
+		TurnCounter: 10,
+		DevCardDeck: InitDevCardDeck(),
+		Players: []*pbb.PlayerState{{
+			Id:        "P1",
+			Resources: &pbb.ResourceCount{Ore: 1, Wheat: 1, Sheep: 1},
+		}},
+	}
+
+	cardType, err := BuyDevCard(state, "P1")
+	if err != nil {
+		t.Fatalf("unexpected error buying dev card: %v", err)
+	}
+
+	// Check that purchase turn was tracked
+	p := state.Players[0]
+	if p.DevCardsPurchasedTurn == nil {
+		t.Fatalf("DevCardsPurchasedTurn map should be initialized")
+	}
+	if p.DevCardsPurchasedTurn[int32(cardType)] != state.TurnCounter {
+		t.Errorf("expected purchase turn %d, got %d", state.TurnCounter, p.DevCardsPurchasedTurn[int32(cardType)])
+	}
+}

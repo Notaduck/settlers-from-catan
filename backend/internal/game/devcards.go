@@ -69,10 +69,17 @@ func BuyDevCard(state *pb.GameState, playerID string) (pb.DevCardType, error) {
 	if p.DevCards == nil {
 		p.DevCards = make(map[int32]int32)
 	}
+	// Initialize dev_cards_purchased_turn map if needed
+	if p.DevCardsPurchasedTurn == nil {
+		p.DevCardsPurchasedTurn = make(map[int32]int32)
+	}
 
 	// Add to player's hand
 	p.DevCards[int32(cardType)] = p.DevCards[int32(cardType)] + 1
 	p.DevCardCount++
+
+	// Track when this card was purchased
+	p.DevCardsPurchasedTurn[int32(cardType)] = state.TurnCounter
 
 	// Track VP cards separately for victory calculation
 	if cardType == pb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT {
@@ -98,6 +105,13 @@ func PlayDevCard(state *pb.GameState, playerID string, cardType pb.DevCardType, 
 	// Check player has the card
 	if p.DevCards == nil || p.DevCards[int32(cardType)] == 0 {
 		return errors.New("you don't have that card")
+	}
+
+	// Check timing rules - cards purchased this turn cannot be played (except Victory Point cards)
+	if cardType != pb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT {
+		if p.DevCardsPurchasedTurn != nil && p.DevCardsPurchasedTurn[int32(cardType)] == state.TurnCounter {
+			return errors.New("cannot play development card purchased this turn")
+		}
 	}
 
 	// Apply card effect
@@ -156,6 +170,14 @@ func PlayDevCard(state *pb.GameState, playerID string, cardType pb.DevCardType, 
 		delete(p.DevCards, int32(cardType))
 	}
 	p.DevCardCount--
+
+	// Also remove from purchase turn tracking when played
+	if p.DevCardsPurchasedTurn != nil && p.DevCardsPurchasedTurn[int32(cardType)] > 0 {
+		p.DevCardsPurchasedTurn[int32(cardType)]--
+		if p.DevCardsPurchasedTurn[int32(cardType)] == 0 {
+			delete(p.DevCardsPurchasedTurn, int32(cardType))
+		}
+	}
 
 	// Check victory after playing card (in case of VP card)
 	CheckVictory(state)
