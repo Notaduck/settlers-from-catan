@@ -27,7 +27,7 @@ Your task is to implement functionality per the specifications.
 
 ## 2. Validate
 
-After implementing, run validation:
+After implementing, run validation, test-backend, typecheck and build most succeed before committing:
 
 ```bash
 # Backend unit tests (ALWAYS run)

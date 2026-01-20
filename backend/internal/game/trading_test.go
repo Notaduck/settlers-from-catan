@@ -76,7 +76,8 @@ func TestRespondTrade_AcceptDecline(t *testing.T) {
 
 func TestBankTrade(t *testing.T) {
 	state := basicGameState(makePlayer("me", &catanv1.ResourceCount{Wood: 4}))
-	// Happy path
+	state.Board = GenerateBoard()
+	// Happy path - default 4:1 ratio
 	err := BankTrade(state, "me", &catanv1.ResourceCount{Wood: 4}, catanv1.Resource_RESOURCE_BRICK)
 	if err != nil {
 		t.Fatalf("BankTrade failed: %v", err)
@@ -89,9 +90,124 @@ func TestBankTrade(t *testing.T) {
 	}
 	// Not enough for bank trade
 	state = basicGameState(makePlayer("me", &catanv1.ResourceCount{Wood: 3}))
+	state.Board = GenerateBoard()
 	err = BankTrade(state, "me", &catanv1.ResourceCount{Wood: 3}, catanv1.Resource_RESOURCE_BRICK)
 	if err == nil {
 		t.Error("Allowed bank trade with insufficient resources")
+	}
+}
+
+func TestBankTradeWithGenericPort(t *testing.T) {
+	state := basicGameState(makePlayer("me", &catanv1.ResourceCount{Wood: 3}))
+	state.Board = GenerateBoard()
+
+	// Find a generic port and give player access
+	var genericPort *catanv1.Port
+	for _, p := range state.Board.Ports {
+		if p.Type == catanv1.PortType_PORT_TYPE_GENERIC {
+			genericPort = p
+			break
+		}
+	}
+	if genericPort == nil {
+		t.Fatal("No generic port found on board")
+	}
+
+	// Place settlement on port vertex
+	for _, v := range state.Board.Vertices {
+		if v.Id == genericPort.Location[0] {
+			v.Building = &catanv1.Building{
+				Type:    catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+				OwnerId: "me",
+			}
+			break
+		}
+	}
+
+	// Should succeed with 3:1 ratio
+	err := BankTrade(state, "me", &catanv1.ResourceCount{Wood: 3}, catanv1.Resource_RESOURCE_BRICK)
+	if err != nil {
+		t.Fatalf("BankTrade with generic port failed: %v", err)
+	}
+	if state.Players[0].Resources.Wood != 0 {
+		t.Errorf("Expected 0 wood remaining, got %d", state.Players[0].Resources.Wood)
+	}
+	if state.Players[0].Resources.Brick != 1 {
+		t.Errorf("Expected 1 brick received, got %d", state.Players[0].Resources.Brick)
+	}
+}
+
+func TestBankTradeWithSpecificPort(t *testing.T) {
+	state := basicGameState(makePlayer("me", &catanv1.ResourceCount{Wheat: 2}))
+	state.Board = GenerateBoard()
+
+	// Find wheat-specific port and give player access
+	var wheatPort *catanv1.Port
+	for _, p := range state.Board.Ports {
+		if p.Type == catanv1.PortType_PORT_TYPE_SPECIFIC && p.Resource == catanv1.Resource_RESOURCE_WHEAT {
+			wheatPort = p
+			break
+		}
+	}
+	if wheatPort == nil {
+		t.Fatal("No wheat-specific port found on board")
+	}
+
+	// Place settlement on port vertex
+	for _, v := range state.Board.Vertices {
+		if v.Id == wheatPort.Location[0] {
+			v.Building = &catanv1.Building{
+				Type:    catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+				OwnerId: "me",
+			}
+			break
+		}
+	}
+
+	// Should succeed with 2:1 ratio for wheat
+	err := BankTrade(state, "me", &catanv1.ResourceCount{Wheat: 2}, catanv1.Resource_RESOURCE_BRICK)
+	if err != nil {
+		t.Fatalf("BankTrade with specific port failed: %v", err)
+	}
+	if state.Players[0].Resources.Wheat != 0 {
+		t.Errorf("Expected 0 wheat remaining, got %d", state.Players[0].Resources.Wheat)
+	}
+	if state.Players[0].Resources.Brick != 1 {
+		t.Errorf("Expected 1 brick received, got %d", state.Players[0].Resources.Brick)
+	}
+}
+
+func TestBankTradeSpecificPortWrongResource(t *testing.T) {
+	state := basicGameState(makePlayer("me", &catanv1.ResourceCount{Wood: 2}))
+	state.Board = GenerateBoard()
+
+	// Find wheat-specific port and give player access
+	var wheatPort *catanv1.Port
+	for _, p := range state.Board.Ports {
+		if p.Type == catanv1.PortType_PORT_TYPE_SPECIFIC && p.Resource == catanv1.Resource_RESOURCE_WHEAT {
+			wheatPort = p
+			break
+		}
+	}
+	if wheatPort == nil {
+		t.Fatal("No wheat-specific port found on board")
+	}
+
+	// Place settlement on port vertex
+	for _, v := range state.Board.Vertices {
+		if v.Id == wheatPort.Location[0] {
+			v.Building = &catanv1.Building{
+				Type:    catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT,
+				OwnerId: "me",
+			}
+			break
+		}
+	}
+
+	// Should fail with 2:1 ratio for wood (wheat port doesn't help with wood)
+	err := BankTrade(state, "me", &catanv1.ResourceCount{Wood: 2}, catanv1.Resource_RESOURCE_BRICK)
+	if err == nil {
+		t.Error("BankTrade should fail - specific port doesn't apply to different resource")
 	}
 }
 

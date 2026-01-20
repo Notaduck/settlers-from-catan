@@ -47,10 +47,15 @@
 - [x] DFS algorithm, recalc triggers, awarding/tie rules all implemented in backend/internal/game/longestroad.go and tested in longestroad_test.go; UI badges/data-cy compliance confirmed. Known test ambiguity documented (see plan).
 
 ## PRIORITY 8: PORTS - MARITIME TRADING
-- [ ] Implement port model and board placement. Update bank trade logic to support variable port ratios. Render port icons on board, update trade modal/UI, enable port access triggers on placement.
-  - Files: backend/internal/game/board.go (port generation), backend/internal/game/ports.go, backend/internal/game/ports_test.go, frontend/src/components/Board/Port.tsx, context/GameContext.tsx, proto/catan/v1/types.proto (Port/port array), proto/catan/v1/messages.proto
-  - Go unit test(s): backend/internal/game/ports_test.go
-  - Playwright: frontend/tests/ports.spec.ts
+- [x] BACKEND COMPLETE - Port generation, board placement, and bank trade logic with variable ratios (2:1, 3:1, 4:1) fully implemented and tested.
+  - GeneratePortsForBoard dynamically identifies coastal vertices (<3 adjacent hexes) and assigns 9 ports (4 generic 3:1, 5 specific 2:1).
+  - BankTrade function updated to use GetBestTradeRatio, supporting port-based ratios.
+  - Comprehensive unit tests added: TestBankTradeWithGenericPort, TestBankTradeWithSpecificPort, TestBankTradeSpecificPortWrongResource.
+  - All port tests pass. Backend validation complete (make test-backend passes except 2 pre-existing longest road test failures).
+  - Files modified: backend/internal/game/ports.go, backend/internal/game/trading.go, backend/internal/game/trading_test.go, backend/internal/game/board.go
+- [ ] FRONTEND PENDING - Render port icons on board, update trade modal to show available port ratios with data-cy attributes.
+  - Files: frontend/src/components/Board/Port.tsx (new), frontend/src/components/Game/BankTradeModal.tsx, context/GameContext.tsx
+  - Playwright: frontend/tests/ports.spec.ts (new)
 
 ----
 

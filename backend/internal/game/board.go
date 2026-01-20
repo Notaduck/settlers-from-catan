@@ -97,15 +97,17 @@ func GenerateBoard() *pb.BoardState {
 	vertices := generateVertices(hexes)
 	edges := generateEdges(hexes)
 
-	// Add standard ports (maritime trading)
-	ports := GeneratePorts()
-	return &pb.BoardState{
+	// Create preliminary board state
+	board := &pb.BoardState{
 		Hexes:     hexes,
 		Vertices:  vertices,
 		Edges:     edges,
 		RobberHex: desertCoord,
-		Ports:     ports,
 	}
+
+	// Add standard ports (maritime trading) - needs vertices to be generated first
+	board.Ports = GeneratePortsForBoard(board)
+	return board
 }
 
 // Vertex directions relative to a hex center (6 corners).

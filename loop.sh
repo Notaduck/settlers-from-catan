@@ -41,7 +41,7 @@ run_opencode() {
         opencode run -m "$MODEL" "$(cat "$PROMPT_FILE")"
     else
         # Default to GitHub Copilot provider
-        opencode run -m "github-copilot/gpt-4.1" "$(cat "$PROMPT_FILE")"
+        opencode run -m "github-copilot/claude-sonnet-4.5" "$(cat "$PROMPT_FILE")"
     fi
 }
 
@@ -95,5 +95,5 @@ while true; do
     echo ""
 
     # Small delay between iterations
-    sleep 2
+    sleep 120
 done

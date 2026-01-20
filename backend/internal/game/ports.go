@@ -27,33 +27,57 @@ var (
 	}
 )
 
-// Standard port locations by coastal edge (TO BE MATCHED to vertex IDs after generateVertices)
-var standardPortEdges = [][]string{
-	{"7.000,2.000", "8.000,1.000"}, // real edge IDs arranged clockwise by board geometry
-	{"8.000,1.000", "8.000,-1.000"},
-	{"8.000,-1.000", "7.000,-2.000"},
-	{"7.000,-2.000", "5.000,-3.000"},
-	{"3.000,-3.000", "1.000,-3.000"},
-	{"-1.000,-3.000", "-3.000,-2.000"},
-	{"-4.000,-1.000", "-4.000,1.000"},
-	{"-3.000,2.000", "-1.000,3.000"},
-	{"1.000,3.000", "3.000,3.000"},
-}
-
-// GeneratePorts returns the 9 standard ports. Assumes standard board layout/scale.
-func GeneratePorts() []*catanv1.Port {
-	// For standard map, ports are fixed.
-	ports := make([]*catanv1.Port, 9)
-	order := rand.Perm(9)
-	for i, idx := range order {
-		typ := portTypes[idx]
-		res := portResources[idx]
-		ports[i] = &catanv1.Port{
-			Location: append([]string{}, standardPortEdges[i]...),
-			Type:     typ,
-			Resource: res,
+// GeneratePortsForBoard returns the 9 standard ports, selecting coastal vertices from the board.
+func GeneratePortsForBoard(board *catanv1.BoardState) []*catanv1.Port {
+	// Find coastal vertices (vertices with fewer than 3 adjacent hexes)
+	coastalVertices := []string{}
+	for _, v := range board.Vertices {
+		if len(v.AdjacentHexes) < 3 {
+			coastalVertices = append(coastalVertices, v.Id)
 		}
 	}
+
+	// Select 18 coastal vertices for 9 ports (2 vertices per port)
+	// We'll use every 2nd coastal vertex to spread ports around the coast
+	portVertices := [][]string{}
+	step := len(coastalVertices) / 9
+	if step < 2 {
+		step = 2
+	}
+
+	for i := 0; i < 9 && i*step+1 < len(coastalVertices); i++ {
+		portVertices = append(portVertices, []string{
+			coastalVertices[i*step],
+			coastalVertices[i*step+1],
+		})
+	}
+
+	// If we don't have enough coastal vertices, fill in with remaining ones
+	for len(portVertices) < 9 && len(portVertices)*2 < len(coastalVertices) {
+		idx := len(portVertices) * 2
+		if idx+1 < len(coastalVertices) {
+			portVertices = append(portVertices, []string{
+				coastalVertices[idx],
+				coastalVertices[idx+1],
+			})
+		}
+	}
+
+	// Randomize port types and resources
+	ports := make([]*catanv1.Port, len(portVertices))
+	order := rand.Perm(len(portTypes))
+	for i := range portVertices {
+		if i >= len(portVertices) {
+			break
+		}
+		idx := order[i%len(order)]
+		ports[i] = &catanv1.Port{
+			Location: portVertices[i],
+			Type:     portTypes[idx],
+			Resource: portResources[idx],
+		}
+	}
+
 	return ports
 }
 

@@ -79,7 +79,7 @@ func ExpireOldTrades(state *pb.GameState) {
 	state.PendingTrades = pending
 }
 
-// BankTrade exchanges 4 (or port ratio) identical resources for 1 of choice
+// BankTrade exchanges resources at best available port ratio for 1 of choice
 func BankTrade(state *pb.GameState, playerID string, offering *pb.ResourceCount, requested pb.Resource) error {
 	if state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
 		return ErrWrongPhase
@@ -93,13 +93,20 @@ func BankTrade(state *pb.GameState, playerID string, offering *pb.ResourceCount,
 	}
 
 	offerCount, offerRes := countSingleResourceOffer(offering)
-	// TODO: Port support for ratios < 4
-	if offerCount < 4 {
+	if offerCount <= 0 {
+		return ErrInsufficientResources
+	}
+
+	// Get best trade ratio for this resource based on player's ports
+	requiredRatio := GetBestTradeRatio(playerID, offerRes, state.Board)
+
+	if offerCount < requiredRatio {
 		return ErrInsufficientResources
 	}
 	if int(playerResource(currentPlayer.Resources, offerRes)) < offerCount {
 		return ErrInsufficientResources
 	}
+
 	deductResource(currentPlayer.Resources, offerRes, offerCount)
 	addResource(currentPlayer.Resources, requested, 1)
 	return nil
