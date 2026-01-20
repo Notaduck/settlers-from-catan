@@ -13,6 +13,10 @@ message BankTradeMessage {
   Resource resource_requested = 2;
 }
 
+message SetTurnPhaseMessage {
+  TurnPhase phase = 1;
+}
+
 
 message JoinGameMessage {
   string game_id = 1;
@@ -76,6 +80,7 @@ message ClientMessage {
     PlayerReadyMessage player_ready = 10;
     DiscardCardsMessage discard_cards = 11;
     BankTradeMessage bank_trade = 12;
+    SetTurnPhaseMessage set_turn_phase = 13;
   }
 }
 
