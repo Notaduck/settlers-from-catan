@@ -95,5 +95,5 @@ while true; do
     echo ""
 
     # Small delay between iterations
-    sleep 120
+    sleep 2
 done

@@ -1,0 +1,349 @@
+import {
+  type Page,
+  type BrowserContext,
+  type APIRequestContext,
+  expect,
+} from "@playwright/test";
+
+const API_BASE = "http://localhost:8080";
+
+export interface GameSession {
+  code: string;
+  sessionToken: string;
+  playerId: string;
+}
+
+// ============================================================================
+// Core Game Setup Helpers
+// ============================================================================
+
+/**
+ * Create a new game via API
+ */
+export async function createGame(
+  request: APIRequestContext,
+  playerName: string
+): Promise<GameSession> {
+  const response = await request.post(`${API_BASE}/api/games`, {
+    data: { playerName },
+  });
+  return response.json();
+}
+
+/**
+ * Join an existing game via API
+ */
+export async function joinGame(
+  request: APIRequestContext,
+  gameCode: string,
+  playerName: string
+): Promise<GameSession> {
+  const response = await request.post(
+    `${API_BASE}/api/games/${gameCode}/join`,
+    {
+      data: { playerName },
+    }
+  );
+  const body = await response.json();
+  return { code: gameCode, ...body };
+}
+
+/**
+ * Visit the game as a specific player (set localStorage and reload)
+ */
+export async function visitAsPlayer(page: Page, session: GameSession) {
+  await page.goto("/");
+  await page.evaluate((s) => {
+    localStorage.setItem("sessionToken", s.sessionToken);
+    localStorage.setItem("gameCode", s.code);
+    localStorage.setItem("playerId", s.playerId);
+  }, session);
+  await page.reload();
+}
+
+/**
+ * Wait for lobby screen to appear
+ */
+export async function waitForLobby(page: Page) {
+  await expect(page.locator("[data-cy='game-loading']")).not.toBeVisible({
+    timeout: 30000,
+  });
+  await expect(page.locator("[data-cy='game-waiting']")).toBeVisible({
+    timeout: 30000,
+  });
+}
+
+/**
+ * Wait for game board to appear (after game starts)
+ */
+export async function waitForGameBoard(page: Page) {
+  await expect(page.locator("[data-cy='game-loading']")).not.toBeVisible({
+    timeout: 30000,
+  });
+  await expect(page.locator("[data-cy='game-board-container']")).toBeVisible({
+    timeout: 30000,
+  });
+}
+
+/**
+ * Mark a player as ready in the lobby
+ */
+export async function setPlayerReady(page: Page, ready: boolean = true) {
+  if (ready) {
+    await page.locator("[data-cy='ready-btn']").click();
+    await expect(page.locator("[data-cy='cancel-ready-btn']")).toBeVisible({
+      timeout: 10000,
+    });
+  } else {
+    await page.locator("[data-cy='cancel-ready-btn']").click();
+    await expect(page.locator("[data-cy='ready-btn']")).toBeVisible({
+      timeout: 10000,
+    });
+  }
+}
+
+/**
+ * Start the game (clicks start button)
+ */
+export async function startGame(page: Page) {
+  await expect(page.locator("[data-cy='start-game-btn']")).toBeEnabled({
+    timeout: 10000,
+  });
+  await page.locator("[data-cy='start-game-btn']").click();
+  await waitForGameBoard(page);
+}
+
+/**
+ * Start a 2-player game (creates game, joins as 2 players, readies up, starts)
+ * Returns { hostPage, guestPage }
+ */
+export async function startTwoPlayerGame(
+  page: Page,
+  context: BrowserContext,
+  request: APIRequestContext
+) {
+  const host = await createGame(request, "Host");
+  const guest = await joinGame(request, host.code, "Guest");
+
+  const hostPage = page;
+  const guestPage = await context.newPage();
+
+  await visitAsPlayer(hostPage, host);
+  await waitForLobby(hostPage);
+
+  await visitAsPlayer(guestPage, guest);
+  await waitForLobby(guestPage);
+
+  await setPlayerReady(guestPage, true);
+  await setPlayerReady(hostPage, true);
+  await startGame(hostPage);
+
+  return { hostPage, guestPage, hostSession: host, guestSession: guest };
+}
+
+// ============================================================================
+// Setup Phase Helpers
+// ============================================================================
+
+/**
+ * Place a settlement during setup phase (clicks first valid vertex)
+ */
+export async function placeSettlement(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Settlement", {
+    timeout: 30000,
+  });
+  const validVertex = page.locator("[data-cy^='vertex-'].vertex--valid").first();
+  await expect(validVertex).toBeVisible({ timeout: 30000 });
+  await validVertex.click();
+}
+
+/**
+ * Place a road during setup phase (clicks first valid edge)
+ */
+export async function placeRoad(page: Page) {
+  const placementMode = page.locator("[data-cy='placement-mode']");
+  await expect(placementMode).toContainText("Place Road", { timeout: 30000 });
+  const validEdge = page.locator("[data-cy^='edge-'].edge--valid").first();
+  await expect(validEdge).toBeVisible({ timeout: 30000 });
+  await validEdge.click();
+}
+
+/**
+ * Complete one round of setup (settlement + road for current player)
+ */
+export async function completeSetupRound(page: Page) {
+  await placeSettlement(page);
+  await placeRoad(page);
+}
+
+/**
+ * Complete the entire setup phase for a 2-player game
+ * (Host: S+R, Guest: S+R, Guest: S+R, Host: S+R)
+ */
+export async function completeSetupPhase(
+  hostPage: Page,
+  guestPage: Page
+) {
+  // Round 1: Host, then Guest
+  await completeSetupRound(hostPage);
+  await completeSetupRound(guestPage);
+
+  // Round 2: Guest, then Host (reverse order)
+  await completeSetupRound(guestPage);
+  await completeSetupRound(hostPage);
+
+  // Wait for main game phase
+  await expect(hostPage.locator("[data-cy='game-phase']")).toContainText(
+    "PLAYING",
+    { timeout: 10000 }
+  );
+}
+
+// ============================================================================
+// Test-Only Backend Endpoints (DEV_MODE only)
+// ============================================================================
+
+/**
+ * Grant resources to a player (test endpoint)
+ * Only available when backend is running with DEV_MODE=true
+ */
+export async function grantResources(
+  request: APIRequestContext,
+  gameCode: string,
+  playerId: string,
+  resources: {
+    wood?: number;
+    brick?: number;
+    sheep?: number;
+    wheat?: number;
+    ore?: number;
+  }
+) {
+  const response = await request.post(
+    `${API_BASE}/test/grant-resources`,
+    {
+      data: { gameCode, playerId, resources },
+    }
+  );
+  if (!response.ok()) {
+    throw new Error(`Failed to grant resources: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+/**
+ * Force the next dice roll to a specific value (test endpoint)
+ * Only available when backend is running with DEV_MODE=true
+ */
+export async function forceDiceRoll(
+  request: APIRequestContext,
+  gameCode: string,
+  diceValue: number
+) {
+  const response = await request.post(
+    `${API_BASE}/test/force-dice-roll`,
+    {
+      data: { gameCode, diceValue },
+    }
+  );
+  if (!response.ok()) {
+    throw new Error(`Failed to force dice roll: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+/**
+ * Advance game to a specific phase (test endpoint)
+ * Only available when backend is running with DEV_MODE=true
+ */
+export async function advanceToPhase(
+  request: APIRequestContext,
+  gameCode: string,
+  phase: string
+) {
+  const response = await request.post(
+    `${API_BASE}/test/set-game-state`,
+    {
+      data: { gameCode, phase },
+    }
+  );
+  if (!response.ok()) {
+    throw new Error(`Failed to advance to phase: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+// ============================================================================
+// Game Phase Helpers
+// ============================================================================
+
+/**
+ * Wait for game to reach a specific phase
+ */
+export async function waitForGamePhase(page: Page, phase: string) {
+  await expect(page.locator("[data-cy='game-phase']")).toContainText(phase, {
+    timeout: 30000,
+  });
+}
+
+/**
+ * Roll dice (clicks roll dice button)
+ */
+export async function rollDice(page: Page) {
+  await page.locator("[data-cy='roll-dice-btn']").click();
+  // Wait for dice result to appear
+  await expect(page.locator("[data-cy='dice-result']")).toBeVisible({
+    timeout: 10000,
+  });
+}
+
+/**
+ * End turn (clicks end turn button)
+ */
+export async function endTurn(page: Page) {
+  await page.locator("[data-cy='end-turn-btn']").click();
+}
+
+// ============================================================================
+// Build Helpers
+// ============================================================================
+
+/**
+ * Build a settlement (assumes player has resources and valid placement)
+ */
+export async function buildSettlement(page: Page, vertexSelector: string) {
+  await page.locator("[data-cy='build-settlement-btn']").click();
+  await page.locator(vertexSelector).click();
+  await expect(page.locator(vertexSelector)).toHaveClass(/vertex--occupied/, {
+    timeout: 10000,
+  });
+}
+
+/**
+ * Build a road (assumes player has resources and valid placement)
+ */
+export async function buildRoad(page: Page, edgeSelector: string) {
+  await page.locator("[data-cy='build-road-btn']").click();
+  await page.locator(edgeSelector).click();
+  await expect(page.locator(edgeSelector)).toHaveClass(/edge--occupied/, {
+    timeout: 10000,
+  });
+}
+
+/**
+ * Build a city (assumes player has resources and valid upgrade)
+ */
+export async function buildCity(page: Page, vertexSelector: string) {
+  await page.locator("[data-cy='build-city-btn']").click();
+  await page.locator(vertexSelector).click();
+}
+
+/**
+ * Buy a development card (assumes player has resources)
+ */
+export async function buyDevelopmentCard(page: Page) {
+  await page.locator("[data-cy='buy-dev-card-btn']").click();
+  // Wait for resource count to update or card to appear
+  await page.waitForTimeout(500);
+}
