@@ -199,6 +199,10 @@ export interface PlayerState {
     devCardsPurchasedTurn: {
         [key: number]: number;
     }; // Map of DevCardType -> turn when purchased (hidden from other players)
+    /**
+     * @generated from protobuf field: int32 road_building_roads_remaining = 14
+     */
+    roadBuildingRoadsRemaining: number; // 0, 1, or 2 - tracks free roads remaining from Road Building card
 }
 /**
  * Port model for board trading bonuses
@@ -1176,7 +1180,8 @@ class PlayerState$Type extends MessageType<PlayerState> {
             { no: 10, name: "is_host", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 11, name: "victory_point_cards", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 12, name: "dev_cards", kind: "map", K: 5 /*ScalarType.INT32*/, V: { kind: "scalar", T: 5 /*ScalarType.INT32*/ } },
-            { no: 13, name: "dev_cards_purchased_turn", kind: "map", K: 5 /*ScalarType.INT32*/, V: { kind: "scalar", T: 5 /*ScalarType.INT32*/ } }
+            { no: 13, name: "dev_cards_purchased_turn", kind: "map", K: 5 /*ScalarType.INT32*/, V: { kind: "scalar", T: 5 /*ScalarType.INT32*/ } },
+            { no: 14, name: "road_building_roads_remaining", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
         ]);
     }
     create(value?: PartialMessage<PlayerState>): PlayerState {
@@ -1193,6 +1198,7 @@ class PlayerState$Type extends MessageType<PlayerState> {
         message.victoryPointCards = 0;
         message.devCards = {};
         message.devCardsPurchasedTurn = {};
+        message.roadBuildingRoadsRemaining = 0;
         if (value !== undefined)
             reflectionMergePartial<PlayerState>(this, message, value);
         return message;
@@ -1241,6 +1247,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
                 case /* map<int32, int32> dev_cards_purchased_turn */ 13:
                     this.binaryReadMap13(message.devCardsPurchasedTurn, reader, options);
                     break;
+                case /* int32 road_building_roads_remaining */ 14:
+                    message.roadBuildingRoadsRemaining = reader.int32();
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1252,11 +1261,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
         }
         return message;
     }
-    // @ts-ignore - Generated code has unused parameters
     private binaryReadMap12(map: PlayerState["devCards"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof PlayerState["devCards"] | undefined, val: PlayerState["devCards"][any] | undefined;
         while (reader.pos < end) {
-            // @ts-ignore - Generated code has unused parameters
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:
@@ -1270,11 +1277,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
         }
         map[key ?? 0] = val ?? 0;
     }
-    // @ts-ignore - Generated code has unused parameters
     private binaryReadMap13(map: PlayerState["devCardsPurchasedTurn"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof PlayerState["devCardsPurchasedTurn"] | undefined, val: PlayerState["devCardsPurchasedTurn"][any] | undefined;
         while (reader.pos < end) {
-            // @ts-ignore - Generated code has unused parameters
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:
@@ -1328,6 +1333,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
         /* map<int32, int32> dev_cards_purchased_turn = 13; */
         for (let k of globalThis.Object.keys(message.devCardsPurchasedTurn))
             writer.tag(13, WireType.LengthDelimited).fork().tag(1, WireType.Varint).int32(parseInt(k)).tag(2, WireType.Varint).int32(message.devCardsPurchasedTurn[k as any]).join();
+        /* int32 road_building_roads_remaining = 14; */
+        if (message.roadBuildingRoadsRemaining !== 0)
+            writer.tag(14, WireType.Varint).int32(message.roadBuildingRoadsRemaining);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1695,11 +1703,9 @@ class RobberPhase$Type extends MessageType<RobberPhase> {
         }
         return message;
     }
-    // @ts-ignore - Generated code has unused parameters
     private binaryReadMap2(map: RobberPhase["discardRequired"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof RobberPhase["discardRequired"] | undefined, val: RobberPhase["discardRequired"][any] | undefined;
         while (reader.pos < end) {
-            // @ts-ignore - Generated code has unused parameters
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:

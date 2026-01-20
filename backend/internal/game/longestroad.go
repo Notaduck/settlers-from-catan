@@ -126,3 +126,23 @@ func GetLongestRoadPlayerId(state *pb.GameState) string {
 	}
 	return "" // No one qualifies
 }
+
+// UpdateLongestRoadBonus recalculates and updates the longest road bonus holder
+func UpdateLongestRoadBonus(state *pb.GameState) {
+	newHolderID := GetLongestRoadPlayerId(state)
+	currentHolderID := ""
+	if state.LongestRoadPlayerId != nil {
+		currentHolderID = *state.LongestRoadPlayerId
+	}
+
+	if newHolderID != currentHolderID {
+		// Bonus is changing hands
+		if newHolderID == "" {
+			// No one qualifies anymore
+			state.LongestRoadPlayerId = nil
+		} else {
+			// Award to new holder
+			state.LongestRoadPlayerId = &newHolderID
+		}
+	}
+}

@@ -76,6 +76,9 @@ func PlaceSettlement(state *pb.GameState, playerID, vertexID string) error {
 	// Update victory points
 	player.VictoryPoints++
 
+	// Update longest road bonus after settlement placement (may break opponent roads)
+	UpdateLongestRoadBonus(state)
+
 	// Check victory after point-gaining settlement placement
 	if victory, _ := CheckVictory(state); victory {
 		state.Status = pb.GameStatus_GAME_STATUS_FINISHED
@@ -179,9 +182,11 @@ func PlaceRoad(state *pb.GameState, playerID, edgeID string) error {
 		return ErrMaxRoadsReached
 	}
 
-	// Check resources
-	if !CanAfford(ResourceCountToMap(player.Resources), "road") {
-		return ErrInsufficientResources
+	// Check resources (unless road building card is active)
+	if player.RoadBuildingRoadsRemaining == 0 {
+		if !CanAfford(ResourceCountToMap(player.Resources), "road") {
+			return ErrInsufficientResources
+		}
 	}
 
 	// Find the edge
@@ -206,13 +211,22 @@ func PlaceRoad(state *pb.GameState, playerID, edgeID string) error {
 		return ErrMustConnectToOwned
 	}
 
-	// Deduct resources
-	DeductResources(player.Resources, "road")
+	// Deduct resources (unless road building card is active)
+	if player.RoadBuildingRoadsRemaining > 0 {
+		// Decrement the remaining free roads from Road Building card
+		player.RoadBuildingRoadsRemaining--
+	} else {
+		// Normal resource cost
+		DeductResources(player.Resources, "road")
+	}
 
 	// Place the road
 	targetEdge.Road = &pb.Road{
 		OwnerId: playerID,
 	}
+
+	// Update longest road bonus after road placement
+	UpdateLongestRoadBonus(state)
 
 	// Check victory after possible bonus (e.g., longest road transferred)
 	if victory, _ := CheckVictory(state); victory {

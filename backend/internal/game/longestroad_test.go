@@ -164,3 +164,189 @@ func TestTieKeepsCurrentHolder(t *testing.T) {
 		t.Errorf("Tie should keep current holder, got %s", pid)
 	}
 }
+
+func TestLongestRoadTransfer_NewPlayerExceedsHolder(t *testing.T) {
+	// Create a simple board with one long road for p1 (5 roads) and space for p2 to build 6
+	v1 := makeVertex("A", nil)
+	v2 := makeVertex("B", nil)
+	v3 := makeVertex("C", nil)
+	v4 := makeVertex("D", nil)
+	v5 := makeVertex("E", nil)
+	v6 := makeVertex("F", nil)
+	v7 := makeVertex("G", nil)
+	v8 := makeVertex("H", nil)
+
+	// p1's initial road: A-B-C-D-E-F (5 segments)
+	e1 := makeEdge("E1", "p1", "A", "B")
+	e2 := makeEdge("E2", "p1", "B", "C")
+	e3 := makeEdge("E3", "p1", "C", "D")
+	e4 := makeEdge("E4", "p1", "D", "E")
+	e5 := makeEdge("E5", "p1", "E", "F")
+
+	// p2's road that will exceed p1: G-H (will extend to 6)
+	e6 := makeEdge("E6", "p2", "G", "H")
+
+	board := &pb.BoardState{
+		Edges:    []*pb.Edge{e1, e2, e3, e4, e5, e6},
+		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6, v7, v8},
+	}
+
+	state := &pb.GameState{
+		Board:               board,
+		LongestRoadPlayerId: ptr("p1"), // p1 initially has longest road
+		Status:              pb.GameStatus_GAME_STATUS_PLAYING,
+		TurnPhase:           pb.TurnPhase_TURN_PHASE_BUILD,
+		CurrentTurn:         1, // p2's turn
+		Players: []*pb.PlayerState{
+			{Id: "p1", Resources: &pb.ResourceCount{}},
+			{Id: "p2", Resources: &pb.ResourceCount{Wood: 10, Brick: 10}}, // p2 has resources
+		},
+	}
+
+	// Place p2 settlement at H to prepare for extending road
+	v8.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p2"}
+
+	// Add more edges for p2 to extend to 6 total road segments
+	e7 := makeEdge("E7", "", "H", "A") // Will be placed by p2
+	e8 := makeEdge("E8", "", "A", "B") // Will conflict with p1, but let's use different vertices
+
+	// Let's use separate vertices for p2's extension
+	v9 := makeVertex("I", nil)
+	v10 := makeVertex("J", nil)
+	v11 := makeVertex("K", nil)
+	v12 := makeVertex("L", nil)
+
+	e7 = makeEdge("E7", "", "H", "I")
+	e8 = makeEdge("E8", "", "I", "J")
+	e9 := makeEdge("E9", "", "J", "K")
+	e10 := makeEdge("E10", "", "K", "L")
+
+	board.Edges = append(board.Edges, e7, e8, e9, e10)
+	board.Vertices = append(board.Vertices, v9, v10, v11, v12)
+
+	// Place roads to give p2 a 6-road path
+	e7.Road = &pb.Road{OwnerId: "p2"}
+	e8.Road = &pb.Road{OwnerId: "p2"}
+	e9.Road = &pb.Road{OwnerId: "p2"}
+	e10.Road = &pb.Road{OwnerId: "p2"}
+
+	// Update longest road bonus
+	UpdateLongestRoadBonus(state)
+
+	// p2 should now have longest road with 6 segments vs p1's 5
+	if state.LongestRoadPlayerId == nil || *state.LongestRoadPlayerId != "p2" {
+		currentHolder := ""
+		if state.LongestRoadPlayerId != nil {
+			currentHolder = *state.LongestRoadPlayerId
+		}
+		t.Errorf("expected p2 to have longest road, got %s", currentHolder)
+	}
+}
+
+func TestLongestRoadTransfer_BrokenByOpponentSettlement(t *testing.T) {
+	// p1 has a 5-road path, p2 places settlement to break it, longest road should be lost
+	v1 := makeVertex("A", nil)
+	v2 := makeVertex("B", nil)
+	v3 := makeVertex("C", nil)
+	v4 := makeVertex("D", nil)
+	v5 := makeVertex("E", nil)
+	v6 := makeVertex("F", nil)
+
+	// p1's road that will be broken: A-B-C-D-E-F
+	e1 := makeEdge("E1", "p1", "A", "B")
+	e2 := makeEdge("E2", "p1", "B", "C")
+	e3 := makeEdge("E3", "p1", "C", "D")
+	e4 := makeEdge("E4", "p1", "D", "E")
+	e5 := makeEdge("E5", "p1", "E", "F")
+
+	board := &pb.BoardState{
+		Edges:    []*pb.Edge{e1, e2, e3, e4, e5},
+		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6},
+	}
+
+	state := &pb.GameState{
+		Board:               board,
+		LongestRoadPlayerId: ptr("p1"), // p1 initially has longest road
+		Status:              pb.GameStatus_GAME_STATUS_PLAYING,
+		TurnPhase:           pb.TurnPhase_TURN_PHASE_BUILD,
+		CurrentTurn:         1, // p2's turn
+		Players: []*pb.PlayerState{
+			{Id: "p1", Resources: &pb.ResourceCount{}, VictoryPoints: 2},
+			{Id: "p2", Resources: &pb.ResourceCount{Wood: 1, Brick: 1, Sheep: 1, Wheat: 1}},
+		},
+	}
+
+	// p2 places settlement at vertex C, breaking p1's road
+	err := PlaceSettlement(state, "p2", "C")
+	if err != nil {
+		t.Fatalf("unexpected error placing settlement: %v", err)
+	}
+
+	// UpdateLongestRoadBonus should have been called automatically by PlaceSettlement
+	// p1's road is now broken into A-B (2 segments) and D-E-F (3 segments)
+	// Neither player should have longest road anymore
+	if state.LongestRoadPlayerId != nil {
+		t.Errorf("expected no one to have longest road after breaking, got %s", *state.LongestRoadPlayerId)
+	}
+}
+
+func TestLongestRoadUpdate_TriggersVictoryCheck(t *testing.T) {
+	// Player at 8 VP gets longest road (2 VP) to reach 10 VP and win
+	v1 := makeVertex("A", nil)
+	v2 := makeVertex("B", nil)
+	v3 := makeVertex("C", nil)
+	v4 := makeVertex("D", nil)
+	v5 := makeVertex("E", nil)
+	v6 := makeVertex("F", nil)
+
+	// Create a 5-road path
+	e1 := makeEdge("E1", "", "A", "B") // Will be placed by p1
+	e2 := makeEdge("E2", "", "B", "C")
+	e3 := makeEdge("E3", "", "C", "D")
+	e4 := makeEdge("E4", "", "D", "E")
+	e5 := makeEdge("E5", "", "E", "F")
+
+	board := &pb.BoardState{
+		Edges:    []*pb.Edge{e1, e2, e3, e4, e5},
+		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6},
+	}
+
+	state := &pb.GameState{
+		Board:       board,
+		Status:      pb.GameStatus_GAME_STATUS_PLAYING,
+		TurnPhase:   pb.TurnPhase_TURN_PHASE_BUILD,
+		CurrentTurn: 0,
+		Players: []*pb.PlayerState{
+			{Id: "p1", Resources: &pb.ResourceCount{Wood: 10, Brick: 10}, VictoryPoints: 8}, // 8 VP, will get 2 more from longest road
+		},
+	}
+
+	// Place settlement at A to satisfy connectivity
+	v1.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}
+
+	// Place first 4 roads (not enough for longest road yet)
+	e1.Road = &pb.Road{OwnerId: "p1"}
+	e2.Road = &pb.Road{OwnerId: "p1"}
+	e3.Road = &pb.Road{OwnerId: "p1"}
+	e4.Road = &pb.Road{OwnerId: "p1"}
+
+	// Place 5th road - should trigger longest road bonus and victory
+	err := PlaceRoad(state, "p1", "E5")
+	if err != nil {
+		t.Fatalf("unexpected error placing final road: %v", err)
+	}
+
+	// Game should be finished due to victory
+	if state.Status != pb.GameStatus_GAME_STATUS_FINISHED {
+		t.Errorf("expected game to be finished after reaching 10 VP, got status %v", state.Status)
+	}
+
+	// p1 should have longest road
+	if state.LongestRoadPlayerId == nil || *state.LongestRoadPlayerId != "p1" {
+		currentHolder := ""
+		if state.LongestRoadPlayerId != nil {
+			currentHolder = *state.LongestRoadPlayerId
+		}
+		t.Errorf("expected p1 to have longest road, got %s", currentHolder)
+	}
+}

@@ -978,22 +978,23 @@ func (x *ResourceCount) GetOre() int32 {
 
 // A player's current state
 type PlayerState struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Color                 PlayerColor            `protobuf:"varint,3,opt,name=color,proto3,enum=catan.v1.PlayerColor" json:"color,omitempty"`
-	Resources             *ResourceCount         `protobuf:"bytes,4,opt,name=resources,proto3" json:"resources,omitempty"`
-	DevCardCount          int32                  `protobuf:"varint,5,opt,name=dev_card_count,json=devCardCount,proto3" json:"dev_card_count,omitempty"` // Hidden from other players
-	KnightsPlayed         int32                  `protobuf:"varint,6,opt,name=knights_played,json=knightsPlayed,proto3" json:"knights_played,omitempty"`
-	VictoryPoints         int32                  `protobuf:"varint,7,opt,name=victory_points,json=victoryPoints,proto3" json:"victory_points,omitempty"`
-	Connected             bool                   `protobuf:"varint,8,opt,name=connected,proto3" json:"connected,omitempty"`
-	IsReady               bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"`                                                                                                                           // Ready to start the game (lobby only)
-	IsHost                bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`                                                                                                                             // Host can start game when all ready
-	VictoryPointCards     int32                  `protobuf:"varint,11,opt,name=victory_point_cards,json=victoryPointCards,proto3" json:"victory_point_cards,omitempty"`                                                                                          // Number of VP dev cards in hand (hidden from other players)
-	DevCards              map[int32]int32        `protobuf:"bytes,12,rep,name=dev_cards,json=devCards,proto3" json:"dev_cards,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`                                            // Map of DevCardType enum value -> count (hidden from other players)
-	DevCardsPurchasedTurn map[int32]int32        `protobuf:"bytes,13,rep,name=dev_cards_purchased_turn,json=devCardsPurchasedTurn,proto3" json:"dev_cards_purchased_turn,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // Map of DevCardType -> turn when purchased (hidden from other players)
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state                      protoimpl.MessageState `protogen:"open.v1"`
+	Id                         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                       string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Color                      PlayerColor            `protobuf:"varint,3,opt,name=color,proto3,enum=catan.v1.PlayerColor" json:"color,omitempty"`
+	Resources                  *ResourceCount         `protobuf:"bytes,4,opt,name=resources,proto3" json:"resources,omitempty"`
+	DevCardCount               int32                  `protobuf:"varint,5,opt,name=dev_card_count,json=devCardCount,proto3" json:"dev_card_count,omitempty"` // Hidden from other players
+	KnightsPlayed              int32                  `protobuf:"varint,6,opt,name=knights_played,json=knightsPlayed,proto3" json:"knights_played,omitempty"`
+	VictoryPoints              int32                  `protobuf:"varint,7,opt,name=victory_points,json=victoryPoints,proto3" json:"victory_points,omitempty"`
+	Connected                  bool                   `protobuf:"varint,8,opt,name=connected,proto3" json:"connected,omitempty"`
+	IsReady                    bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"`                                                                                                                           // Ready to start the game (lobby only)
+	IsHost                     bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`                                                                                                                             // Host can start game when all ready
+	VictoryPointCards          int32                  `protobuf:"varint,11,opt,name=victory_point_cards,json=victoryPointCards,proto3" json:"victory_point_cards,omitempty"`                                                                                          // Number of VP dev cards in hand (hidden from other players)
+	DevCards                   map[int32]int32        `protobuf:"bytes,12,rep,name=dev_cards,json=devCards,proto3" json:"dev_cards,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`                                            // Map of DevCardType enum value -> count (hidden from other players)
+	DevCardsPurchasedTurn      map[int32]int32        `protobuf:"bytes,13,rep,name=dev_cards_purchased_turn,json=devCardsPurchasedTurn,proto3" json:"dev_cards_purchased_turn,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // Map of DevCardType -> turn when purchased (hidden from other players)
+	RoadBuildingRoadsRemaining int32                  `protobuf:"varint,14,opt,name=road_building_roads_remaining,json=roadBuildingRoadsRemaining,proto3" json:"road_building_roads_remaining,omitempty"`                                                             // 0, 1, or 2 - tracks free roads remaining from Road Building card
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *PlayerState) Reset() {
@@ -1115,6 +1116,13 @@ func (x *PlayerState) GetDevCardsPurchasedTurn() map[int32]int32 {
 		return x.DevCardsPurchasedTurn
 	}
 	return nil
+}
+
+func (x *PlayerState) GetRoadBuildingRoadsRemaining() int32 {
+	if x != nil {
+		return x.RoadBuildingRoadsRemaining
+	}
+	return 0
 }
 
 // Port model for board trading bonuses
@@ -2008,7 +2016,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x05brick\x18\x02 \x01(\x05R\x05brick\x12\x14\n" +
 	"\x05sheep\x18\x03 \x01(\x05R\x05sheep\x12\x14\n" +
 	"\x05wheat\x18\x04 \x01(\x05R\x05wheat\x12\x10\n" +
-	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\xbf\x05\n" +
+	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\x82\x06\n" +
 	"\vPlayerState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
@@ -2023,7 +2031,8 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	" \x01(\bR\x06isHost\x12.\n" +
 	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\x12@\n" +
 	"\tdev_cards\x18\f \x03(\v2#.catan.v1.PlayerState.DevCardsEntryR\bdevCards\x12i\n" +
-	"\x18dev_cards_purchased_turn\x18\r \x03(\v20.catan.v1.PlayerState.DevCardsPurchasedTurnEntryR\x15devCardsPurchasedTurn\x1a;\n" +
+	"\x18dev_cards_purchased_turn\x18\r \x03(\v20.catan.v1.PlayerState.DevCardsPurchasedTurnEntryR\x15devCardsPurchasedTurn\x12A\n" +
+	"\x1droad_building_roads_remaining\x18\x0e \x01(\x05R\x1aroadBuildingRoadsRemaining\x1a;\n" +
 	"\rDevCardsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\x1aH\n" +

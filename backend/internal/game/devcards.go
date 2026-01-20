@@ -126,8 +126,8 @@ func PlayDevCard(state *pb.GameState, playerID string, cardType pb.DevCardType, 
 		// VP cards are revealed; keep total count for scoring.
 
 	case pb.DevCardType_DEV_CARD_TYPE_ROAD_BUILDING:
-		// Road building allows 2 free roads (handled in UI/handler)
-		// This just validates the card was played
+		// Road building allows 2 free roads - set the remaining count
+		p.RoadBuildingRoadsRemaining = 2
 
 	case pb.DevCardType_DEV_CARD_TYPE_YEAR_OF_PLENTY:
 		// Year of Plenty: take 2 resources from bank

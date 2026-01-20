@@ -291,3 +291,110 @@ func TestBuyDevCardTracksPurchaseTurn(t *testing.T) {
 		t.Errorf("expected purchase turn %d, got %d", state.TurnCounter, p.DevCardsPurchasedTurn[int32(cardType)])
 	}
 }
+
+func TestPlayRoadBuildingCard_AllowsTwoFreeRoads(t *testing.T) {
+	tests := map[string]struct {
+		setup              func(*pbb.GameState)
+		wantRemainingRoads int32
+	}{
+		"playing road building card sets remaining to 2": {
+			setup: func(state *pbb.GameState) {
+				// Player already has the road building card
+				state.Players[0].DevCards[int32(pbb.DevCardType_DEV_CARD_TYPE_ROAD_BUILDING)] = 1
+				state.Players[0].DevCardCount = 1
+			},
+			wantRemainingRoads: 2,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			state := &pbb.GameState{
+				TurnCounter: 5,
+				Players: []*pbb.PlayerState{{
+					Id:       "p1",
+					DevCards: make(map[int32]int32),
+				}},
+			}
+			tt.setup(state)
+
+			// Play the road building card
+			err := PlayDevCard(state, "p1", pbb.DevCardType_DEV_CARD_TYPE_ROAD_BUILDING, nil, nil)
+			if err != nil {
+				t.Fatalf("unexpected error playing road building card: %v", err)
+			}
+
+			// Check that remaining roads is set correctly
+			p := state.Players[0]
+			if p.RoadBuildingRoadsRemaining != tt.wantRemainingRoads {
+				t.Errorf("expected %d remaining roads, got %d", tt.wantRemainingRoads, p.RoadBuildingRoadsRemaining)
+			}
+		})
+	}
+}
+
+func TestRoadBuildingCard_SkipsResourceCost(t *testing.T) {
+	// Create a minimal board with edges and vertices
+	board := GenerateBoard()
+	state := &pbb.GameState{
+		Board:       board,
+		Status:      pbb.GameStatus_GAME_STATUS_PLAYING,
+		TurnPhase:   pbb.TurnPhase_TURN_PHASE_BUILD,
+		CurrentTurn: 0,
+		Players: []*pbb.PlayerState{{
+			Id: "p1",
+			Resources: &pbb.ResourceCount{
+				Wood:  0, // No resources for road building
+				Brick: 0,
+			},
+			RoadBuildingRoadsRemaining: 2, // Has road building active
+		}},
+	}
+
+	// Place a settlement first to satisfy connectivity
+	targetVertex := board.Vertices[0] // First vertex
+	targetVertex.Building = &pbb.Building{
+		Type:    pbb.BuildingType_BUILDING_TYPE_SETTLEMENT,
+		OwnerId: "p1",
+	}
+
+	// Find an edge connected to that vertex
+	var targetEdge *pbb.Edge
+	for _, edge := range board.Edges {
+		for _, vId := range edge.Vertices {
+			if vId == targetVertex.Id {
+				targetEdge = edge
+				break
+			}
+		}
+		if targetEdge != nil {
+			break
+		}
+	}
+
+	if targetEdge == nil {
+		t.Fatalf("could not find edge connected to vertex")
+	}
+
+	// Should be able to place road without resources
+	err := PlaceRoad(state, "p1", targetEdge.Id)
+	if err != nil {
+		t.Fatalf("expected road building to skip resource cost, got error: %v", err)
+	}
+
+	// Check that road was placed
+	if targetEdge.Road == nil || targetEdge.Road.OwnerId != "p1" {
+		t.Errorf("expected road to be placed")
+	}
+
+	// Check that remaining count was decremented
+	if state.Players[0].RoadBuildingRoadsRemaining != 1 {
+		t.Errorf("expected remaining roads to be decremented to 1, got %d", state.Players[0].RoadBuildingRoadsRemaining)
+	}
+
+	// Check that resources weren't deducted (they were 0 to begin with)
+	p := state.Players[0]
+	if p.Resources.Wood != 0 || p.Resources.Brick != 0 {
+		t.Errorf("expected resources to remain 0, got wood: %d, brick: %d", p.Resources.Wood, p.Resources.Brick)
+	}
+}

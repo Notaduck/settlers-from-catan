@@ -148,6 +148,7 @@ message PlayerState {
   int32 victory_point_cards = 11; // Number of VP dev cards in hand (hidden from other players)
   map<int32, int32> dev_cards = 12; // Map of DevCardType enum value -> count (hidden from other players)
   map<int32, int32> dev_cards_purchased_turn = 13; // Map of DevCardType -> turn when purchased (hidden from other players)
+  int32 road_building_roads_remaining = 14; // 0, 1, or 2 - tracks free roads remaining from Road Building card
 }
 
 // Port model for board trading bonuses
