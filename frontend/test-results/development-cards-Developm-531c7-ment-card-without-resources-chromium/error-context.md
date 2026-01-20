@@ -1,0 +1,125 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: "Game Code:"
+          - strong [ref=e10]: NEWQSN
+        - generic [ref=e11]: SETUP
+        - button "Leave Game" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Setup Phase - Round 1
+          - generic [ref=e16]: "Current Turn: Host"
+          - generic [ref=e17]: Place Road (1/2)
+        - generic [ref=e18]: Place Road
+        - generic [ref=e19]:
+          - img [ref=e21]:
+            - generic [ref=e22]:
+              - generic [ref=e23]:
+                - generic [ref=e26]: "9"
+                - generic [ref=e27]: ••••
+              - generic [ref=e28]:
+                - generic [ref=e31]: "11"
+                - generic [ref=e32]: ••
+              - generic [ref=e33]:
+                - generic [ref=e36]: "6"
+                - generic [ref=e37]: •••••
+              - generic [ref=e38]:
+                - generic [ref=e41]: "3"
+                - generic [ref=e42]: ••
+              - generic [ref=e43]:
+                - generic [ref=e46]: "9"
+                - generic [ref=e47]: ••••
+              - generic [ref=e48]:
+                - generic [ref=e51]: "5"
+                - generic [ref=e52]: ••••
+              - generic [ref=e53]:
+                - generic [ref=e56]: "2"
+                - generic [ref=e57]: •
+              - generic [ref=e58]:
+                - generic [ref=e61]: "8"
+                - generic [ref=e62]: •••••
+              - generic [ref=e63]:
+                - generic [ref=e66]: "6"
+                - generic [ref=e67]: •••••
+              - generic [ref=e68]:
+                - generic [ref=e71]: "12"
+                - generic [ref=e72]: •
+              - generic [ref=e73]:
+                - generic [ref=e76]: "11"
+                - generic [ref=e77]: ••
+              - generic [ref=e83]:
+                - generic [ref=e86]: "8"
+                - generic [ref=e87]: •••••
+              - generic [ref=e88]:
+                - generic [ref=e91]: "10"
+                - generic [ref=e92]: •••
+              - generic [ref=e93]:
+                - generic [ref=e96]: "10"
+                - generic [ref=e97]: •••
+              - generic [ref=e98]:
+                - generic [ref=e101]: "4"
+                - generic [ref=e102]: •••
+              - generic [ref=e103]:
+                - generic [ref=e106]: "4"
+                - generic [ref=e107]: •••
+              - generic [ref=e108]:
+                - generic [ref=e111]: "3"
+                - generic [ref=e112]: ••
+              - generic [ref=e113]:
+                - generic [ref=e116]: "5"
+                - generic [ref=e117]: ••••
+              - generic [ref=e370]: 2:1
+              - generic [ref=e373]: 2:1
+              - generic [ref=e376]: 2:1
+              - generic [ref=e379]: 2:1
+              - generic [ref=e382]: 2:1
+              - generic [ref=e385]: 2:1
+              - generic [ref=e388]: 2:1
+              - generic [ref=e391]: 2:1
+              - generic [ref=e394]: 2:1
+          - generic [ref=e395]:
+            - generic [ref=e396]:
+              - heading "Dice" [level=3] [ref=e397]
+              - generic [ref=e398]:
+                - generic [ref=e399]: "?"
+                - generic [ref=e400]: "?"
+              - text: "0"
+            - generic [ref=e401]:
+              - heading "Current Turn" [level=3] [ref=e402]
+              - generic [ref=e403]:
+                - generic [ref=e405]: Host
+                - generic [ref=e406]: (Roll)
+            - generic [ref=e407]:
+              - heading "Your Resources" [level=3] [ref=e408]
+              - generic [ref=e409]:
+                - generic [ref=e410]:
+                  - generic [ref=e411]: 🪵
+                  - generic [ref=e412]: "0"
+                - generic [ref=e413]:
+                  - generic [ref=e414]: 🧱
+                  - generic [ref=e415]: "0"
+                - generic [ref=e416]:
+                  - generic [ref=e417]: 🐑
+                  - generic [ref=e418]: "0"
+                - generic [ref=e419]:
+                  - generic [ref=e420]: 🌾
+                  - generic [ref=e421]: "0"
+                - generic [ref=e422]:
+                  - generic [ref=e423]: �ite
+                  - generic [ref=e424]: "0"
+            - generic [ref=e425]:
+              - heading "Players" [level=3] [ref=e426]
+              - generic [ref=e427]:
+                - generic [ref=e429]: Host
+                - generic [ref=e430]: 1 VP
+              - generic [ref=e431]:
+                - generic [ref=e433]: Guest
+                - generic [ref=e434]: 0 VP
+```

@@ -36,19 +36,21 @@ Only 2 small implementation gaps remain:
 - **File**: `backend/internal/game/commands.go`
 - **Issue**: Road Building card validated but doesn't enable special placement mode
 - **Implementation**:
-  - Add `roadBuildingActive` flag to PlayerState
-  - Modify `PlaceRoad()` to skip resource cost if flag set
+  - Add `roadBuildingActive int32` flag to PlayerState proto
+  - Modify `PlaceRoad()` to skip resource cost if flag > 0
   - Decrement flag after each free road placement (max 2)
+  - Clear flag when turn ends or both roads placed
 - **Go Tests**: Add test cases to `backend/internal/game/devcards_test.go`
   - `TestPlayRoadBuildingCard_AllowsTwoFreeRoads`
   - `TestRoadBuildingCard_SkipsResourceCost` 
+  - `TestRoadBuildingCard_ClearsOnTurnEnd`
 - **E2E Tests**: Extend `frontend/tests/development-cards.spec.ts`
   - Verify 2 roads can be placed without resources
   - Verify normal road placement resumes after
 
 #### 2. Add Real-time Longest Road Updates
 - **Files**: `backend/internal/game/commands.go`, `backend/internal/game/longestroad.go`
-- **Issue**: `PlaceRoad()` doesn't call longest road recalculation
+- **Issue**: `PlaceRoad()` and `PlaceSettlement()` don't call longest road recalculation
 - **Implementation**:
   - Add `UpdateLongestRoadBonus(state)` calls to `PlaceRoad()` and `PlaceSettlement()`
   - Create `UpdateLongestRoadBonus()` function to handle bonus transfers
@@ -56,6 +58,7 @@ Only 2 small implementation gaps remain:
 - **Go Tests**: Add to `backend/internal/game/longestroad_test.go`
   - `TestLongestRoadTransfer_NewPlayerExceedsHolder`
   - `TestLongestRoadTransfer_BrokenByOpponentSettlement`
+  - `TestLongestRoadUpdate_TriggersVictoryCheck`
 - **E2E Tests**: Extend `frontend/tests/longest-road.spec.ts`
   - Verify bonus transfers when new player gets longer road
   - Verify bonus lost when road broken by opponent settlement
@@ -64,15 +67,22 @@ Only 2 small implementation gaps remain:
 
 #### 3. Fix Playwright E2E Timeout Issues  
 - **File**: `frontend/tests/development-cards.spec.ts`
-- **Issue**: Current plan notes e2e timeouts in dev-cards suite
+- **Issue**: E2E suite timing out at step 2 (buy dev card test)
 - **Investigation**: Check if `startTwoPlayerGame` helper reliably advances through lobby → setup → playing phases
-- **Fix**: Ensure `DEV_MODE=true` backend properly handles rapid state transitions
+- **Fix**: Ensure proper wait conditions for WebSocket state transitions
+- **Alternative**: Add DEV_MODE backend option for faster e2e test transitions
 
-#### 4. Add SetTurnPhase Handler (If Needed)
-- **File**: `backend/internal/handlers/handlers.go` 
-- **Issue**: Proto defines `SetTurnPhaseMessage` but no handler exists
-- **Decision**: Investigate if frontend actually uses this message
-- **Implementation**: Add handler if required, or remove from proto if unused
+#### 4. Add Road Building State to Proto
+- **File**: `proto/catan/v1/types.proto`
+- **Issue**: Need to track road building active state in PlayerState
+- **Implementation**: 
+  ```proto
+  message PlayerState {
+    // existing fields...
+    int32 road_building_roads_remaining = 16; // 0, 1, or 2
+  }
+  ```
+- **Regeneration**: Run `make generate` after proto changes
 
 ### LOW PRIORITY - Polish
 
@@ -136,7 +146,7 @@ test('Feature works correctly', async ({ page }) => {
 
 ### Proto Integration:
 - All required messages already exist
-- No new proto definitions needed
+- New field needed for road building state
 - Use existing `build_structure` and `play_dev_card` message types
 
 ----
@@ -149,15 +159,23 @@ test('Feature works correctly', async ({ page }) => {
 
 **✅ ACHIEVED:**
 - Complete rule implementation following standard Catan
-- Comprehensive Go unit test coverage (>90%)
+- Comprehensive Go unit test coverage (100+ tests passing)
 - Full-featured UI with 3D/2D board rendering
 - End-to-end test coverage for all major flows
 - WebSocket-based multiplayer architecture
 - Deterministic gameplay for testing
+- Interactive board with vertex/edge click handlers
+- Complete setup phase with snake draft
+- Robber mechanics with discard/move/steal
+- Bank and player trading systems
+- Port-based maritime trading
+- Development card deck and most card types
+- Victory detection and game over flow
+- Longest road algorithm (needs auto-update)
 
 **🔧 REMAINING:**
-- 2 minor development card mechanics
-- 1 longest road edge case
+- 1 development card mechanic (Road Building free placement)
+- 1 real-time update issue (Longest Road transfers)
 - 1 e2e test stability issue
 
 **Assessment**: This is an exceptionally well-implemented Settlers of Catan game. The remaining tasks are minor enhancements rather than missing core functionality. The codebase demonstrates excellent software engineering practices, comprehensive testing, and deep understanding of Catan game mechanics.
