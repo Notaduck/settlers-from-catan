@@ -9,7 +9,7 @@ Prioritized gap analysis against `specs/*.md` and current codebase. Each task is
 - No gaps found versus `specs/setup-phase-ui.md`. Setup banner/instructions/resource toast already in `frontend/src/components/Game/Game.tsx` + `frontend/src/context/GameContext.tsx`. Playwright coverage: `frontend/tests/setup-phase.spec.ts`.
 
 ## PRIORITY 3: VICTORY FLOW
-- Ensure victory detection triggers on dev card effects and bonus transfers (Largest Army / Longest Road), and set `GameStatus` to FINISHED + broadcast `gameOver`. Files: `backend/internal/game/devcards.go`, `backend/internal/game/commands.go`, `backend/internal/handlers/handlers.go`, `backend/internal/game/rules.go`. Go tests: `backend/internal/game/victory_test.go`, `backend/internal/game/devcards_test.go`. Playwright: extend `frontend/tests/victory.spec.ts` to confirm real victory trigger (not just test endpoint).
+- ✅ Completed. `PlayDevCard` now sets `GameStatus` to FINISHED when victory is detected and handler broadcasts `gameOver` after dev card plays. VP cards keep scoring count when revealed. Added `backend/internal/game/devcards_victory_test.go`. Playwright `frontend/tests/victory.spec.ts` not updated yet (still needed for real victory trigger).
 
 ## PRIORITY 4: ROBBER FLOW
 - No functional gaps found versus `specs/robber-flow.md`, but update E2E to use `forceDiceRoll` so tests exercise discard/move/steal flow. Files: `frontend/tests/robber.spec.ts`, `frontend/tests/helpers.ts`. Go tests: already in `backend/internal/game/robber_test.go`.
@@ -35,3 +35,4 @@ Prioritized gap analysis against `specs/*.md` and current codebase. Each task is
 ## NOTES / ASSUMPTIONS
 - Ports currently use randomized coastal selection; plan assumes switching to fixed vertex-pair list for the standard board.
 - Dev card visibility is currently broadcast to all clients; plan assumes redaction on outbound state snapshots rather than changing client storage.
+ - Fixed unrelated flake in `backend/internal/game/dice_test.go` by selecting a vertex adjacent to a single matching-number hex.

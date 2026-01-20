@@ -726,6 +726,12 @@ func (h *Handler) handlePlayDevCard(client *hub.Client, payload []byte) {
 
 	// Broadcast updated game state to all
 	h.broadcastGameStateProto(client.GameID, &state)
+	if state.Status == game.GameStatusFinished {
+		if winnerID, ok := game.DetermineWinner(&state); ok {
+			gameOverPayload := game.BuildGameOverPayload(&state, winnerID)
+			h.broadcastServerMessage(client.GameID, "gameOver", gameOverPayload)
+		}
+	}
 }
 
 // HandleCreateGame handles POST /api/games to create a new game.

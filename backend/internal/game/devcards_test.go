@@ -57,8 +57,8 @@ func TestPlayDevCardDecrementCount(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	p := state.Players[0]
-	if p.VictoryPointCards != 0 {
-		t.Errorf("expected VictoryPointCards to decrement to 0, got %d", p.VictoryPointCards)
+	if p.VictoryPointCards != 1 {
+		t.Errorf("expected VictoryPointCards to remain 1 for scoring, got %d", p.VictoryPointCards)
 	}
 	if p.DevCardCount != 0 {
 		t.Errorf("expected DevCardCount 0, got %d", p.DevCardCount)
@@ -262,8 +262,8 @@ func TestPlayVictoryPointCardSameTurnAllowed(t *testing.T) {
 	}
 
 	// VP card should have been played
-	if state.Players[0].VictoryPointCards != 0 {
-		t.Errorf("expected VictoryPointCards to be 0, got %d", state.Players[0].VictoryPointCards)
+	if state.Players[0].VictoryPointCards != 1 {
+		t.Errorf("expected VictoryPointCards to remain 1, got %d", state.Players[0].VictoryPointCards)
 	}
 }
 

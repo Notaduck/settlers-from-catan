@@ -123,11 +123,7 @@ func PlayDevCard(state *pb.GameState, playerID string, cardType pb.DevCardType, 
 		RecalculateLargestArmy(state)
 
 	case pb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT:
-		// VP cards are revealed, decrement hidden count
-		if p.VictoryPointCards > 0 {
-			p.VictoryPointCards--
-		}
-		// VP already counted in CheckVictory
+		// VP cards are revealed; keep total count for scoring.
 
 	case pb.DevCardType_DEV_CARD_TYPE_ROAD_BUILDING:
 		// Road building allows 2 free roads (handled in UI/handler)
@@ -179,8 +175,10 @@ func PlayDevCard(state *pb.GameState, playerID string, cardType pb.DevCardType, 
 		}
 	}
 
-	// Check victory after playing card (in case of VP card)
-	CheckVictory(state)
+	// Check victory after playing card (in case of VP card or bonus award).
+	if victory, _ := CheckVictory(state); victory {
+		state.Status = pb.GameStatus_GAME_STATUS_FINISHED
+	}
 
 	return nil
 }

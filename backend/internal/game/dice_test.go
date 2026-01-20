@@ -181,16 +181,24 @@ func TestResourceDistribution_SettlementGetsOneResource(t *testing.T) {
 		t.Skip("No hex with number 8 found in test board")
 	}
 
-	// Find a vertex adjacent to this hex
+	// Find a vertex adjacent to ONLY this hex (to avoid multiple resource grants)
 	var targetVertex *pb.Vertex
 	for _, vertex := range state.Board.Vertices {
+		adjacentToTarget := false
+		otherHexCount := 0
 		for _, adjHex := range vertex.AdjacentHexes {
 			if adjHex.Q == targetHex.Coord.Q && adjHex.R == targetHex.Coord.R {
-				targetVertex = vertex
-				break
+				adjacentToTarget = true
+				continue
+			}
+			for _, hex := range state.Board.Hexes {
+				if hex.Coord.Q == adjHex.Q && hex.Coord.R == adjHex.R && hex.Number == 8 {
+					otherHexCount++
+				}
 			}
 		}
-		if targetVertex != nil {
+		if adjacentToTarget && otherHexCount == 0 {
+			targetVertex = vertex
 			break
 		}
 	}
