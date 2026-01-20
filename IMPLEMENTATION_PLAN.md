@@ -34,7 +34,7 @@
 
 **Frontend UI Gaps:**
 - ✅ ProposeTradeModal (COMPLETE - 227 lines full implementation)
-- ⚠️ IncomingTradeModal (24-line STUB with TODO comment)
+- ✅ IncomingTradeModal (COMPLETE - 130 lines full implementation)
 - ⚠️ Knight card → robber move integration (backend ready, UI hookup missing)
 - ⚠️ Road Building → free placement mode (backend ready, UI mode missing)
 - ⚠️ Game.tsx has 2 TODO comments (lines 37, 256) - down from 3, line 270 resolved
@@ -525,36 +525,64 @@ Complete stub/TODO UI components to enable full E2E testing.
 
 ---
 
-#### Task 2.4: Complete IncomingTradeModal UI
+#### Task 2.4: Complete IncomingTradeModal UI ✅ COMPLETE
 **Spec:** `specs/trading.md`
 **Blocker for:** Task 1.3 (Trading E2E)
 
-**Current state:** Stub implementation with TODO comment
+**Status: COMPLETE (2026-01-20)**
 
-**Required implementation:**
-- [ ] Display offering player name
-- [ ] Show resources offered (icons + counts)
-- [ ] Show resources requested (icons + counts)
-- [ ] Accept button calls `acceptTrade` from GameContext
-- [ ] Decline button calls `declineTrade` from GameContext
-- [ ] Optional: Counter button (opens ProposeTradeModal with reversed offer)
+**Completed implementation:**
+- ✅ Display offering player name in modal header
+- ✅ Show resources offered (icons + counts) - only displays non-zero resources
+- ✅ Show resources requested (icons + counts) - only displays non-zero resources
+- ✅ Accept button calls `onAccept` callback
+- ✅ Decline button calls `onDecline` callback
+- ✅ Trade summary shows "You give" and "You receive" totals
+- ✅ Visual trade arrow (⇄) between offer and request sections
+- ✅ Help text explaining trade execution
+- ✅ All required data-cy attributes implemented per spec
 
-**Files to modify:**
-- `frontend/src/components/Game/IncomingTradeModal.tsx` (full implementation)
-- `frontend/src/context/GameContext.tsx` (add `acceptTrade`, `declineTrade` methods)
+**Files modified:**
+- `frontend/src/components/Game/IncomingTradeModal.tsx` (rewritten from 24-line stub to 130 lines full implementation)
 
-**Data attributes:**
-- `data-cy="incoming-trade-modal"`
-- `data-cy="accept-trade-btn"`
-- `data-cy="decline-trade-btn"`
+**Implementation details:**
+- Uses same resource display pattern as ProposeTradeModal for consistency
+- State management: receives trade details via props (fromPlayer, offer, request)
+- Only displays resources with non-zero counts (cleaner UI)
+- Calculates and displays total resources being exchanged
+- Follows modal overlay pattern consistent with other game modals
+- No internal state needed - fully controlled by parent component
 
-**Backend:** Already complete (`handleRespondTrade`, `AcceptTrade`, `DeclineTrade` commands)
+**Data attributes implemented:**
+- ✅ `data-cy="incoming-trade-modal"`
+- ✅ `data-cy="accept-trade-btn"`
+- ✅ `data-cy="decline-trade-btn"`
+- ✅ `data-cy="incoming-offer-{resource}"` (wood, brick, sheep, wheat, ore)
+- ✅ `data-cy="incoming-request-{resource}"` (wood, brick, sheep, wheat, ore)
+
+**Backend integration:**
+- Backend already complete: `AcceptTrade`, `DeclineTrade` commands in `trading.go`
+- Backend already has `handleRespondTrade` handler
+- Proto message `RespondTradeMessage` with tradeId and accept (bool)
+- GameContext already has `respondTrade` method (added in Task 2.3)
 
 **Validation:**
-- E2E test: incoming trade → accept/decline works
-- `make typecheck` passes
-- `make lint` passes
-- `make e2e` passes
+- ✅ All backend tests pass (make test-backend)
+- ✅ TypeScript typecheck passes (make typecheck)
+- ✅ Lint passes with 0 errors, 2 acceptable warnings (make lint)
+- ✅ Build succeeds (make build)
+- ⚠️ E2E tests not run (servers not started per instructions - will validate separately)
+
+**Notes:**
+- Removed TODO comment from IncomingTradeModal.tsx
+- Modal follows same patterns as ProposeTradeModal and BankTradeModal for consistency
+- Counter-offer feature intentionally omitted (spec marked as optional)
+- Ready for E2E testing in Task 1.3 (Trading E2E Tests)
+- Both ProposeTradeModal (Task 2.3) and IncomingTradeModal (Task 2.4) now complete
+
+**Next steps:**
+- Task 1.3: Implement Trading E2E Tests (now unblocked)
+- Task 3.1: Remove remaining stub/TODO comments from Game.tsx
 
 ---
 
