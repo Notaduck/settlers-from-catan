@@ -4,126 +4,52 @@
 
 ----
 
-## 🎯 PROJECT STATUS: 100% COMPLETE & PRODUCTION READY
+## 🎯 PROJECT STATUS
 
-**Last Updated**: 2026-01-20
-**Validation Status**: ✅ All checks passing - Last verified 2026-01-20 18:57 UTC  
-- ✅ `make test-backend`: 131 tests passing
-- ✅ `make typecheck`: Clean TypeScript compilation  
-- ✅ `make lint`: Clean (Go vet, ESLint, buf lint)
-- ✅ `make build`: Both backend and frontend build successfully
+**Current Focus**: Fix client message parsing so camelCase protojson fields (e.g., `structureType`) work with WebSocket handlers.
 
-### ✅ FULLY IMPLEMENTED FEATURES
+### ✅ Completed This Iteration
 
-**Backend (Go)**:
-- Interactive board with vertex/edge placement validation
-- Complete setup phase with snake draft and resource grants  
-- Victory detection and game over flow
-- Robber mechanics (move, steal, discard on 7)
-- Trading system (player-to-player and bank trades with port ratios)
-- Development cards (all 5 types with proper timing rules)
-- Longest road calculation with DFS algorithm
-- Algorithmic port generation and trade ratio management
+- Updated WebSocket client envelope parsing to pass raw JSON to protojson handlers.
+- Added handler test covering buildStructure payload with camelCase fields.
+- Resolved frontend hook linting and TurnPhase typing errors.
+- Tightened setup-road placement highlighting to only edges adjacent to unroaded settlements.
+- Restored 2D board edge/vertex styling so Playwright can detect valid placements.
 
-**Frontend (React + TypeScript)**:
-- GameContext with WebSocket integration (421 lines)
-- Interactive SVG board rendering (337 lines)
-- Complete UI for all game phases (Lobby → Setup → Playing → Victory)
-- All modals and game components implemented
-- Proper data-cy selectors for E2E test coverage
+### 🔎 Notes / Discoveries
 
-**Testing**:
-- 22+ backend unit test files with comprehensive coverage
-- 9 E2E test specs covering all major game flows
-- Test infrastructure with helper functions and multi-page scenarios
-- ForceDiceRoll test endpoint for deterministic E2E robber testing
+- `encoding/json` on Go proto structs expects snake_case JSON tags; raw payloads now go through protojson so camelCase payloads work consistently.
 
 ----
 
-## 📋 MAINTENANCE CHECKLIST
+## ✅ VALIDATION STATUS
 
-**For future development iterations:**
-
-1. **Pre-work validation**:
-   ```bash
-   make test-backend && make typecheck && make lint && make build
-   ```
-
-2. **Post-change validation**:
-   ```bash
-   make test-backend  # Required for any backend changes
-   make typecheck     # Required for any frontend changes  
-   make build         # Verify both projects build
-   make e2e           # Run if UI/WebSocket behavior changed
-   ```
-
-3. **Ready to commit when**:
-   - All validation commands pass
-   - New functionality has appropriate test coverage
-   - `git add -A` captures all changes including new files
+Last run:
+- ✅ `make test-backend`
+- ✅ `make typecheck`
+- ✅ `make lint`
+- ✅ `make build`
+- ❌ `make e2e` (timed out; Playwright dev-cards suite stuck in lobby/setup. Backend restarted with `DEV_MODE=true` but failures persisted.)
 
 ----
 
-## 🏗️ ARCHITECTURAL HIGHLIGHTS
+## 📌 NEXT STEPS
 
-**Excellent Design Patterns Implemented:**
-- **Server-authoritative architecture**: All game logic validated on backend
-- **Type-safe protobuf contract**: Generated TypeScript/Go from shared schema
-- **React Context pattern**: Clean state management without external dependencies  
-- **Deterministic game logic**: Seedable randomness for reliable testing
-- **Component separation**: UI state vs game logic properly decoupled
-
-**Code Quality Achievements:**
-- **Zero linting warnings or errors**
-- **Comprehensive test coverage** at both unit and integration levels
-- **Clean TypeScript throughout** with proper type definitions
-- **Production-ready error handling** and validation
-- **Professional React patterns** with proper hooks usage
-
-----
-
-## 🚀 DEPLOYMENT READY
-
-This implementation is **immediately deployable** and **fully playable** with:
-
-- ✅ Complete Catan ruleset implementation
-- ✅ Robust WebSocket multiplayer support  
-- ✅ Interactive web UI with all game phases
-- ✅ Comprehensive test coverage ensuring quality
-- ✅ Professional architecture and code quality
-- ✅ All validation passing without warnings or errors
-
-**Next steps for production deployment**: Configure hosting environment and deploy using standard `make build` outputs.
+- Investigate Playwright failures in `frontend/tests/development-cards.spec.ts` where lobby ready state and setup progression stall.
+- Confirm `startTwoPlayerGame` reliably toggles ready state and advances to setup/playing under `DEV_MODE=true`.
 
 ----
 
 ## 🔧 DEVELOPMENT COMMANDS
 
-**From repo root:**
+From repo root:
 
 ```bash
-# Install dependencies and generate protobuf
 make install && make generate
-
-# Start development servers  
-make dev                    # Both backend (:8080) + frontend (:3000)
-make dev-backend           # Backend only
-make dev-frontend          # Frontend only
-
-# Testing
-make test                  # All tests  
-make test-backend         # Go unit tests only
-make e2e                  # Playwright E2E tests
-
-# Validation
-make typecheck            # TypeScript compilation
-make lint                 # All linting
-make build               # Production builds
-
-# Database
-make db-reset            # Reset local database
+make dev
+make test-backend
+make typecheck
+make lint
+make build
+make e2e
 ```
-
-----
-
-*This plan will be updated if new development work is identified. Current status: No remaining tasks - project complete.*

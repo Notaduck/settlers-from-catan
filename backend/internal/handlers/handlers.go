@@ -1090,29 +1090,25 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 
 type clientEnvelope struct {
 	Message struct {
-		OneofKind      string                         `json:"oneofKind"`
-		StartGame      *catanv1.StartGameMessage      `json:"startGame,omitempty"`
-		RollDice       *catanv1.RollDiceMessage       `json:"rollDice,omitempty"`
-		BuildStructure *catanv1.BuildStructureMessage `json:"buildStructure,omitempty"`
-		EndTurn        *catanv1.EndTurnMessage        `json:"endTurn,omitempty"`
-		PlayerReady    *catanv1.PlayerReadyMessage    `json:"playerReady,omitempty"`
-		ProposeTrade   *catanv1.ProposeTradeMessage   `json:"proposeTrade,omitempty"`
-		RespondTrade   *catanv1.RespondTradeMessage   `json:"respondTrade,omitempty"`
-		DiscardCards   *catanv1.DiscardCardsMessage   `json:"discardCards,omitempty"`
-		MoveRobber     *catanv1.MoveRobberMessage     `json:"moveRobber,omitempty"`
-		BankTrade      *catanv1.BankTradeMessage      `json:"bankTrade,omitempty"`
-		BuyDevCard     *catanv1.BuyDevCardMessage     `json:"buyDevCard,omitempty"`
-		PlayDevCard    *catanv1.PlayDevCardMessage    `json:"playDevCard,omitempty"`
+		OneofKind      string          `json:"oneofKind"`
+		StartGame      json.RawMessage `json:"startGame,omitempty"`
+		RollDice       json.RawMessage `json:"rollDice,omitempty"`
+		BuildStructure json.RawMessage `json:"buildStructure,omitempty"`
+		EndTurn        json.RawMessage `json:"endTurn,omitempty"`
+		PlayerReady    json.RawMessage `json:"playerReady,omitempty"`
+		ProposeTrade   json.RawMessage `json:"proposeTrade,omitempty"`
+		RespondTrade   json.RawMessage `json:"respondTrade,omitempty"`
+		DiscardCards   json.RawMessage `json:"discardCards,omitempty"`
+		MoveRobber     json.RawMessage `json:"moveRobber,omitempty"`
+		BankTrade      json.RawMessage `json:"bankTrade,omitempty"`
+		BuyDevCard     json.RawMessage `json:"buyDevCard,omitempty"`
+		PlayDevCard    json.RawMessage `json:"playDevCard,omitempty"`
 	} `json:"message"`
 }
 
-func (e clientEnvelope) payloadBytes(payload proto.Message) []byte {
-	if payload == nil {
-		return nil
+func (e clientEnvelope) payloadBytes(payload json.RawMessage) []byte {
+	if len(payload) == 0 {
+		return []byte("{}")
 	}
-	data, err := marshalOptions.Marshal(payload)
-	if err != nil {
-		return nil
-	}
-	return data
+	return payload
 }

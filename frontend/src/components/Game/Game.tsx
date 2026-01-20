@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import { DiscardModal } from "./DiscardModal";
 import { StealModal } from "./StealModal";
 import { BankTradeModal } from "./BankTradeModal";
@@ -10,7 +10,7 @@ import { MonopolyModal } from "./MonopolyModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
-import { GameStatus, PlayerColor, StructureType, DevCardType, ResourceCount } from "@/types";
+import { GameStatus, PlayerColor, StructureType, DevCardType, ResourceCount, TurnPhase } from "@/types";
 import { GameOver } from "./GameOver";
 import "./GameOver.css";
 import "./Game.css";
@@ -23,6 +23,28 @@ const PLAYER_COLORS: Record<PlayerColor, string> = {
   [PlayerColor.GREEN]: "#2ecc71",
   [PlayerColor.ORANGE]: "#e67e22",
 };
+
+function isStatus(
+  status: GameStatus | string | undefined,
+  expected: GameStatus,
+  expectedString: string
+): boolean {
+  return (
+    status === expected ||
+    status === (expectedString as unknown as GameStatus)
+  );
+}
+
+function isTurnPhase(
+  phase: TurnPhase | string | undefined,
+  expected: TurnPhase,
+  expectedString: string
+): boolean {
+  return (
+    phase === expected ||
+    phase === (expectedString as unknown as TurnPhase)
+  );
+}
 
 interface GameProps {
   gameCode: string;
@@ -133,13 +155,16 @@ export function Game({ gameCode, onLeave }: GameProps) {
   // Check if current player is host/ready
   const isHost = currentPlayer?.isHost ?? false;
   const isReady = currentPlayer?.isReady ?? false;
-  // Handle both enum value and JSON string representation
-  const isWaiting =
-    gameState?.status === GameStatus.WAITING ||
-    gameState?.status === ("GAME_STATUS_WAITING" as unknown as GameStatus);
-  const isSetup =
-    gameState?.status === GameStatus.SETUP ||
-    gameState?.status === ("GAME_STATUS_SETUP" as unknown as GameStatus);
+  const isWaiting = isStatus(
+    gameState?.status,
+    GameStatus.WAITING,
+    "GAME_STATUS_WAITING"
+  );
+  const isSetup = isStatus(
+    gameState?.status,
+    GameStatus.SETUP,
+    "GAME_STATUS_SETUP"
+  );
 
   const placementModeLabel = useMemo(() => {
     switch (placementMode) {
@@ -205,13 +230,19 @@ export function Game({ gameCode, onLeave }: GameProps) {
   }, [isSetup, gameState?.setupPhase, setupRound]);
 
   // Dev card logic (must be before early returns to satisfy rules of hooks)
-  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || (gameState?.status as unknown as string) === 'GAME_STATUS_FINISHED';
+  const isGameOver =
+    !!gameOver ||
+    isStatus(gameState?.status, GameStatus.FINISHED, "GAME_STATUS_FINISHED");
   const interactionsDisabled = isGameOver;
   
   const canBuyDevCard = useMemo(() => {
     if (interactionsDisabled || !currentPlayer || !gameState) return false;
     const isMyTurn = gameState.players[gameState.currentTurn]?.id === currentPlayerId;
-    const isTradePhase = gameState.turnPhase === ("TURN_PHASE_TRADE" as unknown as typeof gameState.turnPhase);
+    const isTradePhase = isTurnPhase(
+      gameState.turnPhase,
+      TurnPhase.TRADE,
+      "TURN_PHASE_TRADE"
+    );
     const hasResources = 
       (currentPlayer.resources?.ore ?? 0) >= 1 &&
       (currentPlayer.resources?.wheat ?? 0) >= 1 &&
@@ -222,7 +253,12 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const canPlayDevCard = useMemo(() => {
     if (interactionsDisabled || !currentPlayer || !gameState) return false;
     const isMyTurn = gameState.players[gameState.currentTurn]?.id === currentPlayerId;
-    return isMyTurn && gameState.status === GameStatus.PLAYING;
+    const isPlaying = isStatus(
+      gameState.status,
+      GameStatus.PLAYING,
+      "GAME_STATUS_PLAYING"
+    );
+    return isMyTurn && isPlaying;
   }, [interactionsDisabled, currentPlayer, gameState, currentPlayerId]);
 
   const handlePlayDevCard = useCallback((cardType: DevCardType) => {
@@ -391,11 +427,23 @@ export function Game({ gameCode, onLeave }: GameProps) {
         {/* Game Phase Indicator */}
         {gameState?.status && (
           <div className="game-phase" data-cy="game-phase">
-            {gameState.status === GameStatus.PLAYING ? "PLAYING" : 
-             gameState.status === GameStatus.SETUP ? "SETUP" :
-             gameState.status === GameStatus.WAITING ? "WAITING" :
-             gameState.status === GameStatus.FINISHED ? "FINISHED" :
-             String(gameState.status)}
+            {isStatus(gameState.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING")
+              ? "PLAYING"
+              : isStatus(gameState.status, GameStatus.SETUP, "GAME_STATUS_SETUP")
+                ? "SETUP"
+                : isStatus(
+                      gameState.status,
+                      GameStatus.WAITING,
+                      "GAME_STATUS_WAITING"
+                    )
+                  ? "WAITING"
+                  : isStatus(
+                        gameState.status,
+                        GameStatus.FINISHED,
+                        "GAME_STATUS_FINISHED"
+                      )
+                    ? "FINISHED"
+                    : String(gameState.status)}
           </div>
         )}
         <button
@@ -490,7 +538,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-           {(isSetup && gameState?.status === GameStatus.SETUP) && (
+           {(isSetup &&
+             isStatus(gameState?.status, GameStatus.SETUP, "GAME_STATUS_SETUP")) && (
             <div className="setup-phase-panel">
               <div
                 className="setup-phase-banner"
@@ -517,7 +566,14 @@ export function Game({ gameCode, onLeave }: GameProps) {
             </div>
           )}
            {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
-           {!interactionsDisabled && gameState?.status === GameStatus.PLAYING && gameState?.turnPhase === ("TURN_PHASE_TRADE" as unknown as typeof gameState.turnPhase) && currentPlayer?.id === currentPlayerId && (
+           {!interactionsDisabled &&
+             isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING") &&
+             isTurnPhase(
+               gameState?.turnPhase,
+               TurnPhase.TRADE,
+               "TURN_PHASE_TRADE"
+             ) &&
+             currentPlayer?.id === currentPlayerId && (
              <div className="trade-phase-control">
                 <button
                   className="btn btn-secondary"
@@ -535,7 +591,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
                </button>
              </div>
            )}
-           {resourceGainText && gameState?.status === GameStatus.SETUP && (
+           {resourceGainText &&
+             isStatus(gameState?.status, GameStatus.SETUP, "GAME_STATUS_SETUP") && (
             <div
               className="setup-resource-toast"
               data-cy="setup-resource-toast"
@@ -543,7 +600,11 @@ export function Game({ gameCode, onLeave }: GameProps) {
               {resourceGainText}
             </div>
           )}
-           {!interactionsDisabled && placementModeLabel && ((isSetup && gameState?.status === GameStatus.SETUP) || (gameState?.status === GameStatus.PLAYING)) && (
+           {!interactionsDisabled &&
+             placementModeLabel &&
+             ((isSetup &&
+               isStatus(gameState?.status, GameStatus.SETUP, "GAME_STATUS_SETUP")) ||
+               isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING")) && (
             <div className="placement-mode" data-cy="placement-mode">
               {/* (Placement and trading UI are independent; both can be present) */}
               {placementModeLabel}
@@ -552,20 +613,28 @@ export function Game({ gameCode, onLeave }: GameProps) {
            <div className="game-board-content">
              {/* ---- END TRADING ---- */}
              {gameState?.board && (
-               <Board
-                 board={gameState.board}
-                 players={gameState.players}
-                 validVertexIds={placementState.validVertexIds}
-                 validEdgeIds={placementState.validEdgeIds}
-                 onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
-                  onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
-                  isRobberMoveMode={isRobberMoveRequired}
-                  onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
-                    if (hex.coord) {
-                      sendRobberMove({ q: hex.coord.q, r: hex.coord.r, s: -(hex.coord.q + hex.coord.r) });
-                    }
-                  } : undefined}
-               />
+               <Suspense
+                 fallback={
+                   <div className="board-container" data-cy="board-loading">
+                     <p>Loading board...</p>
+                   </div>
+                 }
+               >
+                 <Board
+                   board={gameState.board}
+                   players={gameState.players}
+                   validVertexIds={placementState.validVertexIds}
+                   validEdgeIds={placementState.validEdgeIds}
+                   onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
+                    onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
+                    isRobberMoveMode={isRobberMoveRequired}
+                    onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
+                      if (hex.coord) {
+                        sendRobberMove({ q: hex.coord.q, r: hex.coord.r, s: -(hex.coord.q + hex.coord.r) });
+                      }
+                    } : undefined}
+                 />
+               </Suspense>
              )}
              {gameState && (
                <PlayerPanel
@@ -577,7 +646,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
                   isGameOver={isGameOver}
                />
              )}
-             {!interactionsDisabled && gameState?.status === GameStatus.PLAYING && (
+             {!interactionsDisabled &&
+               isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING") && (
                <DevelopmentCardsPanel
                  currentPlayer={currentPlayer ?? null}
                  canBuy={canBuyDevCard}

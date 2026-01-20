@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientMessage, ServerMessage } from "@/types";
 
-const WS_URL = "/ws";
+const WS_PATH = "/ws";
 
 interface UseWebSocketOptions {
   onMessage?: (message: ServerMessage) => void;
@@ -14,6 +14,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const pendingMessagesRef = useRef<string[]>([]);
   const optionsRef = useRef(options);
 
   // Keep options ref up to date without causing re-renders
@@ -22,7 +23,16 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   }, [options]);
 
   const getSessionToken = useCallback(() => {
-    return localStorage.getItem("sessionToken");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+    if (sessionToken) {
+      return sessionToken;
+    }
+    const localToken = localStorage.getItem("sessionToken");
+    if (localToken) {
+      sessionStorage.setItem("sessionToken", localToken);
+      localStorage.removeItem("sessionToken");
+    }
+    return localToken;
   }, []);
 
   const connect = useCallback(function connectInternal() {
@@ -42,7 +52,13 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}${WS_URL}?token=${token}`;
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const host = isLocalhost && window.location.port === "3000"
+        ? `${window.location.hostname}:8080`
+        : window.location.host;
+      const wsUrl = `${protocol}//${host}${WS_PATH}?token=${token}`;
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -50,6 +66,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       ws.onopen = () => {
         setIsConnected(true);
         setError(null);
+        if (pendingMessagesRef.current.length > 0) {
+          for (const payload of pendingMessagesRef.current) {
+            ws.send(payload);
+          }
+          pendingMessagesRef.current = [];
+        }
         optionsRef.current.onConnect?.();
       };
 
@@ -58,12 +80,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         wsRef.current = null;
         optionsRef.current.onDisconnect?.();
 
-        // Attempt reconnection after 3 seconds
+        // Attempt reconnection after a short delay
         reconnectTimeoutRef.current = window.setTimeout(() => {
           if (getSessionToken()) {
             connectInternal();
           }
-        }, 3000);
+        }, 1000);
       };
 
       ws.onerror = () => {
@@ -92,12 +114,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   }, []);
 
   const sendMessage = useCallback((message: ClientMessage) => {
+    const payload = JSON.stringify(message);
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
-    } else {
-      console.error("WebSocket is not connected");
+      wsRef.current.send(payload);
+      return;
     }
-  }, []);
+    pendingMessagesRef.current.push(payload);
+    connect();
+  }, [connect]);
 
   useEffect(() => {
     return () => {

@@ -42,9 +42,12 @@ async function joinGame(
 async function visitAsPlayer(page: Page, session: GameSession) {
   await page.goto("/");
   await page.evaluate((s) => {
-    localStorage.setItem("sessionToken", s.sessionToken);
-    localStorage.setItem("gameCode", s.code);
-    localStorage.setItem("playerId", s.playerId);
+    sessionStorage.setItem("sessionToken", s.sessionToken);
+    sessionStorage.setItem("gameCode", s.code);
+    sessionStorage.setItem("playerId", s.playerId);
+    localStorage.removeItem("sessionToken");
+    localStorage.removeItem("gameCode");
+    localStorage.removeItem("playerId");
   }, session);
   await page.reload();
 }

@@ -1,37 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GameProvider } from "@/context";
 import { Lobby } from "@/components/Lobby";
 import { Game } from "@/components/Game";
 import "./App.css";
 
+const STORAGE_KEYS = ["gameCode", "sessionToken", "playerId"] as const;
+
+function readSessionValue(key: string) {
+  const sessionValue = sessionStorage.getItem(key);
+  if (sessionValue) {
+    return sessionValue;
+  }
+  const localValue = localStorage.getItem(key);
+  if (localValue) {
+    sessionStorage.setItem(key, localValue);
+    localStorage.removeItem(key);
+  }
+  return localValue;
+}
+
 function App() {
   const [gameCode, setGameCode] = useState<string | null>(() =>
-    localStorage.getItem("gameCode")
+    readSessionValue("gameCode")
   );
   const [sessionToken, setSessionToken] = useState<string | null>(() =>
-    localStorage.getItem("sessionToken")
+    readSessionValue("sessionToken")
   );
   const [playerId, setPlayerId] = useState<string | null>(() =>
-    localStorage.getItem("playerId")
+    readSessionValue("playerId")
   );
 
   const handleGameJoined = (code: string, token: string, id: string) => {
-    localStorage.setItem("sessionToken", token);
-    localStorage.setItem("playerId", id);
-    localStorage.setItem("gameCode", code);
+    sessionStorage.setItem("sessionToken", token);
+    sessionStorage.setItem("playerId", id);
+    sessionStorage.setItem("gameCode", code);
+    STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     setSessionToken(token);
     setPlayerId(id);
     setGameCode(code);
   };
 
   const handleLeaveGame = () => {
-    localStorage.removeItem("sessionToken");
-    localStorage.removeItem("playerId");
-    localStorage.removeItem("gameCode");
+    STORAGE_KEYS.forEach((key) => {
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
+    });
     setSessionToken(null);
     setPlayerId(null);
     setGameCode(null);
   };
+
+  useEffect(() => {
+    STORAGE_KEYS.forEach((key) => {
+      const value = readSessionValue(key);
+      if (!value) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  }, []);
 
   return (
     <GameProvider playerId={playerId}>

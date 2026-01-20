@@ -224,6 +224,76 @@ func TestHandleMoveRobber_AllowsStealWithoutHex(t *testing.T) {
 	}
 }
 
+func TestHandleClientMessage_BuildStructureUsesProtoJSON(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	h := hub.NewHub()
+	go h.Run()
+
+	handler := NewHandler(database, h)
+
+	gameID := "game-setup"
+	code := "SET001"
+	playerID := "p1"
+	state := game.NewGameState(gameID, code, []string{"Host"}, []string{playerID})
+	state.Status = game.GameStatusSetup
+	state.CurrentTurn = 0
+	state.SetupPhase = &catanv1.SetupPhase{
+		Round:            1,
+		PlacementsInTurn: 0,
+	}
+
+	vertexID := state.Board.Vertices[0].Id
+
+	stateJSON, err := marshalOptions.Marshal(state)
+	if err != nil {
+		t.Fatalf("failed to marshal state: %v", err)
+	}
+	if _, err := database.Exec(
+		"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+		gameID,
+		code,
+		string(stateJSON),
+		"setup",
+	); err != nil {
+		t.Fatalf("failed to insert game state: %v", err)
+	}
+
+	client := hub.NewClient(h, &websocket.Conn{}, playerID, gameID)
+	h.Register(client)
+
+	message := []byte(`{"message":{"oneofKind":"buildStructure","buildStructure":{"structureType":1,"location":"` + vertexID + `"}}}`)
+	handler.handleClientMessage(client, message)
+
+	var updatedStateJSON string
+	if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+		t.Fatalf("failed to load updated state: %v", err)
+	}
+
+	var updatedState catanv1.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+		t.Fatalf("failed to parse updated state: %v", err)
+	}
+
+	var placed *catanv1.Vertex
+	for _, vertex := range updatedState.Board.Vertices {
+		if vertex.Id == vertexID {
+			placed = vertex
+			break
+		}
+	}
+	if placed == nil || placed.Building == nil {
+		t.Fatalf("expected settlement placed at vertex %s", vertexID)
+	}
+	if placed.Building.Type != catanv1.BuildingType_BUILDING_TYPE_SETTLEMENT {
+		t.Fatalf("expected settlement type, got %v", placed.Building.Type)
+	}
+	if placed.Building.OwnerId != playerID {
+		t.Fatalf("expected owner %s, got %s", playerID, placed.Building.OwnerId)
+	}
+}
+
 func setupTestDB(t *testing.T) (*sqlx.DB, func()) {
 	t.Helper()
 	dbPath := t.TempDir() + "/test.db"

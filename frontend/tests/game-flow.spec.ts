@@ -42,11 +42,14 @@ async function visitAsPlayer(page: Page, session: GameSession) {
   // First navigate to the page
   await page.goto("/");
 
-  // Then set localStorage and reload to pick up the state
+  // Then set sessionStorage and reload to pick up the state
   await page.evaluate((s) => {
-    localStorage.setItem("sessionToken", s.sessionToken);
-    localStorage.setItem("gameCode", s.code);
-    localStorage.setItem("playerId", s.playerId);
+    sessionStorage.setItem("sessionToken", s.sessionToken);
+    sessionStorage.setItem("gameCode", s.code);
+    sessionStorage.setItem("playerId", s.playerId);
+    localStorage.removeItem("sessionToken");
+    localStorage.removeItem("gameCode");
+    localStorage.removeItem("playerId");
   }, session);
 
   // Reload to connect with the session
@@ -154,7 +157,7 @@ test.describe("Game Start", () => {
     await waitForGameBoard(hostPage);
     await waitForGameBoard(guestPage);
 
-    await expect(hostPage.locator("[data-cy='board-svg']")).toBeVisible();
+    await expect(hostPage.locator("[data-cy='board']")).toBeVisible();
 
     await guestPage.close();
   });

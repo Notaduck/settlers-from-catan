@@ -110,6 +110,35 @@ function collectPlayerStructures(board: BoardState, playerId: string) {
   return { playerRoadVertices, playerBuildingVertices };
 }
 
+function collectUnroadedBuildingVertices(
+  board: BoardState,
+  playerId: string
+): Set<string> {
+  const verticesWithRoad = new Set<string>();
+  for (const edge of board.edges ?? []) {
+    if (edge.road?.ownerId !== playerId) {
+      continue;
+    }
+    for (const vertexId of edge.vertices ?? []) {
+      if (vertexId) {
+        verticesWithRoad.add(vertexId);
+      }
+    }
+  }
+
+  const unroaded = new Set<string>();
+  for (const vertex of board.vertices ?? []) {
+    if (vertex.building?.ownerId !== playerId) {
+      continue;
+    }
+    if (!verticesWithRoad.has(vertex.id)) {
+      unroaded.add(vertex.id);
+    }
+  }
+
+  return unroaded;
+}
+
 function edgeConnectsToVertices(
   edgeVertices: string[] | undefined,
   candidates: Set<string>
@@ -194,11 +223,17 @@ export function getPlacementState(
     if (!canPlaceRoad) {
       return emptyState;
     }
+    const setupRoadVertices = collectUnroadedBuildingVertices(
+      board,
+      currentPlayerId
+    );
+    const roadAnchorVertices =
+      setupRoadVertices.size > 0 ? setupRoadVertices : playerBuildingVertices;
     for (const edge of board.edges ?? []) {
       if (edge.road) {
         continue;
       }
-      if (edgeConnectsToVertices(edge.vertices, playerBuildingVertices)) {
+      if (edgeConnectsToVertices(edge.vertices, roadAnchorVertices)) {
         emptyState.validEdgeIds.add(edge.id);
       }
     }
