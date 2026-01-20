@@ -14,7 +14,7 @@ import type {
   ResourceCount,
   GameOverPayload,
 } from "@/types";
-import { GameStatus, StructureType, TurnPhase } from "@/types";
+import { GameStatus, StructureType, TurnPhase, DevCardType, Resource } from "@/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { getPlacementState, type PlacementState } from "@/components/Board/placement";
 
@@ -139,6 +139,9 @@ interface GameContextValue extends GameContextState {
   sendRobberMove: (hex: { q: number; r: number; s: number }, victimId?: string) => void;
   sendRobberSteal: (victimId: string) => void;
   robberStealCandidates: { id: string; name: string; avatarUrl?: string }[];
+  // --- Dev Cards ---
+  buyDevCard: () => void;
+  playDevCard: (cardType: DevCardType, targetResource?: Resource, resources?: Resource[]) => void;
 }
 
 
@@ -326,6 +329,31 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     } as ClientMessage);
   }, [sendMessage]);
 
+  const buyDevCard = useCallback(() => {
+    sendMessage({
+      message: {
+        oneofKind: "buyDevCard",
+        buyDevCard: {},
+      },
+    } as ClientMessage);
+  }, [sendMessage]);
+
+  const playDevCard = useCallback(
+    (cardType: DevCardType, targetResource?: Resource, resources?: Resource[]) => {
+      sendMessage({
+        message: {
+          oneofKind: "playDevCard",
+          playDevCard: {
+            cardType,
+            targetResource,
+            resources: resources ?? [],
+          },
+        },
+      } as ClientMessage);
+    },
+    [sendMessage]
+  );
+
   const value: GameContextValue = {
     ...state,
     isConnected,
@@ -351,6 +379,8 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     sendRobberMove,
     sendRobberSteal,
     robberStealCandidates,
+    buyDevCard,
+    playDevCard,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

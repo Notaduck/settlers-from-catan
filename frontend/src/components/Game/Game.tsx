@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { DiscardModal } from "./DiscardModal";
 import { StealModal } from "./StealModal";
 import { BankTradeModal } from "./BankTradeModal";
 import { ProposeTradeModal } from "./ProposeTradeModal";
 import { IncomingTradeModal } from "./IncomingTradeModal";
+import { DevelopmentCardsPanel } from "./DevelopmentCardsPanel";
+import { YearOfPlentyModal } from "./YearOfPlentyModal";
+import { MonopolyModal } from "./MonopolyModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
-import { GameStatus, PlayerColor, StructureType } from "@/types";
+import { GameStatus, PlayerColor, StructureType, DevCardType } from "@/types";
 import { GameOver } from "./GameOver";
 import "./GameOver.css";
 import "./Game.css";
@@ -33,6 +36,10 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const [showIncomingTrade, setShowIncomingTrade] = useState(false);
   // Simulated offer for stub incoming modal demo:
   const [incomingTrade, setIncomingTrade] = useState<{from: string; offer: Record<string,number>; request: Record<string,number>}|null>(null);
+  
+  // Dev card modals
+  const [showYearOfPlenty, setShowYearOfPlenty] = useState(false);
+  const [showMonopoly, setShowMonopoly] = useState(false);
   const {
     connect,
     disconnect,
@@ -58,6 +65,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
     isRobberStealRequired,
     sendRobberSteal,
     robberStealCandidates,
+    // Dev cards
+    buyDevCard,
+    playDevCard,
   } = useGame();
 
   // UI state (for modal closing)
@@ -171,6 +181,38 @@ export function Game({ gameCode, onLeave }: GameProps) {
     return `Place ${label} (${placementCount}/2)`;
   }, [isSetup, gameState?.setupPhase, setupRound]);
 
+  // Dev card logic (must be before early returns to satisfy rules of hooks)
+  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || (gameState?.status as unknown as string) === 'GAME_STATUS_FINISHED';
+  const interactionsDisabled = isGameOver;
+  
+  const canBuyDevCard = useMemo(() => {
+    if (interactionsDisabled || !currentPlayer || !gameState) return false;
+    const isMyTurn = gameState.players[gameState.currentTurn]?.id === currentPlayerId;
+    const isTradePhase = gameState.turnPhase === ("TURN_PHASE_TRADE" as unknown as typeof gameState.turnPhase);
+    const hasResources = 
+      (currentPlayer.resources?.ore ?? 0) >= 1 &&
+      (currentPlayer.resources?.wheat ?? 0) >= 1 &&
+      (currentPlayer.resources?.sheep ?? 0) >= 1;
+    return isMyTurn && isTradePhase && hasResources;
+  }, [interactionsDisabled, currentPlayer, gameState, currentPlayerId]);
+
+  const canPlayDevCard = useMemo(() => {
+    if (interactionsDisabled || !currentPlayer || !gameState) return false;
+    const isMyTurn = gameState.players[gameState.currentTurn]?.id === currentPlayerId;
+    return isMyTurn && gameState.status === GameStatus.PLAYING;
+  }, [interactionsDisabled, currentPlayer, gameState, currentPlayerId]);
+
+  const handlePlayDevCard = useCallback((cardType: DevCardType) => {
+    if (cardType === DevCardType.YEAR_OF_PLENTY) {
+      setShowYearOfPlenty(true);
+    } else if (cardType === DevCardType.MONOPOLY) {
+      setShowMonopoly(true);
+    } else {
+      // Knight and Road Building can be played directly
+      playDevCard(cardType);
+    }
+  }, [playDevCard]);
+
   if (error) {
     return (
       <div className="game-error" data-cy="game-error">
@@ -202,10 +244,6 @@ export function Game({ gameCode, onLeave }: GameProps) {
       </div>
     );
   }
-
-  // Game Over overlay
-  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || (gameState?.status as unknown as string) === 'GAME_STATUS_FINISHED';
-  const interactionsDisabled = isGameOver;
 
   return (
     <div className="game" data-cy="game">
@@ -266,6 +304,27 @@ export function Game({ gameCode, onLeave }: GameProps) {
           onSteal={victimId => { sendRobberSteal(victimId); setStealClosed(true); }}
           onCancel={() => setStealClosed(true)}
         />
+      )}
+      {/* Dev Card Modals */}
+      {!interactionsDisabled && (
+        <>
+          <YearOfPlentyModal
+            open={showYearOfPlenty}
+            onClose={() => setShowYearOfPlenty(false)}
+            onSubmit={(resources) => {
+              playDevCard(DevCardType.YEAR_OF_PLENTY, undefined, resources);
+              setShowYearOfPlenty(false);
+            }}
+          />
+          <MonopolyModal
+            open={showMonopoly}
+            onClose={() => setShowMonopoly(false)}
+            onSubmit={(resource) => {
+              playDevCard(DevCardType.MONOPOLY, resource);
+              setShowMonopoly(false);
+            }}
+          />
+        </>
       )}
 
       {isGameOver && (
@@ -448,17 +507,26 @@ export function Game({ gameCode, onLeave }: GameProps) {
                   } : undefined}
                />
              )}
-            {gameState && (
-              <PlayerPanel
-                players={gameState.players}
-                 currentTurn={gameState.currentTurn}
-                 turnPhase={gameState.turnPhase}
-                 dice={gameState.dice}
-                 gameStatus={gameState.status as unknown as string}
-                 isGameOver={isGameOver}
-              />
-            )}
-          </div>
+             {gameState && (
+               <PlayerPanel
+                 players={gameState.players}
+                  currentTurn={gameState.currentTurn}
+                  turnPhase={gameState.turnPhase}
+                  dice={gameState.dice}
+                  gameStatus={gameState.status as unknown as string}
+                  isGameOver={isGameOver}
+               />
+             )}
+             {!interactionsDisabled && gameState?.status === GameStatus.PLAYING && (
+               <DevelopmentCardsPanel
+                 currentPlayer={currentPlayer ?? null}
+                 canBuy={canBuyDevCard}
+                 canPlay={canPlayDevCard}
+                 onBuyCard={buyDevCard}
+                 onPlayCard={handlePlayDevCard}
+               />
+             )}
+           </div>
         </div>
       )}
     </div>
