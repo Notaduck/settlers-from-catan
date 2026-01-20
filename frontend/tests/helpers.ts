@@ -151,14 +151,16 @@ export async function startTwoPlayerGame(
 /**
  * Place a settlement during setup phase (clicks first valid vertex)
  */
-export async function placeSettlement(page: Page) {
+export async function placeSettlement(page: Page): Promise<string> {
   const placementMode = page.locator("[data-cy='placement-mode']");
   await expect(placementMode).toContainText("Place Settlement", {
     timeout: 30000,
   });
   const validVertex = page.locator("[data-cy^='vertex-'].vertex--valid").first();
   await expect(validVertex).toBeVisible({ timeout: 30000 });
+  const dataCy = (await validVertex.getAttribute("data-cy")) ?? "";
   await validVertex.click();
+  return dataCy;
 }
 
 /**

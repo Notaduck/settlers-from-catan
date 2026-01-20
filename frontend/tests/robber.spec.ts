@@ -1,4 +1,10 @@
-import { test, expect } from "@playwright/test";
+import {
+  test,
+  expect,
+  type Page,
+  type BrowserContext,
+  type APIRequestContext,
+} from "@playwright/test";
 import {
   createGame,
   joinGame,
@@ -6,69 +12,230 @@ import {
   waitForLobby,
   setPlayerReady,
   startGame,
-  completeSetupPhase,
   waitForGamePhase,
   grantResources,
+  forceDiceRoll,
+  placeSettlement,
+  placeRoad,
 } from "./helpers";
 
-/**
- * Robber Flow E2E Tests
- *
- * Tests the complete robber flow:
- * 1. Rolling 7 triggers discard for players with >7 cards
- * 2. Discard modal enforces correct card count (half, rounded down)
- * 3. After discards complete, active player moves robber
- * 4. After robber placed, active player can steal from adjacent players
- */
+const RESOURCE_TYPES = ["wood", "brick", "sheep", "wheat", "ore"] as const;
+
+type ResourceType = (typeof RESOURCE_TYPES)[number];
+
+async function startRobberGame(
+  page: Page,
+  context: BrowserContext,
+  request: APIRequestContext
+) {
+  const host = await createGame(request, "Alice");
+  const guest = await joinGame(request, host.code, "Bob");
+
+  const hostPage = page;
+  const guestPage = await context.newPage();
+
+  await visitAsPlayer(hostPage, host);
+  await waitForLobby(hostPage);
+
+  await visitAsPlayer(guestPage, guest);
+  await waitForLobby(guestPage);
+
+  await setPlayerReady(guestPage, true);
+  await setPlayerReady(hostPage, true);
+  await startGame(hostPage);
+
+  await placeSettlement(hostPage);
+  await placeRoad(hostPage);
+
+  const guestSettlement1 = await placeSettlement(guestPage);
+  await placeRoad(guestPage);
+
+  const guestSettlement2 = await placeSettlement(guestPage);
+  await placeRoad(guestPage);
+
+  await placeSettlement(hostPage);
+  await placeRoad(hostPage);
+
+  await waitForGamePhase(hostPage, "PLAYING");
+
+  return {
+    hostPage,
+    guestPage,
+    hostSession: host,
+    guestSession: guest,
+    guestSettlements: [guestSettlement1, guestSettlement2].filter(Boolean),
+  };
+}
+
+async function getDiscardCount(page: Page): Promise<number> {
+  const heading = await page
+    .locator("[data-cy='discard-modal'] h2")
+    .textContent();
+  const match = heading?.match(/Discard\s+(\d+)\s+Cards/);
+  if (!match) {
+    throw new Error("Unable to parse discard count");
+  }
+  return Number(match[1]);
+}
+
+async function selectDiscardResources(
+  page: Page,
+  count: number,
+  resource: ResourceType = "wood"
+) {
+  const addButton = page
+    .locator(`[data-cy='discard-card-${resource}'] button`)
+    .nth(1);
+  for (let i = 0; i < count; i += 1) {
+    await addButton.click();
+  }
+}
+
+async function getResourceTotal(page: Page): Promise<number> {
+  let total = 0;
+  for (const resource of RESOURCE_TYPES) {
+    const countText = await page
+      .locator(`[data-cy='resource-${resource}'] .resource-count`)
+      .textContent();
+    total += Number(countText?.trim() ?? 0);
+  }
+  return total;
+}
+
+async function getRobberHexWithGuestAdjacency(
+  page: Page,
+  guestVertexDataCys: string[]
+): Promise<string> {
+  const dataCy = await page.evaluate((vertexDataCys) => {
+    const parseTranslate = (el: Element | null) => {
+      if (!el) return null;
+      const transform = el.getAttribute("transform") || "";
+      const match = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(transform);
+      if (!match) return null;
+      return { x: Number(match[1]), y: Number(match[2]) };
+    };
+
+    const vertices = vertexDataCys
+      .map((cy) => parseTranslate(document.querySelector(`[data-cy='${cy}']`)))
+      .filter((pos): pos is { x: number; y: number } => Boolean(pos));
+    if (vertices.length === 0) return null;
+
+    const hexes = Array.from(
+      document.querySelectorAll("[data-cy^='robber-hex-']")
+    );
+    if (hexes.length === 0) return null;
+
+    const samplePolygon = hexes[0]?.querySelector("polygon");
+    const points = samplePolygon?.getAttribute("points") || "";
+    const radius = points
+      .split(" ")
+      .map((pair) => pair.split(",").map(Number))
+      .filter((pair) => pair.length === 2 && !pair.some(Number.isNaN))
+      .reduce((max, [x, y]) => Math.max(max, Math.hypot(x, y)), 0);
+
+    const threshold = radius * 1.1;
+
+    for (const hex of hexes) {
+      const pos = parseTranslate(hex);
+      if (!pos) continue;
+      const hasGuestAdjacency = vertices.some((v) => {
+        const dx = v.x - pos.x;
+        const dy = v.y - pos.y;
+        return Math.hypot(dx, dy) <= threshold;
+      });
+      if (hasGuestAdjacency) {
+        return hex.getAttribute("data-cy");
+      }
+    }
+
+    return null;
+  }, guestVertexDataCys);
+
+  if (!dataCy) {
+    throw new Error("Unable to find robber hex adjacent to guest settlement");
+  }
+
+  return dataCy;
+}
+
+async function getRobberHexWithoutGuestAdjacency(
+  page: Page,
+  guestVertexDataCys: string[]
+): Promise<string> {
+  const dataCy = await page.evaluate((vertexDataCys) => {
+    const parseTranslate = (el: Element | null) => {
+      if (!el) return null;
+      const transform = el.getAttribute("transform") || "";
+      const match = /translate\(([-\d.]+),\s*([-\d.]+)\)/.exec(transform);
+      if (!match) return null;
+      return { x: Number(match[1]), y: Number(match[2]) };
+    };
+
+    const vertices = vertexDataCys
+      .map((cy) => parseTranslate(document.querySelector(`[data-cy='${cy}']`)))
+      .filter((pos): pos is { x: number; y: number } => Boolean(pos));
+    if (vertices.length === 0) return null;
+
+    const hexes = Array.from(
+      document.querySelectorAll("[data-cy^='robber-hex-']")
+    );
+    if (hexes.length === 0) return null;
+
+    const samplePolygon = hexes[0]?.querySelector("polygon");
+    const points = samplePolygon?.getAttribute("points") || "";
+    const radius = points
+      .split(" ")
+      .map((pair) => pair.split(",").map(Number))
+      .filter((pair) => pair.length === 2 && !pair.some(Number.isNaN))
+      .reduce((max, [x, y]) => Math.max(max, Math.hypot(x, y)), 0);
+
+    const threshold = radius * 1.1;
+
+    for (const hex of hexes) {
+      const pos = parseTranslate(hex);
+      if (!pos) continue;
+      const hasGuestAdjacency = vertices.some((v) => {
+        const dx = v.x - pos.x;
+        const dy = v.y - pos.y;
+        return Math.hypot(dx, dy) <= threshold;
+      });
+      if (!hasGuestAdjacency) {
+        return hex.getAttribute("data-cy");
+      }
+    }
+
+    return null;
+  }, guestVertexDataCys);
+
+  if (!dataCy) {
+    throw new Error("Unable to find robber hex without guest adjacency");
+  }
+
+  return dataCy;
+}
+
 test.describe("Robber Flow", () => {
   test("Rolling 7 shows discard modal for players with >7 cards", async ({
     page,
     context,
     request,
   }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+    const { hostPage, guestPage, hostSession } = await startRobberGame(
+      page,
+      context,
+      request
+    );
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
-
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
-
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
-
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
-
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
-
-    // Grant Alice >7 cards (12 cards total: 3 of each resource + 2 wood)
-    await grantResources(request, host.code, host.playerId, {
-      wood: 5,
-      brick: 3,
-      sheep: 2,
-      wheat: 1,
-      ore: 1,
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
     });
 
-    // Roll dice to trigger a 7 (in a real game we'd need to control the dice,
-    // but for now we'll roll and check if we get 7, or grant more cards and try again)
-    // Since we can't force dice rolls yet, we'll skip the actual 7 roll test
-    // and just verify the discard modal appears when it should
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    // Note: This test is incomplete because forceDiceRoll is not yet implemented
-    // When backend supports forcing dice rolls, uncomment and complete:
-    // await forceDiceRoll(request, host.code, 7);
-    // await rollDice(hostPage);
-    
-    // For now, just verify the discard modal component exists in the DOM
-    // (it won't be visible without a 7 roll, but we can verify the test infrastructure)
-    await expect(hostPage.locator("[data-cy='roll-dice-btn']")).toBeVisible();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(guestPage.locator("[data-cy='discard-modal']")).toBeHidden();
   });
 
   test("Discard modal enforces correct card count", async ({
@@ -76,47 +243,35 @@ test.describe("Robber Flow", () => {
     context,
     request,
   }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+    const { hostPage, hostSession } = await startRobberGame(
+      page,
+      context,
+      request
+    );
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
-
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
-
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
-
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
-
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
-
-    // Grant Alice 12 cards (must discard 6 when 7 rolled)
-    await grantResources(request, host.code, host.playerId, {
-      wood: 4,
-      brick: 4,
-      sheep: 4,
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
     });
 
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Force roll a 7
-    // 2. Verify discard modal appears
-    // 3. Try to submit with wrong count (should be disabled)
-    // 4. Select exactly 6 cards
-    // 5. Verify submit button enables
-    // 6. Submit and verify modal closes
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    // For now, we'll just verify the game is in PLAYING state
-    await expect(hostPage.locator("[data-cy='game-phase']")).toContainText(
-      "PLAYING"
-    );
+    const discardModal = hostPage.locator("[data-cy='discard-modal']");
+    await expect(discardModal).toBeVisible({ timeout: 10000 });
+
+    const submitButton = hostPage.locator("[data-cy='discard-submit']");
+    await expect(submitButton).toBeDisabled();
+
+    const requiredCount = await getDiscardCount(hostPage);
+    if (requiredCount > 1) {
+      await selectDiscardResources(hostPage, requiredCount - 1);
+      await expect(submitButton).toBeDisabled();
+    }
+
+    await selectDiscardResources(hostPage, 1);
+    await expect(submitButton).toBeEnabled();
+
+    await submitButton.click();
+    await expect(discardModal).toBeHidden({ timeout: 10000 });
   });
 
   test("After discard, robber move UI appears", async ({
@@ -124,74 +279,67 @@ test.describe("Robber Flow", () => {
     context,
     request,
   }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+    const { hostPage, hostSession } = await startRobberGame(
+      page,
+      context,
+      request
+    );
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
+    });
 
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    const requiredCount = await getDiscardCount(hostPage);
+    await selectDiscardResources(hostPage, requiredCount);
+    await hostPage.locator("[data-cy='discard-submit']").click();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeHidden({
+      timeout: 10000,
+    });
 
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
-
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
-
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Grant cards to players requiring discard
-    // 2. Force roll a 7
-    // 3. Complete all discards
-    // 4. Verify robber move UI appears (hexes become clickable)
-    // 5. Verify robber-hex-* data-cy attributes appear
-
-    // For now, we'll just verify the game board is visible
-    await expect(
-      hostPage.locator("[data-cy='game-board-container']")
-    ).toBeVisible();
+    await expect(hostPage.locator("[data-cy^='robber-hex-']").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("Clicking hex moves robber", async ({ page, context, request }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+    const { hostPage, hostSession, guestSettlements } = await startRobberGame(
+      page,
+      context,
+      request
+    );
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
+    });
 
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    const requiredCount = await getDiscardCount(hostPage);
+    await selectDiscardResources(hostPage, requiredCount);
+    await hostPage.locator("[data-cy='discard-submit']").click();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeHidden({
+      timeout: 10000,
+    });
 
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
+    await expect(hostPage.locator("[data-cy^='robber-hex-']").first()).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
+    const robberHexDataCy = await getRobberHexWithGuestAdjacency(
+      hostPage,
+      guestSettlements
+    );
+    await hostPage.locator(`[data-cy='${robberHexDataCy}']`).click();
 
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Trigger robber move phase (via 7 roll or Knight card)
-    // 2. Click a valid hex (not current robber location)
-    // 3. Verify robber icon moves to new hex
-    // 4. Verify robber-hex data-cy attribute updates
-
-    // For now, we'll just verify the game board is interactive
-    await expect(
-      hostPage.locator("[data-cy='game-board-container']")
-    ).toBeVisible();
+    await expect(hostPage.locator("[data-cy^='robber-hex-']")).toHaveCount(0);
   });
 
   test("Steal UI shows adjacent players", async ({
@@ -199,75 +347,96 @@ test.describe("Robber Flow", () => {
     context,
     request,
   }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+    const { hostPage, hostSession, guestSession, guestSettlements } =
+      await startRobberGame(page, context, request);
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
+    });
 
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    const requiredCount = await getDiscardCount(hostPage);
+    await selectDiscardResources(hostPage, requiredCount);
+    await hostPage.locator("[data-cy='discard-submit']").click();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeHidden({
+      timeout: 10000,
+    });
 
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
+    await expect(hostPage.locator("[data-cy^='robber-hex-']").first()).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
-
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Trigger robber move phase
-    // 2. Move robber to a hex with adjacent settlements
-    // 3. Verify steal modal appears
-    // 4. Verify steal-player-* buttons show for each adjacent player
-    // 5. Verify player names are displayed correctly
-
-    // For now, we'll just verify the game is running
-    await expect(hostPage.locator("[data-cy='game-phase']")).toContainText(
-      "PLAYING"
+    const robberHexDataCy = await getRobberHexWithGuestAdjacency(
+      hostPage,
+      guestSettlements
     );
+    await hostPage.locator(`[data-cy='${robberHexDataCy}']`).click();
+
+    await expect(hostPage.locator("[data-cy='steal-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(
+      hostPage.locator(`[data-cy='steal-player-${guestSession.playerId}']`)
+    ).toBeVisible({ timeout: 10000 });
   });
 
-  test("Stealing transfers a resource", async ({ page, context, request }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
+  test("Stealing transfers a resource", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const { hostPage, hostSession, guestSession, guestSettlements } =
+      await startRobberGame(page, context, request);
 
-    const hostPage = page;
-    const guestPage = await context.newPage();
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
+    });
+    await grantResources(request, hostSession.code, guestSession.playerId, {
+      brick: 2,
+    });
 
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
+    await forceDiceRoll(request, hostSession.code, 7);
 
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    const requiredCount = await getDiscardCount(hostPage);
+    await selectDiscardResources(hostPage, requiredCount);
+    await hostPage.locator("[data-cy='discard-submit']").click();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeHidden({
+      timeout: 10000,
+    });
 
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
+    await expect(hostPage.locator("[data-cy^='robber-hex-']").first()).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
+    const robberHexDataCy = await getRobberHexWithGuestAdjacency(
+      hostPage,
+      guestSettlements
+    );
+    await hostPage.locator(`[data-cy='${robberHexDataCy}']`).click();
 
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Grant resources to victim player
-    // 2. Trigger robber move and steal flow
-    // 3. Record resource counts before steal
-    // 4. Click steal-player button
-    // 5. Verify resource transferred (thief +1, victim -1)
-    // 6. Verify steal notification appears
+    await expect(hostPage.locator("[data-cy='steal-modal']")).toBeVisible({
+      timeout: 10000,
+    });
 
-    // For now, we'll just verify the game is running
-    await expect(hostPage.locator("[data-cy='game-phase']")).toContainText(
-      "PLAYING"
+    const beforeStealTotal = await getResourceTotal(hostPage);
+
+    await hostPage
+      .locator(`[data-cy='steal-player-${guestSession.playerId}']`)
+      .click();
+
+    await expect(hostPage.locator("[data-cy='steal-modal']")).toBeHidden({
+      timeout: 10000,
+    });
+
+    await expect.poll(async () => getResourceTotal(hostPage)).toBe(
+      beforeStealTotal + 1
     );
   });
 
@@ -276,37 +445,40 @@ test.describe("Robber Flow", () => {
     context,
     request,
   }) => {
-    // Create a 2-player game and complete setup
-    const host = await createGame(request, "Alice");
-    const guest = await joinGame(request, host.code, "Bob");
-
-    const hostPage = page;
-    const guestPage = await context.newPage();
-
-    await visitAsPlayer(hostPage, host);
-    await waitForLobby(hostPage);
-
-    await visitAsPlayer(guestPage, guest);
-    await waitForLobby(guestPage);
-
-    await setPlayerReady(guestPage, true);
-    await setPlayerReady(hostPage, true);
-    await startGame(hostPage);
-
-    // Complete setup phase
-    await completeSetupPhase(hostPage, guestPage);
-    await waitForGamePhase(hostPage, "PLAYING");
-
-    // Note: This test requires forceDiceRoll to be implemented
-    // When available, the test would:
-    // 1. Trigger robber move phase
-    // 2. Move robber to a hex with NO adjacent settlements
-    // 3. Verify steal modal does NOT appear
-    // 4. Verify turn continues normally
-
-    // For now, we'll just verify the game is running
-    await expect(hostPage.locator("[data-cy='game-phase']")).toContainText(
-      "PLAYING"
+    const { hostPage, hostSession, guestSettlements } = await startRobberGame(
+      page,
+      context,
+      request
     );
+
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 10,
+    });
+
+    await forceDiceRoll(request, hostSession.code, 7);
+
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeVisible({
+      timeout: 10000,
+    });
+    const requiredCount = await getDiscardCount(hostPage);
+    await selectDiscardResources(hostPage, requiredCount);
+    await hostPage.locator("[data-cy='discard-submit']").click();
+    await expect(hostPage.locator("[data-cy='discard-modal']")).toBeHidden({
+      timeout: 10000,
+    });
+
+    await expect(hostPage.locator("[data-cy^='robber-hex-']").first()).toBeVisible({
+      timeout: 10000,
+    });
+
+    const robberHexDataCy = await getRobberHexWithoutGuestAdjacency(
+      hostPage,
+      guestSettlements
+    );
+    await hostPage.locator(`[data-cy='${robberHexDataCy}']`).click();
+
+    await expect(hostPage.locator("[data-cy='steal-modal']")).toBeHidden({
+      timeout: 10000,
+    });
   });
 });

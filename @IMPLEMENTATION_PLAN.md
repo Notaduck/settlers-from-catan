@@ -12,7 +12,7 @@ Prioritized gap analysis against `specs/*.md` and current codebase. Each task is
 - ✅ Completed. `PlayDevCard` now sets `GameStatus` to FINISHED when victory is detected and handler broadcasts `gameOver` after dev card plays. VP cards keep scoring count when revealed. Added `backend/internal/game/devcards_victory_test.go`. Playwright `frontend/tests/victory.spec.ts` not updated yet (still needed for real victory trigger).
 
 ## PRIORITY 4: ROBBER FLOW
-- No functional gaps found versus `specs/robber-flow.md`, but update E2E to use `forceDiceRoll` so tests exercise discard/move/steal flow. Files: `frontend/tests/robber.spec.ts`, `frontend/tests/helpers.ts`. Go tests: already in `backend/internal/game/robber_test.go`.
+- ✅ Completed: updated E2E to use `forceDiceRoll` and fully exercise discard/move/steal flow. Files: `frontend/tests/robber.spec.ts`, `frontend/tests/helpers.ts`. Go tests already covered in `backend/internal/game/robber_test.go`.
 
 ## PRIORITY 5: TRADING + TURN PHASES
 - Implement `SetTurnPhase` to switch `TRADE ↔ BUILD`, enforce build actions only in BUILD phase, and broadcast `turnChanged`. Files: `backend/internal/game/state_machine.go`, `backend/internal/handlers/handlers.go`, `backend/internal/game/commands.go`, `proto/catan/v1/messages.proto` (if message wiring needs update), `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`. Go tests: `backend/internal/game/state_machine_test.go`, `backend/internal/handlers/handlers_test.go`. Playwright: update `frontend/tests/trading.spec.ts` and `frontend/tests/game-flow.spec.ts`.
