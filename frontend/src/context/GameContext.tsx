@@ -136,7 +136,7 @@ interface GameContextValue extends GameContextState {
   isRobberMoveRequired: boolean;
   isRobberStealRequired: boolean;
   sendRobberDiscard: (toDiscard: ResourceCount) => void;
-  sendRobberMove: (hex: any, victimId?: string) => void;
+  sendRobberMove: (hex: { q: number; r: number; s: number }, victimId?: string) => void;
   sendRobberSteal: (victimId: string) => void;
   robberStealCandidates: { id: string; name: string; avatarUrl?: string }[];
 }
@@ -251,26 +251,26 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
 
   // --- Robber Phase Derivation ---
   const robberPhase = state.gameState?.robberPhase;
-  const playerId = state.currentPlayerId ?? "";
+  const currentPlayerId = state.currentPlayerId ?? "";
 
   // Discard
   const isRobberDiscardRequired = !!(
-    robberPhase && robberPhase.discardPending?.includes(playerId)
+    robberPhase && robberPhase.discardPending?.includes(currentPlayerId)
   );
-  const robberDiscardAmount = robberPhase?.discardRequired?.[playerId] ?? 0;
+  const robberDiscardAmount = robberPhase?.discardRequired?.[currentPlayerId] ?? 0;
   const robberDiscardMax = useMemo(() => {
-    if (!state.gameState?.players || !playerId) return null;
-    return state.gameState.players.find(p => p.id === playerId)?.resources ?? null;
-  }, [state.gameState?.players, playerId]);
+    if (!state.gameState?.players || !currentPlayerId) return null;
+    return state.gameState.players.find(p => p.id === currentPlayerId)?.resources ?? null;
+  }, [state.gameState, currentPlayerId]);
 
   // Move
   const isRobberMoveRequired = !!(
-    robberPhase && robberPhase.movePendingPlayerId === playerId
+    robberPhase && robberPhase.movePendingPlayerId === currentPlayerId
   );
 
   // Steal
   const isRobberStealRequired = !!(
-    robberPhase && robberPhase.stealPendingPlayerId === playerId
+    robberPhase && robberPhase.stealPendingPlayerId === currentPlayerId
   );
 
   // Candidates for StealModal
@@ -283,9 +283,9 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     (board.vertices ?? []).forEach((v) => {
       if (
         v.building &&
-        v.building.ownerId !== playerId &&
+        v.building.ownerId !== currentPlayerId &&
         v.adjacentHexes?.some(
-          h => h.q === board.robberHex.q && h.r === board.robberHex.r
+          h => h.q === board.robberHex!.q && h.r === board.robberHex!.r
         )
       ) {
         adjacentPlayers.add(v.building.ownerId);
@@ -295,7 +295,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     return (state.gameState?.players ?? [])
       .filter(p => adjacentPlayers.has(p.id))
       .map(p => ({ id: p.id, name: p.name }));
-  }, [state.gameState?.board, state.gameState?.players, playerId]);
+  }, [state.gameState?.board, state.gameState?.players, currentPlayerId]);
 
   // Handlers
   const sendRobberDiscard = useCallback((toDiscard: ResourceCount) => {
@@ -307,7 +307,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     } as ClientMessage);
   }, [sendMessage]);
 
-  const sendRobberMove = useCallback((hex, victimId) => {
+  const sendRobberMove = useCallback((hex: { q: number; r: number; s: number }, victimId?: string) => {
     sendMessage({
       message: {
         oneofKind: "moveRobber",
@@ -316,7 +316,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     } as ClientMessage);
   }, [sendMessage]);
 
-  const sendRobberSteal = useCallback((victimId) => {
+  const sendRobberSteal = useCallback((victimId: string) => {
     // For the UI: call moveRobber with undefined hex (should be ignored on handler), but set victimId.
     sendMessage({
       message: {

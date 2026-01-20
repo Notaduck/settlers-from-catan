@@ -5,8 +5,9 @@
 ----
 
 ## BLOCKERS (JAN 2026)
-- Catastrophic handler package breakage blocks backend server compile (see previous plan).
-- Known test failures in victory, robber, longest road (all previously documented, unchanged).
+- TypeScript build errors (55+ errors): Pre-existing compilation issues in frontend preventing `make build`. `make typecheck` passes because it uses different config. Requires systematic TypeScript refactoring.
+- 2 consistent longest road test failures: TestOpponentSettlementBlocksRoad, TestTieKeepsCurrentHolder (documented in plan).
+- Flaky resource distribution tests: Occasionally fail due to randomness in board generation/dice (TestResourceDistribution_SettlementGetsOneResource, TestResourceDistribution_MultiplePlayersReceive).
 - E2E test runs skipped due to servers not running (per doc/rule).
 
 ----
@@ -63,6 +64,19 @@
   - Validation: make typecheck passes, make lint passes (no new errors), make test-backend passes (2 pre-existing longest road failures).
   - E2E test (frontend/tests/ports.spec.ts) not implemented - per workflow, e2e runs skipped when servers not running.
   - REMAINING: Playwright e2e spec for ports (future task).
+
+----
+
+## PRIORITY 9: CODE QUALITY & BUILD FIXES (IN PROGRESS)
+- [x] Fixed lint errors: Removed `any` type in GameContext.tsx (line 139), removed unused `page` parameters in trading.spec.ts, fixed useMemo dependencies.
+  - Files: frontend/src/context/GameContext.tsx, frontend/tests/trading.spec.ts
+  - Validation: `make lint` passes with 0 errors (2 warnings remain, acceptable)
+- [ ] Fix TypeScript build errors: 55+ compilation errors preventing `make build` success. Systematic refactor needed for:
+  - Import conflicts (Edge, Vertex components)
+  - Type conversions (GameStatus, TurnPhase from string)
+  - Null safety issues throughout Game components
+  - ResourceCount type index signature issues
+  - Generated file unused variable warnings
 
 ----
 
