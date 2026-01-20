@@ -207,28 +207,28 @@ func TestLongestRoadTransfer_NewPlayerExceedsHolder(t *testing.T) {
 	v8.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p2"}
 
 	// Add more edges for p2 to extend to 6 total road segments
-	e7 := makeEdge("E7", "", "H", "A") // Will be placed by p2
-	e8 := makeEdge("E8", "", "A", "B") // Will conflict with p1, but let's use different vertices
-
 	// Let's use separate vertices for p2's extension
 	v9 := makeVertex("I", nil)
 	v10 := makeVertex("J", nil)
 	v11 := makeVertex("K", nil)
 	v12 := makeVertex("L", nil)
+	v13 := makeVertex("M", nil)
 
-	e7 = makeEdge("E7", "", "H", "I")
-	e8 = makeEdge("E8", "", "I", "J")
+	e7 := makeEdge("E7", "", "H", "I")
+	e8 := makeEdge("E8", "", "I", "J")
 	e9 := makeEdge("E9", "", "J", "K")
 	e10 := makeEdge("E10", "", "K", "L")
+	e11 := makeEdge("E11", "", "L", "M") // Add one more edge to make 6 segments
 
-	board.Edges = append(board.Edges, e7, e8, e9, e10)
-	board.Vertices = append(board.Vertices, v9, v10, v11, v12)
+	board.Edges = append(board.Edges, e7, e8, e9, e10, e11)
+	board.Vertices = append(board.Vertices, v9, v10, v11, v12, v13)
 
-	// Place roads to give p2 a 6-road path
+	// Place roads to give p2 a 6-road path: G-H-I-J-K-L-M (6 segments)
 	e7.Road = &pb.Road{OwnerId: "p2"}
 	e8.Road = &pb.Road{OwnerId: "p2"}
 	e9.Road = &pb.Road{OwnerId: "p2"}
 	e10.Road = &pb.Road{OwnerId: "p2"}
+	e11.Road = &pb.Road{OwnerId: "p2"} // p2 now has 6 total road segments
 
 	// Update longest road bonus
 	UpdateLongestRoadBonus(state)
@@ -259,9 +259,16 @@ func TestLongestRoadTransfer_BrokenByOpponentSettlement(t *testing.T) {
 	e4 := makeEdge("E4", "p1", "D", "E")
 	e5 := makeEdge("E5", "p1", "E", "F")
 
+	// Add a setup for p2 to legally connect to vertex C
+	// Use more intermediate vertices to satisfy distance rule
+	v7 := makeVertex("G", nil)
+	v8 := makeVertex("H", nil)
+	e6 := makeEdge("E6", "p2", "G", "H") // p2's road
+	e7 := makeEdge("E7", "p2", "H", "C") // p2's road connecting to C
+
 	board := &pb.BoardState{
-		Edges:    []*pb.Edge{e1, e2, e3, e4, e5},
-		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6},
+		Edges:    []*pb.Edge{e1, e2, e3, e4, e5, e6, e7},
+		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6, v7, v8},
 	}
 
 	state := &pb.GameState{
@@ -275,6 +282,9 @@ func TestLongestRoadTransfer_BrokenByOpponentSettlement(t *testing.T) {
 			{Id: "p2", Resources: &pb.ResourceCount{Wood: 1, Brick: 1, Sheep: 1, Wheat: 1}},
 		},
 	}
+
+	// Give p2 an initial settlement at G to satisfy connectivity requirement
+	v7.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p2"}
 
 	// p2 places settlement at vertex C, breaking p1's road
 	err := PlaceSettlement(state, "p2", "C")
@@ -299,16 +309,25 @@ func TestLongestRoadUpdate_TriggersVictoryCheck(t *testing.T) {
 	v5 := makeVertex("E", nil)
 	v6 := makeVertex("F", nil)
 
-	// Create a 5-road path
-	e1 := makeEdge("E1", "", "A", "B") // Will be placed by p1
-	e2 := makeEdge("E2", "", "B", "C")
-	e3 := makeEdge("E3", "", "C", "D")
-	e4 := makeEdge("E4", "", "D", "E")
-	e5 := makeEdge("E5", "", "E", "F")
+	// Add additional vertices for 8 total VP (7 settlements + 1 city = 8 VP)
+	v7 := makeVertex("G", nil)
+	v8 := makeVertex("H", nil)
+	v9 := makeVertex("I", nil)
+	v10 := makeVertex("J", nil)
+	v11 := makeVertex("K", nil)
+	v12 := makeVertex("L", nil)
+	v13 := makeVertex("M", nil)
+
+	// Create a 5-edge path - initially only the edges exist, no roads placed yet
+	e1 := &pb.Edge{Id: "E1", Vertices: []string{"A", "B"}} // No road initially
+	e2 := &pb.Edge{Id: "E2", Vertices: []string{"B", "C"}}
+	e3 := &pb.Edge{Id: "E3", Vertices: []string{"C", "D"}}
+	e4 := &pb.Edge{Id: "E4", Vertices: []string{"D", "E"}}
+	e5 := &pb.Edge{Id: "E5", Vertices: []string{"E", "F"}}
 
 	board := &pb.BoardState{
 		Edges:    []*pb.Edge{e1, e2, e3, e4, e5},
-		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6},
+		Vertices: []*pb.Vertex{v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13},
 	}
 
 	state := &pb.GameState{
@@ -321,8 +340,15 @@ func TestLongestRoadUpdate_TriggersVictoryCheck(t *testing.T) {
 		},
 	}
 
-	// Place settlement at A to satisfy connectivity
-	v1.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}
+	// Place buildings to actually have 8 VP on the board
+	// 6 settlements (6 VP) + 1 city (2 VP) = 8 VP
+	v1.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}  // VP 1
+	v7.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}  // VP 2
+	v8.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}  // VP 3
+	v9.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"}  // VP 4
+	v10.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"} // VP 5
+	v11.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_SETTLEMENT, OwnerId: "p1"} // VP 6
+	v12.Building = &pb.Building{Type: pb.BuildingType_BUILDING_TYPE_CITY, OwnerId: "p1"}       // VP 8 (city = 2 VP)
 
 	// Place first 4 roads (not enough for longest road yet)
 	e1.Road = &pb.Road{OwnerId: "p1"}
@@ -330,7 +356,6 @@ func TestLongestRoadUpdate_TriggersVictoryCheck(t *testing.T) {
 	e3.Road = &pb.Road{OwnerId: "p1"}
 	e4.Road = &pb.Road{OwnerId: "p1"}
 
-	// Place 5th road - should trigger longest road bonus and victory
 	err := PlaceRoad(state, "p1", "E5")
 	if err != nil {
 		t.Fatalf("unexpected error placing final road: %v", err)
