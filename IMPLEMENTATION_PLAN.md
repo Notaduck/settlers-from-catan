@@ -5,7 +5,7 @@
 ----
 
 ## BLOCKERS (JAN 2026)
-- 2 consistent longest road test failures: TestOpponentSettlementBlocksRoad, TestTieKeepsCurrentHolder (documented in plan).
+- ~~2 consistent longest road test failures: TestOpponentSettlementBlocksRoad, TestTieKeepsCurrentHolder~~ **RESOLVED 2026-01-20** - Tests fixed, all backend tests now pass.
 - Flaky resource distribution tests: Occasionally fail due to randomness in board generation/dice (TestResourceDistribution_SettlementGetsOneResource, TestResourceDistribution_MultiplePlayersReceive).
 - E2E test runs skipped due to servers not running (per doc/rule).
 
@@ -44,7 +44,12 @@
   - Playwright: frontend/tests/development-cards.spec.ts
 
 ## PRIORITY 7: LONGEST ROAD (COMPLETE)
-- [x] DFS algorithm, recalc triggers, awarding/tie rules all implemented in backend/internal/game/longestroad.go and tested in longestroad_test.go; UI badges/data-cy compliance confirmed. Known test ambiguity documented (see plan).
+- [x] DFS algorithm, recalc triggers, awarding/tie rules all implemented in backend/internal/game/longestroad.go and tested in longestroad_test.go; UI badges/data-cy compliance confirmed.
+- [x] **TEST FIXES (2026-01-20)**: Fixed 2 failing longest road tests:
+  - **TestOpponentSettlementBlocksRoad**: Updated test to place opponent settlement at connecting vertex B (middle) instead of endpoint A. This correctly tests the rule that opponent buildings break road chains.
+  - **TestTieKeepsCurrentHolder**: Updated test to use 5-segment roads (minimum for longest road bonus) instead of 1-segment roads. Previous test expected tie-breaking logic to apply even when no player qualified for the bonus (< 5 roads).
+  - Files modified: backend/internal/game/longestroad_test.go
+  - Validation: All backend tests pass (`make test-backend`), `make typecheck` passes, `make lint` passes (2 acceptable warnings), `make build` succeeds.
 
 ## PRIORITY 8: PORTS - MARITIME TRADING
 - [x] BACKEND COMPLETE - Port generation, board placement, and bank trade logic with variable ratios (2:1, 3:1, 4:1) fully implemented and tested.
