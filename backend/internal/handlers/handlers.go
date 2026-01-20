@@ -147,6 +147,10 @@ func (h *Handler) handleClientMessage(client *hub.Client, raw []byte) {
 		h.handleMoveRobber(client, msg.payloadBytes(msg.Message.MoveRobber))
 	case "bankTrade":
 		h.handleBankTrade(client, msg.payloadBytes(msg.Message.BankTrade))
+	case "buyDevCard":
+		h.handleBuyDevCard(client, msg.payloadBytes(msg.Message.BuyDevCard))
+	case "playDevCard":
+		h.handlePlayDevCard(client, msg.payloadBytes(msg.Message.PlayDevCard))
 	default:
 		h.sendError(client, "UNSUPPORTED_MESSAGE", "Unsupported message type")
 	}
@@ -631,6 +635,91 @@ func (h *Handler) handleBankTrade(client *hub.Client, payload []byte) {
 	h.broadcastGameStateProto(client.GameID, &state)
 }
 
+// handleBuyDevCard handles purchasing a development card
+func (h *Handler) handleBuyDevCard(client *hub.Client, payload []byte) {
+	var req catanv1.BuyDevCardMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse buy dev card request")
+		return
+	}
+
+	var stateJSON string
+	var state game.GameState
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+
+	// Buy dev card
+	cardType, err := game.BuyDevCard(&state, client.PlayerID)
+	if err != nil {
+		h.sendError(client, "BUY_DEV_CARD_ERROR", err.Error())
+		return
+	}
+
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+
+	// Notify the player what they drew (only to that player)
+	boughtPayload := &catanv1.DevCardBoughtPayload{
+		PlayerId: client.PlayerID,
+		CardType: cardType,
+	}
+	h.sendServerMessage(client, "devCardBought", boughtPayload)
+
+	// Broadcast updated game state to all
+	h.broadcastGameStateProto(client.GameID, &state)
+}
+
+// handlePlayDevCard handles playing a development card
+func (h *Handler) handlePlayDevCard(client *hub.Client, payload []byte) {
+	var req catanv1.PlayDevCardMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse play dev card request")
+		return
+	}
+
+	var stateJSON string
+	var state game.GameState
+	if err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE id = ?", client.GameID); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to parse game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+
+	// Play dev card
+	err := game.PlayDevCard(&state, client.PlayerID, req.CardType, req.TargetResource, req.Resources)
+	if err != nil {
+		h.sendError(client, "PLAY_DEV_CARD_ERROR", err.Error())
+		return
+	}
+
+	if err := h.saveGameState(client.GameID, &state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
+
+	// Broadcast updated game state to all
+	h.broadcastGameStateProto(client.GameID, &state)
+}
+
 // HandleCreateGame handles POST /api/games to create a new game.
 func (h *Handler) HandleCreateGame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -1004,6 +1093,8 @@ type clientEnvelope struct {
 		DiscardCards   *catanv1.DiscardCardsMessage   `json:"discardCards,omitempty"`
 		MoveRobber     *catanv1.MoveRobberMessage     `json:"moveRobber,omitempty"`
 		BankTrade      *catanv1.BankTradeMessage      `json:"bankTrade,omitempty"`
+		BuyDevCard     *catanv1.BuyDevCardMessage     `json:"buyDevCard,omitempty"`
+		PlayDevCard    *catanv1.PlayDevCardMessage    `json:"playDevCard,omitempty"`
 	} `json:"message"`
 }
 

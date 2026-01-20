@@ -253,5 +253,6 @@ func NewGameState(gameID, code string, playerNames []string, playerIDs []string)
 		TurnPhase:   pb.TurnPhase_TURN_PHASE_ROLL,
 		Dice:        []int32{0, 0},
 		Status:      pb.GameStatus_GAME_STATUS_WAITING,
+		DevCardDeck: InitDevCardDeck(),
 	}
 }

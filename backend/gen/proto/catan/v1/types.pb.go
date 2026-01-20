@@ -987,9 +987,10 @@ type PlayerState struct {
 	KnightsPlayed     int32                  `protobuf:"varint,6,opt,name=knights_played,json=knightsPlayed,proto3" json:"knights_played,omitempty"`
 	VictoryPoints     int32                  `protobuf:"varint,7,opt,name=victory_points,json=victoryPoints,proto3" json:"victory_points,omitempty"`
 	Connected         bool                   `protobuf:"varint,8,opt,name=connected,proto3" json:"connected,omitempty"`
-	IsReady           bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"`                                  // Ready to start the game (lobby only)
-	IsHost            bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`                                    // Host can start game when all ready
-	VictoryPointCards int32                  `protobuf:"varint,11,opt,name=victory_point_cards,json=victoryPointCards,proto3" json:"victory_point_cards,omitempty"` // Number of VP dev cards in hand (hidden from other players)
+	IsReady           bool                   `protobuf:"varint,9,opt,name=is_ready,json=isReady,proto3" json:"is_ready,omitempty"`                                                                                // Ready to start the game (lobby only)
+	IsHost            bool                   `protobuf:"varint,10,opt,name=is_host,json=isHost,proto3" json:"is_host,omitempty"`                                                                                  // Host can start game when all ready
+	VictoryPointCards int32                  `protobuf:"varint,11,opt,name=victory_point_cards,json=victoryPointCards,proto3" json:"victory_point_cards,omitempty"`                                               // Number of VP dev cards in hand (hidden from other players)
+	DevCards          map[int32]int32        `protobuf:"bytes,12,rep,name=dev_cards,json=devCards,proto3" json:"dev_cards,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // Map of DevCardType enum value -> count (hidden from other players)
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1099,6 +1100,13 @@ func (x *PlayerState) GetVictoryPointCards() int32 {
 		return x.VictoryPointCards
 	}
 	return 0
+}
+
+func (x *PlayerState) GetDevCards() map[int32]int32 {
+	if x != nil {
+		return x.DevCards
+	}
+	return nil
 }
 
 // Port model for board trading bonuses
@@ -1256,6 +1264,7 @@ type GameState struct {
 	SetupPhase          *SetupPhase            `protobuf:"bytes,11,opt,name=setup_phase,json=setupPhase,proto3,oneof" json:"setup_phase,omitempty"`    // Present during setup status
 	RobberPhase         *RobberPhase           `protobuf:"bytes,12,opt,name=robber_phase,json=robberPhase,proto3,oneof" json:"robber_phase,omitempty"` // Present during robber actions
 	PendingTrades       []*TradeOffer          `protobuf:"bytes,13,rep,name=pending_trades,json=pendingTrades,proto3" json:"pending_trades,omitempty"`
+	DevCardDeck         []DevCardType          `protobuf:"varint,14,rep,packed,name=dev_card_deck,json=devCardDeck,proto3,enum=catan.v1.DevCardType" json:"dev_card_deck,omitempty"` // Remaining cards in deck (shuffled)
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1377,6 +1386,13 @@ func (x *GameState) GetRobberPhase() *RobberPhase {
 func (x *GameState) GetPendingTrades() []*TradeOffer {
 	if x != nil {
 		return x.PendingTrades
+	}
+	return nil
+}
+
+func (x *GameState) GetDevCardDeck() []DevCardType {
+	if x != nil {
+		return x.DevCardDeck
 	}
 	return nil
 }
@@ -1976,7 +1992,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x05brick\x18\x02 \x01(\x05R\x05brick\x12\x14\n" +
 	"\x05sheep\x18\x03 \x01(\x05R\x05sheep\x12\x14\n" +
 	"\x05wheat\x18\x04 \x01(\x05R\x05wheat\x12\x10\n" +
-	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\x8b\x03\n" +
+	"\x03ore\x18\x05 \x01(\x05R\x03ore\"\x8a\x04\n" +
 	"\vPlayerState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
@@ -1989,7 +2005,11 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\bis_ready\x18\t \x01(\bR\aisReady\x12\x17\n" +
 	"\ais_host\x18\n" +
 	" \x01(\bR\x06isHost\x12.\n" +
-	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\"z\n" +
+	"\x13victory_point_cards\x18\v \x01(\x05R\x11victoryPointCards\x12@\n" +
+	"\tdev_cards\x18\f \x03(\v2#.catan.v1.PlayerState.DevCardsEntryR\bdevCards\x1a;\n" +
+	"\rDevCardsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"z\n" +
 	"\x04Port\x12\x1a\n" +
 	"\blocation\x18\x01 \x03(\tR\blocation\x12&\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x12.catan.v1.PortTypeR\x04type\x12.\n" +
@@ -2001,7 +2021,7 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\x05edges\x18\x03 \x03(\v2\x0e.catan.v1.EdgeR\x05edges\x121\n" +
 	"\n" +
 	"robber_hex\x18\x04 \x01(\v2\x12.catan.v1.HexCoordR\trobberHex\x12$\n" +
-	"\x05ports\x18\x05 \x03(\v2\x0e.catan.v1.PortR\x05ports\"\xa8\x05\n" +
+	"\x05ports\x18\x05 \x03(\v2\x0e.catan.v1.PortR\x05ports\"\xe3\x05\n" +
 	"\tGameState\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12*\n" +
@@ -2018,7 +2038,8 @@ const file_catan_v1_types_proto_rawDesc = "" +
 	"\vsetup_phase\x18\v \x01(\v2\x14.catan.v1.SetupPhaseH\x02R\n" +
 	"setupPhase\x88\x01\x01\x12=\n" +
 	"\frobber_phase\x18\f \x01(\v2\x15.catan.v1.RobberPhaseH\x03R\vrobberPhase\x88\x01\x01\x12;\n" +
-	"\x0epending_trades\x18\r \x03(\v2\x14.catan.v1.TradeOfferR\rpendingTradesB\x19\n" +
+	"\x0epending_trades\x18\r \x03(\v2\x14.catan.v1.TradeOfferR\rpendingTrades\x129\n" +
+	"\rdev_card_deck\x18\x0e \x03(\x0e2\x15.catan.v1.DevCardTypeR\vdevCardDeckB\x19\n" +
 	"\x17_longest_road_player_idB\x19\n" +
 	"\x17_largest_army_player_idB\x0e\n" +
 	"\f_setup_phaseB\x0f\n" +
@@ -2151,7 +2172,7 @@ func file_catan_v1_types_proto_rawDescGZIP() []byte {
 }
 
 var file_catan_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
-var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_catan_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_catan_v1_types_proto_goTypes = []any{
 	(PortType)(0),              // 0: catan.v1.PortType
 	(Resource)(0),              // 1: catan.v1.Resource
@@ -2183,7 +2204,8 @@ var file_catan_v1_types_proto_goTypes = []any{
 	(*JoinGameResponse)(nil),   // 27: catan.v1.JoinGameResponse
 	(*PlayerInfo)(nil),         // 28: catan.v1.PlayerInfo
 	(*GameInfoResponse)(nil),   // 29: catan.v1.GameInfoResponse
-	nil,                        // 30: catan.v1.RobberPhase.DiscardRequiredEntry
+	nil,                        // 30: catan.v1.PlayerState.DevCardsEntry
+	nil,                        // 31: catan.v1.RobberPhase.DiscardRequiredEntry
 }
 var file_catan_v1_types_proto_depIdxs = []int32{
 	10, // 0: catan.v1.Hex.coord:type_name -> catan.v1.HexCoord
@@ -2194,33 +2216,35 @@ var file_catan_v1_types_proto_depIdxs = []int32{
 	13, // 5: catan.v1.Edge.road:type_name -> catan.v1.Road
 	7,  // 6: catan.v1.PlayerState.color:type_name -> catan.v1.PlayerColor
 	16, // 7: catan.v1.PlayerState.resources:type_name -> catan.v1.ResourceCount
-	0,  // 8: catan.v1.Port.type:type_name -> catan.v1.PortType
-	1,  // 9: catan.v1.Port.resource:type_name -> catan.v1.Resource
-	11, // 10: catan.v1.BoardState.hexes:type_name -> catan.v1.Hex
-	14, // 11: catan.v1.BoardState.vertices:type_name -> catan.v1.Vertex
-	15, // 12: catan.v1.BoardState.edges:type_name -> catan.v1.Edge
-	10, // 13: catan.v1.BoardState.robber_hex:type_name -> catan.v1.HexCoord
-	18, // 14: catan.v1.BoardState.ports:type_name -> catan.v1.Port
-	19, // 15: catan.v1.GameState.board:type_name -> catan.v1.BoardState
-	17, // 16: catan.v1.GameState.players:type_name -> catan.v1.PlayerState
-	6,  // 17: catan.v1.GameState.turn_phase:type_name -> catan.v1.TurnPhase
-	5,  // 18: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
-	23, // 19: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
-	21, // 20: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
-	22, // 21: catan.v1.GameState.pending_trades:type_name -> catan.v1.TradeOffer
-	30, // 22: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
-	16, // 23: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
-	16, // 24: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
-	9,  // 25: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
-	28, // 26: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
-	7,  // 27: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
-	5,  // 28: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
-	28, // 29: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	30, // 8: catan.v1.PlayerState.dev_cards:type_name -> catan.v1.PlayerState.DevCardsEntry
+	0,  // 9: catan.v1.Port.type:type_name -> catan.v1.PortType
+	1,  // 10: catan.v1.Port.resource:type_name -> catan.v1.Resource
+	11, // 11: catan.v1.BoardState.hexes:type_name -> catan.v1.Hex
+	14, // 12: catan.v1.BoardState.vertices:type_name -> catan.v1.Vertex
+	15, // 13: catan.v1.BoardState.edges:type_name -> catan.v1.Edge
+	10, // 14: catan.v1.BoardState.robber_hex:type_name -> catan.v1.HexCoord
+	18, // 15: catan.v1.BoardState.ports:type_name -> catan.v1.Port
+	19, // 16: catan.v1.GameState.board:type_name -> catan.v1.BoardState
+	17, // 17: catan.v1.GameState.players:type_name -> catan.v1.PlayerState
+	6,  // 18: catan.v1.GameState.turn_phase:type_name -> catan.v1.TurnPhase
+	5,  // 19: catan.v1.GameState.status:type_name -> catan.v1.GameStatus
+	23, // 20: catan.v1.GameState.setup_phase:type_name -> catan.v1.SetupPhase
+	21, // 21: catan.v1.GameState.robber_phase:type_name -> catan.v1.RobberPhase
+	22, // 22: catan.v1.GameState.pending_trades:type_name -> catan.v1.TradeOffer
+	8,  // 23: catan.v1.GameState.dev_card_deck:type_name -> catan.v1.DevCardType
+	31, // 24: catan.v1.RobberPhase.discard_required:type_name -> catan.v1.RobberPhase.DiscardRequiredEntry
+	16, // 25: catan.v1.TradeOffer.offering:type_name -> catan.v1.ResourceCount
+	16, // 26: catan.v1.TradeOffer.requesting:type_name -> catan.v1.ResourceCount
+	9,  // 27: catan.v1.TradeOffer.status:type_name -> catan.v1.TradeStatus
+	28, // 28: catan.v1.JoinGameResponse.players:type_name -> catan.v1.PlayerInfo
+	7,  // 29: catan.v1.PlayerInfo.color:type_name -> catan.v1.PlayerColor
+	5,  // 30: catan.v1.GameInfoResponse.status:type_name -> catan.v1.GameStatus
+	28, // 31: catan.v1.GameInfoResponse.players:type_name -> catan.v1.PlayerInfo
+	32, // [32:32] is the sub-list for method output_type
+	32, // [32:32] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_catan_v1_types_proto_init() }
@@ -2239,7 +2263,7 @@ func file_catan_v1_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catan_v1_types_proto_rawDesc), len(file_catan_v1_types_proto_rawDesc)),
 			NumEnums:      10,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -53,6 +53,8 @@ message PlayerReadyMessage {
   bool ready = 1;
 }
 
+message BuyDevCardMessage {}
+
 message PlayDevCardMessage {
   DevCardType card_type = 1;
   // Additional fields depending on card type
@@ -81,6 +83,7 @@ message ClientMessage {
     DiscardCardsMessage discard_cards = 11;
     BankTradeMessage bank_trade = 12;
     SetTurnPhaseMessage set_turn_phase = 13;
+    BuyDevCardMessage buy_dev_card = 14;
   }
 }
 
@@ -173,6 +176,12 @@ message DiscardedCardsPayload {
   ResourceCount resources = 2;
 }
 
+// Server notifies a player they bought a dev card
+message DevCardBoughtPayload {
+  string player_id = 1;
+  DevCardType card_type = 2; // Only visible to buying player
+}
+
 // Wrapper for all server messages
 message ServerMessage {
   oneof message {
@@ -191,5 +200,6 @@ message ServerMessage {
     ErrorPayload error = 13;
     PlayerReadyChangedPayload player_ready_changed = 14;
     DiscardedCardsPayload discarded_cards = 15;
+    DevCardBoughtPayload dev_card_bought = 16;
   }
 }

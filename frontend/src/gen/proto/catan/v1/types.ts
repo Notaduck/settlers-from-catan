@@ -187,6 +187,12 @@ export interface PlayerState {
      * @generated from protobuf field: int32 victory_point_cards = 11
      */
     victoryPointCards: number; // Number of VP dev cards in hand (hidden from other players)
+    /**
+     * @generated from protobuf field: map<int32, int32> dev_cards = 12
+     */
+    devCards: {
+        [key: number]: number;
+    }; // Map of DevCardType enum value -> count (hidden from other players)
 }
 /**
  * Port model for board trading bonuses
@@ -294,6 +300,10 @@ export interface GameState {
      * @generated from protobuf field: repeated catan.v1.TradeOffer pending_trades = 13
      */
     pendingTrades: TradeOffer[];
+    /**
+     * @generated from protobuf field: repeated catan.v1.DevCardType dev_card_deck = 14
+     */
+    devCardDeck: DevCardType[]; // Remaining cards in deck (shuffled)
 }
 /**
  * Tracks the Robber phase state, including pending discards and steps.
@@ -1154,7 +1164,8 @@ class PlayerState$Type extends MessageType<PlayerState> {
             { no: 8, name: "connected", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 9, name: "is_ready", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 10, name: "is_host", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
-            { no: 11, name: "victory_point_cards", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
+            { no: 11, name: "victory_point_cards", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 12, name: "dev_cards", kind: "map", K: 5 /*ScalarType.INT32*/, V: { kind: "scalar", T: 5 /*ScalarType.INT32*/ } }
         ]);
     }
     create(value?: PartialMessage<PlayerState>): PlayerState {
@@ -1169,6 +1180,7 @@ class PlayerState$Type extends MessageType<PlayerState> {
         message.isReady = false;
         message.isHost = false;
         message.victoryPointCards = 0;
+        message.devCards = {};
         if (value !== undefined)
             reflectionMergePartial<PlayerState>(this, message, value);
         return message;
@@ -1211,6 +1223,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
                 case /* int32 victory_point_cards */ 11:
                     message.victoryPointCards = reader.int32();
                     break;
+                case /* map<int32, int32> dev_cards */ 12:
+                    this.binaryReadMap12(message.devCards, reader, options);
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1221,6 +1236,24 @@ class PlayerState$Type extends MessageType<PlayerState> {
             }
         }
         return message;
+    }
+    // @ts-expect-error: Generated code with unused parameter
+    private binaryReadMap12(map: PlayerState["devCards"], reader: IBinaryReader, options: BinaryReadOptions): void {
+        let len = reader.uint32(), end = reader.pos + len, key: keyof PlayerState["devCards"] | undefined, val: PlayerState["devCards"][any] | undefined;
+        while (reader.pos < end) {
+            // @ts-expect-error: Generated code with unused variable
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case 1:
+                    key = reader.int32();
+                    break;
+                case 2:
+                    val = reader.int32();
+                    break;
+                default: throw new globalThis.Error("unknown map entry field for catan.v1.PlayerState.dev_cards");
+            }
+        }
+        map[key ?? 0] = val ?? 0;
     }
     internalBinaryWrite(message: PlayerState, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
         /* string id = 1; */
@@ -1256,6 +1289,9 @@ class PlayerState$Type extends MessageType<PlayerState> {
         /* int32 victory_point_cards = 11; */
         if (message.victoryPointCards !== 0)
             writer.tag(11, WireType.Varint).int32(message.victoryPointCards);
+        /* map<int32, int32> dev_cards = 12; */
+        for (let k of globalThis.Object.keys(message.devCards))
+            writer.tag(12, WireType.LengthDelimited).fork().tag(1, WireType.Varint).int32(parseInt(k)).tag(2, WireType.Varint).int32(message.devCards[k as any]).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1423,7 +1459,8 @@ class GameState$Type extends MessageType<GameState> {
             { no: 10, name: "largest_army_player_id", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
             { no: 11, name: "setup_phase", kind: "message", T: () => SetupPhase },
             { no: 12, name: "robber_phase", kind: "message", T: () => RobberPhase },
-            { no: 13, name: "pending_trades", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => TradeOffer }
+            { no: 13, name: "pending_trades", kind: "message", repeat: 2 /*RepeatType.UNPACKED*/, T: () => TradeOffer },
+            { no: 14, name: "dev_card_deck", kind: "enum", repeat: 1 /*RepeatType.PACKED*/, T: () => ["catan.v1.DevCardType", DevCardType, "DEV_CARD_TYPE_"] }
         ]);
     }
     create(value?: PartialMessage<GameState>): GameState {
@@ -1436,6 +1473,7 @@ class GameState$Type extends MessageType<GameState> {
         message.dice = [];
         message.status = 0;
         message.pendingTrades = [];
+        message.devCardDeck = [];
         if (value !== undefined)
             reflectionMergePartial<GameState>(this, message, value);
         return message;
@@ -1487,6 +1525,13 @@ class GameState$Type extends MessageType<GameState> {
                     break;
                 case /* repeated catan.v1.TradeOffer pending_trades */ 13:
                     message.pendingTrades.push(TradeOffer.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* repeated catan.v1.DevCardType dev_card_deck */ 14:
+                    if (wireType === WireType.LengthDelimited)
+                        for (let e = reader.int32() + reader.pos; reader.pos < e;)
+                            message.devCardDeck.push(reader.int32());
+                    else
+                        message.devCardDeck.push(reader.int32());
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1543,6 +1588,13 @@ class GameState$Type extends MessageType<GameState> {
         /* repeated catan.v1.TradeOffer pending_trades = 13; */
         for (let i = 0; i < message.pendingTrades.length; i++)
             TradeOffer.internalBinaryWrite(message.pendingTrades[i], writer.tag(13, WireType.LengthDelimited).fork(), options).join();
+        /* repeated catan.v1.DevCardType dev_card_deck = 14; */
+        if (message.devCardDeck.length) {
+            writer.tag(14, WireType.LengthDelimited).fork();
+            for (let i = 0; i < message.devCardDeck.length; i++)
+                writer.int32(message.devCardDeck[i]);
+            writer.join();
+        }
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1599,11 +1651,11 @@ class RobberPhase$Type extends MessageType<RobberPhase> {
         }
         return message;
     }
-    // @ts-expect-error - Generated code with unused parameters
+    // @ts-expect-error: Generated code with unused parameter
     private binaryReadMap2(map: RobberPhase["discardRequired"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof RobberPhase["discardRequired"] | undefined, val: RobberPhase["discardRequired"][any] | undefined;
         while (reader.pos < end) {
-            // @ts-expect-error - Generated code with unused variable
+            // @ts-expect-error: Generated code with unused variable
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:

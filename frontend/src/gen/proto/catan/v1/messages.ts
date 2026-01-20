@@ -10,7 +10,6 @@ import { UnknownFieldHandler } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
-import { TurnPhase } from "./types";
 import { TradeOffer } from "./types";
 import { BuildingType } from "./types";
 import { PlayerState } from "./types";
@@ -18,6 +17,7 @@ import { GameState } from "./types";
 import { DevCardType } from "./types";
 import { HexCoord } from "./types";
 import { StructureType } from "./types";
+import { TurnPhase } from "./types";
 import { Resource } from "./types";
 import { ResourceCount } from "./types";
 // ==================== Client -> Server Messages ====================
@@ -34,6 +34,15 @@ export interface BankTradeMessage {
      * @generated from protobuf field: catan.v1.Resource resource_requested = 2
      */
     resourceRequested: Resource;
+}
+/**
+ * @generated from protobuf message catan.v1.SetTurnPhaseMessage
+ */
+export interface SetTurnPhaseMessage {
+    /**
+     * @generated from protobuf field: catan.v1.TurnPhase phase = 1
+     */
+    phase: TurnPhase;
 }
 /**
  * @generated from protobuf message catan.v1.JoinGameMessage
@@ -123,6 +132,11 @@ export interface PlayerReadyMessage {
      * @generated from protobuf field: bool ready = 1
      */
     ready: boolean;
+}
+/**
+ * @generated from protobuf message catan.v1.BuyDevCardMessage
+ */
+export interface BuyDevCardMessage {
 }
 /**
  * @generated from protobuf message catan.v1.PlayDevCardMessage
@@ -235,6 +249,18 @@ export interface ClientMessage {
          * @generated from protobuf field: catan.v1.BankTradeMessage bank_trade = 12
          */
         bankTrade: BankTradeMessage;
+    } | {
+        oneofKind: "setTurnPhase";
+        /**
+         * @generated from protobuf field: catan.v1.SetTurnPhaseMessage set_turn_phase = 13
+         */
+        setTurnPhase: SetTurnPhaseMessage;
+    } | {
+        oneofKind: "buyDevCard";
+        /**
+         * @generated from protobuf field: catan.v1.BuyDevCardMessage buy_dev_card = 14
+         */
+        buyDevCard: BuyDevCardMessage;
     } | {
         oneofKind: undefined;
     };
@@ -465,6 +491,21 @@ export interface DiscardedCardsPayload {
     resources?: ResourceCount;
 }
 /**
+ * Server notifies a player they bought a dev card
+ *
+ * @generated from protobuf message catan.v1.DevCardBoughtPayload
+ */
+export interface DevCardBoughtPayload {
+    /**
+     * @generated from protobuf field: string player_id = 1
+     */
+    playerId: string;
+    /**
+     * @generated from protobuf field: catan.v1.DevCardType card_type = 2
+     */
+    cardType: DevCardType; // Only visible to buying player
+}
+/**
  * Wrapper for all server messages
  *
  * @generated from protobuf message catan.v1.ServerMessage
@@ -564,6 +605,12 @@ export interface ServerMessage {
          */
         discardedCards: DiscardedCardsPayload;
     } | {
+        oneofKind: "devCardBought";
+        /**
+         * @generated from protobuf field: catan.v1.DevCardBoughtPayload dev_card_bought = 16
+         */
+        devCardBought: DevCardBoughtPayload;
+    } | {
         oneofKind: undefined;
     };
 }
@@ -621,6 +668,53 @@ class BankTradeMessage$Type extends MessageType<BankTradeMessage> {
  * @generated MessageType for protobuf message catan.v1.BankTradeMessage
  */
 export const BankTradeMessage = new BankTradeMessage$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SetTurnPhaseMessage$Type extends MessageType<SetTurnPhaseMessage> {
+    constructor() {
+        super("catan.v1.SetTurnPhaseMessage", [
+            { no: 1, name: "phase", kind: "enum", T: () => ["catan.v1.TurnPhase", TurnPhase, "TURN_PHASE_"] }
+        ]);
+    }
+    create(value?: PartialMessage<SetTurnPhaseMessage>): SetTurnPhaseMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.phase = 0;
+        if (value !== undefined)
+            reflectionMergePartial<SetTurnPhaseMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SetTurnPhaseMessage): SetTurnPhaseMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* catan.v1.TurnPhase phase */ 1:
+                    message.phase = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SetTurnPhaseMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* catan.v1.TurnPhase phase = 1; */
+        if (message.phase !== 0)
+            writer.tag(1, WireType.Varint).int32(message.phase);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.SetTurnPhaseMessage
+ */
+export const SetTurnPhaseMessage = new SetTurnPhaseMessage$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class JoinGameMessage$Type extends MessageType<JoinGameMessage> {
     constructor() {
@@ -1053,6 +1147,44 @@ class PlayerReadyMessage$Type extends MessageType<PlayerReadyMessage> {
  */
 export const PlayerReadyMessage = new PlayerReadyMessage$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class BuyDevCardMessage$Type extends MessageType<BuyDevCardMessage> {
+    constructor() {
+        super("catan.v1.BuyDevCardMessage", []);
+    }
+    create(value?: PartialMessage<BuyDevCardMessage>): BuyDevCardMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<BuyDevCardMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BuyDevCardMessage): BuyDevCardMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BuyDevCardMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.BuyDevCardMessage
+ */
+export const BuyDevCardMessage = new BuyDevCardMessage$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class PlayDevCardMessage$Type extends MessageType<PlayDevCardMessage> {
     constructor() {
         super("catan.v1.PlayDevCardMessage", [
@@ -1183,7 +1315,9 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
             { no: 9, name: "play_dev_card", kind: "message", oneof: "message", T: () => PlayDevCardMessage },
             { no: 10, name: "player_ready", kind: "message", oneof: "message", T: () => PlayerReadyMessage },
             { no: 11, name: "discard_cards", kind: "message", oneof: "message", T: () => DiscardCardsMessage },
-            { no: 12, name: "bank_trade", kind: "message", oneof: "message", T: () => BankTradeMessage }
+            { no: 12, name: "bank_trade", kind: "message", oneof: "message", T: () => BankTradeMessage },
+            { no: 13, name: "set_turn_phase", kind: "message", oneof: "message", T: () => SetTurnPhaseMessage },
+            { no: 14, name: "buy_dev_card", kind: "message", oneof: "message", T: () => BuyDevCardMessage }
         ]);
     }
     create(value?: PartialMessage<ClientMessage>): ClientMessage {
@@ -1270,6 +1404,18 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
                         bankTrade: BankTradeMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).bankTrade)
                     };
                     break;
+                case /* catan.v1.SetTurnPhaseMessage set_turn_phase */ 13:
+                    message.message = {
+                        oneofKind: "setTurnPhase",
+                        setTurnPhase: SetTurnPhaseMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).setTurnPhase)
+                    };
+                    break;
+                case /* catan.v1.BuyDevCardMessage buy_dev_card */ 14:
+                    message.message = {
+                        oneofKind: "buyDevCard",
+                        buyDevCard: BuyDevCardMessage.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).buyDevCard)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1318,6 +1464,12 @@ class ClientMessage$Type extends MessageType<ClientMessage> {
         /* catan.v1.BankTradeMessage bank_trade = 12; */
         if (message.message.oneofKind === "bankTrade")
             BankTradeMessage.internalBinaryWrite(message.message.bankTrade, writer.tag(12, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.SetTurnPhaseMessage set_turn_phase = 13; */
+        if (message.message.oneofKind === "setTurnPhase")
+            SetTurnPhaseMessage.internalBinaryWrite(message.message.setTurnPhase, writer.tag(13, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.BuyDevCardMessage buy_dev_card = 14; */
+        if (message.message.oneofKind === "buyDevCard")
+            BuyDevCardMessage.internalBinaryWrite(message.message.buyDevCard, writer.tag(14, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -2262,6 +2414,61 @@ class DiscardedCardsPayload$Type extends MessageType<DiscardedCardsPayload> {
  */
 export const DiscardedCardsPayload = new DiscardedCardsPayload$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class DevCardBoughtPayload$Type extends MessageType<DevCardBoughtPayload> {
+    constructor() {
+        super("catan.v1.DevCardBoughtPayload", [
+            { no: 1, name: "player_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "card_type", kind: "enum", T: () => ["catan.v1.DevCardType", DevCardType, "DEV_CARD_TYPE_"] }
+        ]);
+    }
+    create(value?: PartialMessage<DevCardBoughtPayload>): DevCardBoughtPayload {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.playerId = "";
+        message.cardType = 0;
+        if (value !== undefined)
+            reflectionMergePartial<DevCardBoughtPayload>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DevCardBoughtPayload): DevCardBoughtPayload {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string player_id */ 1:
+                    message.playerId = reader.string();
+                    break;
+                case /* catan.v1.DevCardType card_type */ 2:
+                    message.cardType = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DevCardBoughtPayload, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string player_id = 1; */
+        if (message.playerId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.playerId);
+        /* catan.v1.DevCardType card_type = 2; */
+        if (message.cardType !== 0)
+            writer.tag(2, WireType.Varint).int32(message.cardType);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message catan.v1.DevCardBoughtPayload
+ */
+export const DevCardBoughtPayload = new DevCardBoughtPayload$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ServerMessage$Type extends MessageType<ServerMessage> {
     constructor() {
         super("catan.v1.ServerMessage", [
@@ -2279,7 +2486,8 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
             { no: 12, name: "game_over", kind: "message", oneof: "message", T: () => GameOverPayload },
             { no: 13, name: "error", kind: "message", oneof: "message", T: () => ErrorPayload },
             { no: 14, name: "player_ready_changed", kind: "message", oneof: "message", T: () => PlayerReadyChangedPayload },
-            { no: 15, name: "discarded_cards", kind: "message", oneof: "message", T: () => DiscardedCardsPayload }
+            { no: 15, name: "discarded_cards", kind: "message", oneof: "message", T: () => DiscardedCardsPayload },
+            { no: 16, name: "dev_card_bought", kind: "message", oneof: "message", T: () => DevCardBoughtPayload }
         ]);
     }
     create(value?: PartialMessage<ServerMessage>): ServerMessage {
@@ -2384,6 +2592,12 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
                         discardedCards: DiscardedCardsPayload.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).discardedCards)
                     };
                     break;
+                case /* catan.v1.DevCardBoughtPayload dev_card_bought */ 16:
+                    message.message = {
+                        oneofKind: "devCardBought",
+                        devCardBought: DevCardBoughtPayload.internalBinaryRead(reader, reader.uint32(), options, (message.message as any).devCardBought)
+                    };
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -2441,6 +2655,9 @@ class ServerMessage$Type extends MessageType<ServerMessage> {
         /* catan.v1.DiscardedCardsPayload discarded_cards = 15; */
         if (message.message.oneofKind === "discardedCards")
             DiscardedCardsPayload.internalBinaryWrite(message.message.discardedCards, writer.tag(15, WireType.LengthDelimited).fork(), options).join();
+        /* catan.v1.DevCardBoughtPayload dev_card_bought = 16; */
+        if (message.message.oneofKind === "devCardBought")
+            DevCardBoughtPayload.internalBinaryWrite(message.message.devCardBought, writer.tag(16, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
