@@ -97,13 +97,256 @@ Backend responsibilities:
 
 Testing guidelines (Go):
 
-- Use table-driven tests.
-- Cover:
-  - Board generation invariants (no invalid coords, correct tile distribution).
-  - Turn/state machine transitions (lobby -> started -> turns).
-  - Command validation (reject invalid moves).
-  - Deterministic playthrough tests where possible.
-- Avoid flaky tests: no real sockets unless explicitly testing handlers/hub; prefer in-memory constructs.
+### Table-Driven Tests (The Game Changer)
+
+Use **maps** instead of slices for test cases — provides better IDE navigation, clearer names, and randomized iteration order helps catch test dependencies:
+
+```go
+func TestPlaceSettlement(t *testing.T) {
+    tests := map[string]struct {
+        setup     func(*GameState)
+        playerID  string
+        vertexID  string
+        wantErr   bool
+        errorMsg  string
+    }{
+        "valid placement": {
+            setup:    setupValidBoard,
+            playerID: "p1",
+            vertexID: "v1",
+            wantErr:  false,
+        },
+        "distance rule violation": {
+            setup:    setupTooClose,
+            playerID: "p1",
+            vertexID: "v2",
+            wantErr:  true,
+            errorMsg: "too close to existing settlement",
+        },
+    }
+    for name, tt := range tests {
+        t.Run(name, func(t *testing.T) {
+            state := NewGameState(...)
+            tt.setup(state)
+            err := PlaceSettlement(state, tt.playerID, tt.vertexID)
+            
+            if tt.wantErr {
+                if err == nil {
+                    t.Error("expected error but got none")
+                    return
+                }
+                if tt.errorMsg != "" && err.Error() != tt.errorMsg {
+                    t.Errorf("expected error %q, got %q", tt.errorMsg, err.Error())
+                }
+            } else if err != nil {
+                t.Errorf("unexpected error: %v", err)
+            }
+        })
+    }
+}
+```
+
+### Test Structure: Setup → Execute → Assert
+
+```go
+func TestUserService_CreateUser(t *testing.T) {
+    // Setup
+    mockRepo := &MockUserRepository{users: make(map[string]*User)}
+    service := &UserService{repo: mockRepo}
+    newUser := &User{Name: "John"}
+    
+    // Execute
+    err := service.CreateUser(newUser)
+    
+    // Assert
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+    if newUser.ID == "" {
+        t.Error("expected user ID to be set")
+    }
+}
+```
+
+### Dependency Injection & Mocking
+
+Define interfaces for external dependencies to enable testing:
+
+```go
+// Interface for dependency injection
+type DiceRoller interface {
+    Roll() (int, int)
+}
+
+// Production implementation
+type RandomDiceRoller struct{}
+func (r *RandomDiceRoller) Roll() (int, int) {
+    return rand.Intn(6)+1, rand.Intn(6)+1
+}
+
+// Test mock - deterministic
+type FixedDiceRoller struct {
+    Values []int
+    Index  int
+}
+func (r *FixedDiceRoller) Roll() (int, int) {
+    d1, d2 := r.Values[r.Index], r.Values[r.Index+1]
+    r.Index += 2
+    return d1, d2
+}
+```
+
+### Use `t.Helper()` for Better Error Reporting
+
+```go
+func assertNoError(t *testing.T, err error) {
+    t.Helper()  // Points error to caller, not this line
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+}
+
+func assertError(t *testing.T, err error, wantMsg string) {
+    t.Helper()
+    if err == nil {
+        t.Fatal("expected error but got none")
+    }
+    if wantMsg != "" && err.Error() != wantMsg {
+        t.Errorf("expected error %q, got %q", wantMsg, err.Error())
+    }
+}
+```
+
+### Testing HTTP Handlers
+
+Use `httptest` for handler testing:
+
+```go
+func TestGameHandler_CreateGame(t *testing.T) {
+    tests := map[string]struct {
+        method       string
+        body         string
+        expectedCode int
+        expectedBody string
+    }{
+        "valid request": {
+            method:       "POST",
+            body:         `{"playerName":"Alice"}`,
+            expectedCode: 200,
+        },
+        "invalid json": {
+            method:       "POST",
+            body:         `{invalid}`,
+            expectedCode: 400,
+        },
+    }
+    
+    for name, tt := range tests {
+        t.Run(name, func(t *testing.T) {
+            req := httptest.NewRequest(tt.method, "/games", strings.NewReader(tt.body))
+            rec := httptest.NewRecorder()
+            
+            handler.ServeHTTP(rec, req)
+            
+            if rec.Code != tt.expectedCode {
+                t.Errorf("expected status %d, got %d", tt.expectedCode, rec.Code)
+            }
+        })
+    }
+}
+```
+
+### Testing Concurrent Code
+
+```go
+func TestConcurrentResourceAccess(t *testing.T) {
+    state := NewGameState(...)
+    numGoroutines := 100
+    
+    var wg sync.WaitGroup
+    wg.Add(numGoroutines)
+    
+    for i := 0; i < numGoroutines; i++ {
+        go func() {
+            defer wg.Done()
+            // Concurrent operation
+            state.AddResource("p1", pb.TileResource_TILE_RESOURCE_WOOD, 1)
+        }()
+    }
+    
+    wg.Wait()
+    
+    // Verify final state
+    if state.Players[0].Resources.Wood != int32(numGoroutines) {
+        t.Errorf("race condition detected")
+    }
+}
+```
+
+### Common Mistakes to Avoid
+
+1. **Testing implementation, not behavior**:
+   ```go
+   // BAD: Testing internal state
+   if cache.internalMap["key"] == "value" { ... }
+   
+   // GOOD: Testing public behavior
+   value, exists := cache.Get("key")
+   ```
+
+2. **Not testing error cases** — most production bugs happen in error paths
+
+3. **Using `time.Sleep()` in tests** — use channels/signals instead:
+   ```go
+   // BAD
+   time.Sleep(100 * time.Millisecond)
+   
+   // GOOD
+   select {
+   case result := <-ch:
+       // handle result
+   case <-time.After(100 * time.Millisecond):
+       t.Error("timeout")
+   }
+   ```
+
+### Running Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with race detector (catches concurrency bugs)
+go test -race ./...
+
+# Run with coverage
+go test -cover ./...
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out  # View in browser
+
+# Run benchmarks
+go test -bench=. -benchmem ./...
+
+# Skip long-running tests
+go test -short ./...
+```
+
+### What to Cover
+
+- Board generation invariants (correct tile distribution, valid coords)
+- Turn/state machine transitions (lobby → setup → playing)
+- Command validation (reject invalid moves, enforce rules)
+- Error scenarios (network failures, invalid inputs, resource exhaustion)
+- Edge cases (empty inputs, boundary values, max players)
+- Deterministic playthrough tests where possible
+
+### Avoid Flaky Tests
+
+- No real sockets unless explicitly testing handlers/hub
+- Prefer in-memory constructs
+- Use seedable randomness
+- No `time.Sleep()` — use channels/signals
+- Run with `-race` flag to catch race conditions
 
 ### Frontend (React + TS)
 

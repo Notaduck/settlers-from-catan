@@ -25,6 +25,42 @@ Your task is to implement functionality per the specifications.
    - **Frontend changes**: Add/update Playwright tests in `frontend/tests/*.spec.ts`
 4. Use `data-cy` attributes for Playwright selectors.
 
+## 1a. Go Test Best Practices
+
+**When writing Go tests:**
+
+1. **Use map-based table-driven tests** (better than slices — clearer names, catches test dependencies):
+   ```go
+   tests := map[string]struct {
+       setup     func(*GameState)
+       wantErr   bool
+       errorMsg  string
+   }{
+       "valid placement": {setup: setupValid, wantErr: false},
+       "distance rule violation": {setup: setupTooClose, wantErr: true, errorMsg: "too close"},
+   }
+   for name, tt := range tests {
+       t.Run(name, func(t *testing.T) { ... })
+   }
+   ```
+
+2. **Structure: Setup → Execute → Assert** — keep phases clear
+
+3. **Use `t.Helper()`** in helper functions for better error line reporting
+
+4. **Test naming**: `TestFunctionName_Scenario` (e.g., `TestPlaceSettlement_DistanceRule`)
+
+5. **Test error paths** — most production bugs happen in error scenarios
+
+6. **Use interfaces + dependency injection** for testable code (e.g., `DiceRoller` interface)
+
+7. **Test behavior, not implementation** — use public APIs, not internal state
+
+8. **No flaky tests**: 
+   - Avoid `time.Sleep()` — use `select` with `time.After()` for timeouts
+   - Use seedable randomness
+   - Run with `go test -race ./...` to catch race conditions
+
 ## 2. Validate
 
 After implementing, run validation, test-backend, typecheck and build most succeed before committing:
