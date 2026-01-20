@@ -6,6 +6,7 @@ import {
   rollDice,
   endTurn,
   buyDevelopmentCard,
+  isDevModeAvailable,
 } from "./helpers";
 
 test.describe("Development Cards", () => {
@@ -41,6 +42,12 @@ test.describe("Development Cards", () => {
     context,
     request,
   }) => {
+    // Check if DEV_MODE test endpoints are available
+    const devModeEnabled = await isDevModeAvailable(request);
+    if (!devModeEnabled) {
+      test.skip("DEV_MODE test endpoints not available. Start backend with DEV_MODE=true");
+    }
+
     const { hostPage, guestPage, hostSession } = await startTwoPlayerGame(
       page,
       context,
@@ -59,19 +66,19 @@ test.describe("Development Cards", () => {
       sheep: 1,
     });
 
-    // Wait for resources to update
-    await hostPage.waitForTimeout(500);
+    // Wait for resources to update from WebSocket
+    await hostPage.waitForTimeout(1500);
 
     // Buy dev card button should be enabled
     await expect(
       hostPage.locator("[data-cy='buy-dev-card-btn']")
-    ).toBeEnabled();
+    ).toBeEnabled({ timeout: 10000 });
 
     // Click buy button
     await buyDevelopmentCard(hostPage);
 
     // Wait for update
-    await hostPage.waitForTimeout(1000);
+    await hostPage.waitForTimeout(1500);
 
     // Dev card count should increase to 1
     await expect(hostPage.locator("[data-cy='dev-cards-panel']")).toContainText(

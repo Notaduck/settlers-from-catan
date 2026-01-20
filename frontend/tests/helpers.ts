@@ -210,6 +210,22 @@ export async function completeSetupPhase(
 // ============================================================================
 
 /**
+ * Check if DEV_MODE test endpoints are available
+ */
+export async function isDevModeAvailable(request: APIRequestContext): Promise<boolean> {
+  try {
+    const response = await request.post(`${API_BASE}/test/grant-resources`, {
+      data: { gameCode: "test", playerId: "test", resources: {} },
+    });
+    // If we get 404, DEV_MODE is not enabled
+    // If we get 400 or other error, DEV_MODE is enabled but request was invalid
+    return response.status() !== 404;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Grant resources to a player (test endpoint)
  * Only available when backend is running with DEV_MODE=true
  */
@@ -232,7 +248,8 @@ export async function grantResources(
     }
   );
   if (!response.ok()) {
-    throw new Error(`Failed to grant resources: ${await response.text()}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to grant resources (${response.status()}): ${errorText}`);
   }
   return response.json();
 }

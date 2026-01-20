@@ -1,4 +1,4 @@
-.PHONY: all install generate build dev dev-backend dev-frontend stop clean lint test e2e help
+.PHONY: all install generate build dev dev-backend dev-frontend stop clean lint test e2e e2e-dev e2e-headed help
 
 # Default target
 all: install generate build
@@ -80,6 +80,14 @@ e2e: ## Run Playwright E2E tests (requires backend/frontend running)
 	@nc -z localhost 8080 || (echo "❌ Start backend first: make dev-backend" && exit 1)
 	@nc -z localhost 3000 || (echo "❌ Start frontend first: make dev-frontend" && exit 1)
 	cd frontend && npm test
+
+e2e-dev: ## Run E2E tests with auto-started DEV_MODE backend/frontend
+	@echo "🚀 Running E2E tests with DEV_MODE enabled..."
+	./scripts/run-e2e.sh
+
+e2e-headed: ## Run E2E tests in headed mode (see browser)
+	@echo "🚀 Running E2E tests in headed mode..."
+	./scripts/run-e2e.sh --headed
 
 # ==================== Linting ====================
 
