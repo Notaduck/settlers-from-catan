@@ -1599,9 +1599,11 @@ class RobberPhase$Type extends MessageType<RobberPhase> {
         }
         return message;
     }
+    // @ts-expect-error - Generated code with unused parameters
     private binaryReadMap2(map: RobberPhase["discardRequired"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof RobberPhase["discardRequired"] | undefined, val: RobberPhase["discardRequired"][any] | undefined;
         while (reader.pos < end) {
+            // @ts-expect-error - Generated code with unused variable
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:

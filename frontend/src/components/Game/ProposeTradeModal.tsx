@@ -1,4 +1,3 @@
-import React from 'react';
 // TODO: Implement ProposeTradeModal for proposing trade to player or all; stub UI for now
 export function ProposeTradeModal(props: {
   open: boolean;

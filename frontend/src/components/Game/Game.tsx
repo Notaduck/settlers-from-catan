@@ -157,10 +157,10 @@ export function Game({ gameCode, onLeave }: GameProps) {
     return () => window.clearTimeout(timeoutId);
   }, [resourceGainText, clearResourceGain]);
 
-  const setupRound = gameState.setupPhase?.round ?? 1;
-  const currentTurnPlayer = players[gameState.currentTurn ?? 0];
+  const setupRound = gameState?.setupPhase?.round ?? 1;
+  const currentTurnPlayer = players[gameState?.currentTurn ?? 0];
   const setupInstruction = useMemo(() => {
-    if (!isSetup || !gameState.setupPhase) {
+    if (!isSetup || !gameState?.setupPhase) {
       return null;
     }
 
@@ -169,7 +169,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
     const label = placementsInTurn === 0 ? "Settlement" : "Road";
 
     return `Place ${label} (${placementCount}/2)`;
-  }, [isSetup, gameState.setupPhase, setupRound]);
+  }, [isSetup, gameState?.setupPhase, setupRound]);
 
   if (error) {
     return (
@@ -204,7 +204,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
   }
 
   // Game Over overlay
-  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || gameState?.status === 'GAME_STATUS_FINISHED';
+  const isGameOver = !!gameOver || gameState?.status === GameStatus.FINISHED || (gameState?.status as unknown as string) === 'GAME_STATUS_FINISHED';
   const interactionsDisabled = isGameOver;
 
   return (
@@ -219,8 +219,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
             setShowBankTrade(false);
           }}
           resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
-          board={gameState.board}
-          playerId={currentPlayerId}
+          board={gameState?.board}
+          playerId={currentPlayerId ?? ''}
         />
       )}
       {/* PROPOSE TRADE MODAL */}
@@ -236,7 +236,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
             setShowIncomingTrade(true);
           }}
           players={players}
-          myResources={currentPlayer?.resources ?? {}}
+          myResources={(currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}) as unknown as Record<string, number>}
         />
       )}
       {/* INCOMING TRADE MODAL (stub/demo, always shows same test offer) */}
@@ -371,28 +371,8 @@ export function Game({ gameCode, onLeave }: GameProps) {
         </div>
       ) : (
         <div className="game-board-container" data-cy="game-board-container">
-           {(isSetup && gameState.status === GameStatus.SETUP) && (
+           {(isSetup && gameState?.status === GameStatus.SETUP) && (
             <div className="setup-phase-panel">
-              {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
-              {!interactionsDisabled && gameState.status === GameStatus.PLAYING && gameState.turnPhase === "TURN_PHASE_TRADE" && currentPlayer?.id === currentPlayerId && (
-                <div className="trade-phase-control">
-                  <button
-                    className="btn btn-secondary"
-                    data-cy="trade-phase-btn"
-                    onClick={() => setShowBankTrade(true)}
-                  >
-                    Trade with Bank
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    data-cy="propose-trade-btn"
-                    onClick={() => setShowProposeTrade(true)}
-                  >
-                    Propose Trade
-                  </button>
-                </div>
-              )}
-
               <div
                 className="setup-phase-banner"
                 data-cy="setup-phase-banner"
@@ -417,7 +397,26 @@ export function Game({ gameCode, onLeave }: GameProps) {
               )}
             </div>
           )}
-           {resourceGainText && gameState.status === GameStatus.SETUP && (
+           {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
+           {!interactionsDisabled && gameState?.status === GameStatus.PLAYING && gameState?.turnPhase === ("TURN_PHASE_TRADE" as unknown as typeof gameState.turnPhase) && currentPlayer?.id === currentPlayerId && (
+             <div className="trade-phase-control">
+               <button
+                 className="btn btn-secondary"
+                 data-cy="trade-phase-btn"
+                 onClick={() => setShowBankTrade(true)}
+               >
+                 Trade with Bank
+               </button>
+               <button
+                 className="btn btn-secondary"
+                 data-cy="propose-trade-btn"
+                 onClick={() => setShowProposeTrade(true)}
+               >
+                 Propose Trade
+               </button>
+             </div>
+           )}
+           {resourceGainText && gameState?.status === GameStatus.SETUP && (
             <div
               className="setup-resource-toast"
               data-cy="setup-resource-toast"
@@ -425,7 +424,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               {resourceGainText}
             </div>
           )}
-           {!interactionsDisabled && placementModeLabel && ((isSetup && gameState.status === GameStatus.SETUP) || (gameState.status === GameStatus.PLAYING)) && (
+           {!interactionsDisabled && placementModeLabel && ((isSetup && gameState?.status === GameStatus.SETUP) || (gameState?.status === GameStatus.PLAYING)) && (
             <div className="placement-mode" data-cy="placement-mode">
               {/* (Placement and trading UI are independent; both can be present) */}
               {placementModeLabel}
@@ -433,28 +432,32 @@ export function Game({ gameCode, onLeave }: GameProps) {
           )}
            <div className="game-board-content">
              {/* ---- END TRADING ---- */}
-             {gameState.board && (
+             {gameState?.board && (
                <Board
                  board={gameState.board}
                  players={gameState.players}
                  validVertexIds={placementState.validVertexIds}
                  validEdgeIds={placementState.validEdgeIds}
                  onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
-                 onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
-                 isRobberMoveMode={isRobberMoveRequired}
-                 onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
-                   sendRobberMove(hex.coord);
-                 } : undefined}
+                  onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
+                  isRobberMoveMode={isRobberMoveRequired}
+                  onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
+                    if (hex.coord) {
+                      sendRobberMove({ q: hex.coord.q, r: hex.coord.r, s: -(hex.coord.q + hex.coord.r) });
+                    }
+                  } : undefined}
                />
              )}
-            <PlayerPanel
-              players={gameState.players}
-              currentTurn={gameState.currentTurn}
-              turnPhase={gameState.turnPhase}
-              dice={gameState.dice}
-              gameStatus={gameState.status}
-              isGameOver={isGameOver}
-            />
+            {gameState && (
+              <PlayerPanel
+                players={gameState.players}
+                 currentTurn={gameState.currentTurn}
+                 turnPhase={gameState.turnPhase}
+                 dice={gameState.dice}
+                 gameStatus={gameState.status as unknown as string}
+                 isGameOver={isGameOver}
+              />
+            )}
           </div>
         </div>
       )}

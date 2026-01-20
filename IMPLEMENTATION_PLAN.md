@@ -5,7 +5,6 @@
 ----
 
 ## BLOCKERS (JAN 2026)
-- TypeScript build errors (55+ errors): Pre-existing compilation issues in frontend preventing `make build`. `make typecheck` passes because it uses different config. Requires systematic TypeScript refactoring.
 - 2 consistent longest road test failures: TestOpponentSettlementBlocksRoad, TestTieKeepsCurrentHolder (documented in plan).
 - Flaky resource distribution tests: Occasionally fail due to randomness in board generation/dice (TestResourceDistribution_SettlementGetsOneResource, TestResourceDistribution_MultiplePlayersReceive).
 - E2E test runs skipped due to servers not running (per doc/rule).
@@ -67,16 +66,21 @@
 
 ----
 
-## PRIORITY 9: CODE QUALITY & BUILD FIXES (IN PROGRESS)
+## PRIORITY 9: CODE QUALITY & BUILD FIXES (COMPLETE - 2026-01-20)
 - [x] Fixed lint errors: Removed `any` type in GameContext.tsx (line 139), removed unused `page` parameters in trading.spec.ts, fixed useMemo dependencies.
   - Files: frontend/src/context/GameContext.tsx, frontend/tests/trading.spec.ts
   - Validation: `make lint` passes with 0 errors (2 warnings remain, acceptable)
-- [ ] Fix TypeScript build errors: 55+ compilation errors preventing `make build` success. Systematic refactor needed for:
-  - Import conflicts (Edge, Vertex components)
-  - Type conversions (GameStatus, TurnPhase from string)
-  - Null safety issues throughout Game components
-  - ResourceCount type index signature issues
-  - Generated file unused variable warnings
+- [x] Fixed TypeScript build errors: All 55+ compilation errors resolved. `make build` now succeeds.
+  - Fixed import conflicts (Edge, Vertex components renamed to EdgeType, VertexType)
+  - Fixed GameStatus/TurnPhase string conversion issues (added `as unknown as` double cast)
+  - Fixed ResourceCount type initialization and index signature issues
+  - Fixed Game.tsx null safety checks (gameState?.field patterns)
+  - Fixed hex.coord missing 's' property (computed from q+r+s=0)
+  - Removed unused React imports from modal components
+  - Fixed placement.ts Vertex building type (made building optional)
+  - Fixed generated file warnings with @ts-expect-error comments
+  - Files modified: Edge.tsx, Vertex.tsx, placement.ts, GameContext.tsx, PlayerPanel.tsx, DiscardModal.tsx, Game.tsx, GameOver.tsx, IncomingTradeModal.tsx, ProposeTradeModal.tsx, StealModal.tsx, gen/proto/catan/v1/types.ts
+  - Validation: `make build` passes, `make typecheck` passes, `make lint` passes (2 warnings acceptable), `make test-backend` passes (2 pre-existing longest road failures)
 
 ----
 

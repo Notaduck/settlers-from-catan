@@ -1,8 +1,8 @@
-import type { Vertex } from "@/types";
+import type { Vertex as VertexType } from "@/types";
 import { BuildingType } from "@/types";
 
 interface VertexProps {
-  vertex: Vertex;
+  vertex: VertexType;
   x: number;
   y: number;
   ownerColor?: string;

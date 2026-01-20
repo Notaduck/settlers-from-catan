@@ -369,7 +369,7 @@ function isStatus(
   expected: GameStatus,
   expectedString: string
 ): boolean {
-  return status === expected || status === (expectedString as GameStatus);
+  return status === expected || status === (expectedString as unknown as GameStatus);
 }
 
 function isTurnPhase(
@@ -377,7 +377,7 @@ function isTurnPhase(
   expected: TurnPhase,
   expectedString: string
 ): boolean {
-  return phase === expected || phase === (expectedString as TurnPhase);
+  return phase === expected || phase === (expectedString as unknown as TurnPhase);
 }
 
 function getSetupResourceGain(
@@ -426,7 +426,7 @@ function getPositiveResourceDelta(
     return null;
   }
 
-  const delta: ResourceCount = {};
+  const delta: ResourceCount = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
   let hasGain = false;
   const keys = ["wood", "brick", "sheep", "wheat", "ore"] as const;
 

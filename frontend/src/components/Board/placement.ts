@@ -23,7 +23,7 @@ function isStatus(
   expected: GameStatus,
   expectedString: string
 ): boolean {
-  return status === expected || status === (expectedString as GameStatus);
+  return status === expected || status === (expectedString as unknown as GameStatus);
 }
 
 function isTurnPhase(
@@ -31,7 +31,7 @@ function isTurnPhase(
   expected: TurnPhase,
   expectedString: string
 ): boolean {
-  return phase === expected || phase === (expectedString as TurnPhase);
+  return phase === expected || phase === (expectedString as unknown as TurnPhase);
 }
 
 function hasResources(
@@ -71,7 +71,7 @@ function buildAdjacency(board: BoardState): Map<string, Set<string>> {
 
 function violatesDistanceRule(
   vertexId: string,
-  vertexById: Map<string, { building: unknown }>,
+  vertexById: Map<string, { building?: unknown }>,
   adjacency: Map<string, Set<string>>
 ): boolean {
   const neighbors = adjacency.get(vertexId);

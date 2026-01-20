@@ -1,4 +1,3 @@
-import React from "react";
 import { BuildingType, GameOverPayload, GameState, PlayerState } from "@/types";
 
 interface GameOverProps {
@@ -8,7 +7,7 @@ interface GameOverProps {
 }
 
 export function GameOver({ gameState, gameOver, onNewGame }: GameOverProps) {
-  if (!gameState || (!gameOver && gameState.status !== "GAME_STATUS_FINISHED" && gameState.status !== 4)) {
+  if (!gameState || (!gameOver && (gameState.status as unknown as string) !== "GAME_STATUS_FINISHED" && gameState.status !== 4)) {
     return null;
   }
   const scoreMap = new Map(

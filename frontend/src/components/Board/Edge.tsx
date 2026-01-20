@@ -1,7 +1,7 @@
-import type { Edge } from "@/types";
+import type { Edge as EdgeType } from "@/types";
 
 interface EdgeProps {
-  edge: Edge;
+  edge: EdgeType;
   x1: number;
   y1: number;
   x2: number;

@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { ResourceCount } from "@/types";
 
 const RESOURCE_TYPES = ["wood", "brick", "sheep", "wheat", "ore"] as const;
+type ResourceType = typeof RESOURCE_TYPES[number];
 
 export interface DiscardModalProps {
   requiredCount: number;
@@ -11,18 +12,18 @@ export interface DiscardModalProps {
 }
 
 export function DiscardModal({ requiredCount, maxAvailable, onDiscard, onClose }: DiscardModalProps) {
-  const [selected, setSelected] = useState<ResourceCount>({});
+  const [selected, setSelected] = useState<ResourceCount>({ wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 });
   const countSelected = useMemo(
     () => RESOURCE_TYPES.reduce((acc, r) => acc + (selected[r] || 0), 0),
     [selected]
   );
   const canSubmit = countSelected === requiredCount && RESOURCE_TYPES.every(r => (selected[r] || 0) <= (maxAvailable[r] || 0));
-  const handleInc = (r: string) => {
+  const handleInc = (r: ResourceType) => {
     if ((selected[r] || 0) < (maxAvailable[r] || 0) && countSelected < requiredCount) {
       setSelected({ ...selected, [r]: (selected[r] || 0) + 1 });
     }
   };
-  const handleDec = (r: string) => {
+  const handleDec = (r: ResourceType) => {
     if ((selected[r] || 0) > 0) {
       setSelected({ ...selected, [r]: (selected[r] || 0) - 1 });
     }

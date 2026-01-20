@@ -34,7 +34,7 @@ function isTurnPhase(
   expected: TurnPhase,
   expectedString: string
 ): boolean {
-  return phase === expected || phase === (expectedString as TurnPhase);
+  return phase === expected || phase === (expectedString as unknown as TurnPhase);
 }
 
 // Helper to display turn phase

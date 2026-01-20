@@ -1,4 +1,3 @@
-import React from 'react';
 // TODO: Implement IncomingTradeModal for responding to player trade offers. Stub UI for now
 export function IncomingTradeModal(props: {
   open: boolean;
