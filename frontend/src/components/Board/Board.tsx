@@ -9,6 +9,7 @@ import { PlayerColor } from "@/types";
 import { HexTile } from "./HexTile";
 import { Edge as EdgeSegment } from "./Edge";
 import { Vertex as VertexMarker } from "./Vertex";
+import { Port } from "./Port";
 import "./Board.css";
 
 interface BoardProps {
@@ -302,6 +303,29 @@ export function Board({
                     ? () => onBuildSettlement(vertex.id)
                     : undefined
                 }
+              />
+            );
+          })}
+          {board.ports?.map((port, index) => {
+            // Calculate midpoint between the two port vertices
+            const [v1Id, v2Id] = port.location ?? [];
+            if (!v1Id || !v2Id) {
+              return null;
+            }
+            const v1 = vertexById.get(v1Id);
+            const v2 = vertexById.get(v2Id);
+            if (!v1 || !v2) {
+              return null;
+            }
+            const midX = (v1.pos.x + v2.pos.x) / 2;
+            const midY = (v1.pos.y + v2.pos.y) / 2;
+            return (
+              <Port
+                key={`port-${index}`}
+                port={port}
+                x={midX}
+                y={midY}
+                index={index}
               />
             );
           })}

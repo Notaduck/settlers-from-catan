@@ -214,11 +214,13 @@ export function Game({ gameCode, onLeave }: GameProps) {
         <BankTradeModal
           open={showBankTrade}
           onClose={() => setShowBankTrade(false)}
-          onSubmit={(offering, requested) => {
+          onSubmit={() => {
             // TODO: Hook up to trade send
             setShowBankTrade(false);
           }}
           resources={currentPlayer?.resources ?? {wood:0,brick:0,sheep:0,wheat:0,ore:0}}
+          board={gameState.board}
+          playerId={currentPlayerId}
         />
       )}
       {/* PROPOSE TRADE MODAL */}
@@ -226,7 +228,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
         <ProposeTradeModal
           open={showProposeTrade}
           onClose={() => setShowProposeTrade(false)}
-          onSubmit={(offer, request, toPlayerId) => {
+          onSubmit={(offer, request) => {
             // TODO: Hook up to trade send
             setShowProposeTrade(false);
             // For demo: simulate incoming trade right away
