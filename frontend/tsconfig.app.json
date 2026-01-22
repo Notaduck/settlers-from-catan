@@ -24,8 +24,8 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // "noUnusedLocals": true, // Temporarily disabled due to generated protobuf files
+    // "noUnusedParameters": true, // Temporarily disabled due to generated protobuf files
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
