@@ -26,6 +26,7 @@ func main() {
 	handler := handlers.NewHandler(database, h)
 
 	// Routes
+	http.HandleFunc("/health", handler.HandleHealth)
 	http.HandleFunc("/ws", handler.HandleWebSocket)
 	http.HandleFunc("/api/games", handler.HandleCreateGame)
 	http.HandleFunc("/api/games/", handler.HandleGameRoutes)

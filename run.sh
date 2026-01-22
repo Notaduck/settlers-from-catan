@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "==> Step 1: Planning (3 iterations)"
-./loop.sh plan 3
+./loop.sh plan 1
 
 echo
 echo "==> Step 2: Reviewing plan"
