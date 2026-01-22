@@ -439,11 +439,15 @@
   </style>
 </head>
 <body>
+
   <div class="header">
-    <h1>Ralph Dashboard</h1>
+    <h1>
+      <img src="https://raw.githubusercontent.com/octocat/Hello-World/master/images/ralph-bot.png" alt="Ralph Bot" style="height:48px;width:48px;border-radius:50%;vertical-align:middle;margin-right:10px;box-shadow:0 2px 8px #0002;"> Ralph Dashboard
+    </h1>
     <div class="status">
       <div class="status-dot" id="status-dot"></div>
-      <span id="last-update">Updating...</span>
+      <span id="last-update">Last updated: <span id="last-update-time">never</span></span>
+      <button id="refresh-btn" style="margin-left:16px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;">🔄 Refresh</button>
     </div>
   </div>
   
@@ -537,71 +541,51 @@
       const phases = [];
       let currentPhase = null;
       let currentTask = null;
-      
+      let phaseCount = 0;
       const lines = markdown.split('\n');
-      
       for (const line of lines) {
-        // Phase header (## Phase N: Name)
-        const phaseMatch = line.match(/^## Phase (\d+)[:\s]+(.+)/i);
+        // Treat any ### or #### heading as a phase
+        const phaseMatch = line.match(/^(###|####)\s+(.+)/);
         if (phaseMatch) {
           if (currentPhase) phases.push(currentPhase);
+          phaseCount++;
           currentPhase = {
-            number: phaseMatch[1],
-            name: phaseMatch[2].trim(),
+            number: phaseCount,
+            name: phaseMatch[2].replace(/[-:]+$/, '').trim(),
             tasks: []
           };
           continue;
         }
-        
-        // Also match ### headers as sub-phases
-        const subPhaseMatch = line.match(/^### (\d+\.\d+)\s+(.+)/);
-        if (subPhaseMatch && currentPhase) {
-          currentTask = {
-            id: subPhaseMatch[1],
-            title: subPhaseMatch[2].replace(/\*\*/g, '').trim(),
-            status: 'pending',
-            files: [],
-            details: []
-          };
-          currentPhase.tasks.push(currentTask);
-          continue;
-        }
-        
-        // Task line (- [ ] or - [x] or 🔄)
-        const taskMatch = line.match(/^- \[([ x])\]\s+\*\*(.+?)\*\*/);
+        // Task line: any bullet point (not just checklists)
+        const taskMatch = line.match(/^\s*[-*]\s+(.*)/);
         if (taskMatch && currentPhase) {
+          let title = taskMatch[1].replace(/\*\*/g, '').trim();
+          let status = 'pending';
+          if (/✅|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b/i.test(title)) status = 'completed';
+          else if (/🔄|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b/i.test(title)) status = 'in-progress';
+          else if (/⚠️|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b/i.test(title)) status = 'pending';
+          // Remove status markers from title
+          title = title.replace(/(✅|🔄|⚠️|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b)/gi, '').replace(/[-:]+$/, '').trim();
           currentTask = {
             id: `${currentPhase.number}.${currentPhase.tasks.length + 1}`,
-            title: taskMatch[2].trim(),
-            status: taskMatch[1] === 'x' ? 'completed' : 'pending',
+            title,
+            status,
             files: [],
             details: []
           };
           currentPhase.tasks.push(currentTask);
           continue;
         }
-        
-        // Check for status markers
-        if (line.includes('🔄') && currentTask) {
-          currentTask.status = 'in-progress';
-        }
-        if (line.includes('✅') && currentTask) {
-          currentTask.status = 'completed';
-        }
-        
         // File references
         if (currentTask && line.match(/^\s+- Files?:/i)) {
           currentTask.files.push(line.replace(/^\s+- Files?:\s*/i, '').trim());
         }
-        
         // E2E or Unit test references
         if (currentTask && line.match(/^\s+- (E2E|Unit|Tests?):/i)) {
           currentTask.details.push(line.trim());
         }
       }
-      
       if (currentPhase) phases.push(currentPhase);
-      
       return phases;
     }
     
@@ -701,9 +685,12 @@
       }).join('');
     }
     
+
     function togglePhase(index) {
       const phase = document.querySelector(`[data-phase="${index}"]`);
-      phase.classList.toggle('expanded');
+      if (phase) {
+        phase.classList.toggle('expanded');
+      }
     }
     
     function togglePlan() {
@@ -861,9 +848,9 @@
     
     // Initial load
     loadData();
-    
-    // Auto-refresh every 3 seconds
-    setInterval(loadData, 3000);
+
+    // Manual refresh only
+    document.getElementById('refresh-btn').onclick = loadData;
   </script>
 </body>
 </html>

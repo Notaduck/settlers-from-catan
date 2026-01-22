@@ -238,16 +238,14 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const canBuyDevCard = useMemo(() => {
     if (interactionsDisabled || !currentPlayer || !gameState) return false;
     const isMyTurn = gameState.players[gameState.currentTurn]?.id === currentPlayerId;
-    const isTradePhase = isTurnPhase(
-      gameState.turnPhase,
-      TurnPhase.TRADE,
-      "TURN_PHASE_TRADE"
-    );
+    const isTradeOrBuildPhase = 
+      isTurnPhase(gameState.turnPhase, TurnPhase.TRADE, "TURN_PHASE_TRADE") ||
+      isTurnPhase(gameState.turnPhase, TurnPhase.BUILD, "TURN_PHASE_BUILD");
     const hasResources = 
       (currentPlayer.resources?.ore ?? 0) >= 1 &&
       (currentPlayer.resources?.wheat ?? 0) >= 1 &&
       (currentPlayer.resources?.sheep ?? 0) >= 1;
-    return isMyTurn && isTradePhase && hasResources;
+    return isMyTurn && isTradeOrBuildPhase && hasResources;
   }, [interactionsDisabled, currentPlayer, gameState, currentPlayerId]);
 
   const canPlayDevCard = useMemo(() => {

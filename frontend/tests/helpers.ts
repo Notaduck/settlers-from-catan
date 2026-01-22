@@ -371,6 +371,58 @@ export async function buildCity(page: Page, vertexSelector: string) {
 }
 
 /**
+ * Wait for specific resources to be updated in the UI after granting via API
+ */
+export async function waitForResourcesUpdated(
+  page: Page,
+  expectedResources: {
+    ore?: number;
+    wheat?: number;
+    sheep?: number;
+    wood?: number;
+    brick?: number;
+  }
+) {
+  // Wait for each expected resource to be at least the specified amount
+  for (const [resource, minAmount] of Object.entries(expectedResources)) {
+    if (minAmount === undefined) continue;
+    
+    await expect(async () => {
+      const resourceElement = page.locator(`[data-cy='resource-${resource}'] .resource-count`);
+      const currentText = await resourceElement.textContent();
+      const currentAmount = parseInt(currentText || '0', 10);
+      expect(currentAmount).toBeGreaterThanOrEqual(minAmount);
+    }).toPass({
+      timeout: 15000, // Extended timeout for WebSocket propagation
+      intervals: [1000] // Check every second
+    });
+  }
+}
+
+/**
+ * Grant resources and wait for them to be reflected in the UI
+ */
+export async function grantResourcesAndWait(
+  request: APIRequestContext,
+  page: Page,
+  gameCode: string,
+  playerId: string,
+  resources: {
+    wood?: number;
+    brick?: number;
+    sheep?: number;
+    wheat?: number;
+    ore?: number;
+  }
+) {
+  // Grant the resources via API
+  await grantResources(request, gameCode, playerId, resources);
+  
+  // Wait for the resources to be reflected in the UI
+  await waitForResourcesUpdated(page, resources);
+}
+
+/**
  * Buy a development card (assumes player has resources)
  */
 export async function buyDevelopmentCard(page: Page) {

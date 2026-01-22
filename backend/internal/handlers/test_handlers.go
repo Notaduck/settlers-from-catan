@@ -50,16 +50,19 @@ func (h *Handler) HandleGrantResources(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load game state
-	var stateJSON string
-	err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE code = ?", req.GameCode)
+	// Load game state and ID
+	var gameRow struct {
+		ID    string `db:"id"`
+		State string `db:"state"`
+	}
+	err := h.db.Get(&gameRow, "SELECT id, state FROM games WHERE code = ?", req.GameCode)
 	if err != nil {
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
 	var state game.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
 		http.Error(w, "Failed to deserialize game state", http.StatusInternalServerError)
 		return
 	}
@@ -102,7 +105,7 @@ func (h *Handler) HandleGrantResources(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast updated state to all players
-	h.broadcastGameStateProto(req.GameCode, &state)
+	h.broadcastGameStateProto(gameRow.ID, &state)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
@@ -137,16 +140,19 @@ func (h *Handler) HandleForceDiceRoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load game state
-	var stateJSON string
-	err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE code = ?", req.GameCode)
+	// Load game state and ID
+	var gameRow struct {
+		ID    string `db:"id"`
+		State string `db:"state"`
+	}
+	err := h.db.Get(&gameRow, "SELECT id, state FROM games WHERE code = ?", req.GameCode)
 	if err != nil {
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
 	var state game.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
 		http.Error(w, "Failed to deserialize game state", http.StatusInternalServerError)
 		return
 	}
@@ -189,7 +195,7 @@ func (h *Handler) HandleForceDiceRoll(w http.ResponseWriter, r *http.Request) {
 		ResourcesDistributed: distributions,
 	}
 	h.broadcastServerMessage(req.GameCode, "diceRolled", rolledPayload)
-	h.broadcastGameStateProto(req.GameCode, &state)
+	h.broadcastGameStateProto(gameRow.ID, &state)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -229,16 +235,19 @@ func (h *Handler) HandleSetGameState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load game state
-	var stateJSON string
-	err := h.db.Get(&stateJSON, "SELECT state FROM games WHERE code = ?", req.GameCode)
+	// Load game state and ID
+	var gameRow struct {
+		ID    string `db:"id"`
+		State string `db:"state"`
+	}
+	err := h.db.Get(&gameRow, "SELECT id, state FROM games WHERE code = ?", req.GameCode)
 	if err != nil {
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
 	var state game.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
 		http.Error(w, "Failed to deserialize game state", http.StatusInternalServerError)
 		return
 	}
@@ -289,7 +298,7 @@ func (h *Handler) HandleSetGameState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Broadcast updated state to all players
-	h.broadcastGameStateProto(req.GameCode, &state)
+	h.broadcastGameStateProto(gameRow.ID, &state)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

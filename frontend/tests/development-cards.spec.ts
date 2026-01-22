@@ -3,6 +3,7 @@ import {
   startTwoPlayerGame,
   completeSetupPhase,
   grantResources,
+  grantResourcesAndWait,
   rollDice,
   endTurn,
   buyDevelopmentCard,
@@ -59,20 +60,17 @@ test.describe("Development Cards", () => {
     // Roll dice to enter TRADE phase
     await rollDice(hostPage);
 
-    // Grant resources for buying dev card (1 ore, 1 wheat, 1 sheep)
-    await grantResources(request, hostSession.code, hostSession.playerId, {
+    // Grant resources for buying dev card (1 ore, 1 wheat, 1 sheep) and wait for UI update
+    await grantResourcesAndWait(request, hostPage, hostSession.code, hostSession.playerId, {
       ore: 1,
       wheat: 1,
       sheep: 1,
     });
 
-    // Wait for resources to update from WebSocket (increased timeout)
-    await hostPage.waitForTimeout(3000);
-
     // Buy dev card button should be enabled
     await expect(
       hostPage.locator("[data-cy='buy-dev-card-btn']")
-    ).toBeEnabled({ timeout: 10000 });
+    ).toBeEnabled({ timeout: 5000 });
 
     // Click buy button
     await buyDevelopmentCard(hostPage);
@@ -131,12 +129,11 @@ test.describe("Development Cards", () => {
 
     // Buy multiple dev cards to potentially get different types
     for (let i = 0; i < 5; i++) {
-      await grantResources(request, hostSession.code, hostSession.playerId, {
+      await grantResourcesAndWait(request, hostPage, hostSession.code, hostSession.playerId, {
         ore: 1,
         wheat: 1,
         sheep: 1,
       });
-      await hostPage.waitForTimeout(200);
       await buyDevelopmentCard(hostPage);
       await hostPage.waitForTimeout(500);
     }
