@@ -14,6 +14,8 @@ You are implementing Settlers from Catan with Go backend (unit tested) and React
 
 0d. For reference, frontend source code is in `frontend/src/*`.
 
+0e. **Check current iteration**: Read `.ralph-iteration` file if it exists. - If iteration % 10 == 0, this is an **E2E AUDIT iteration** — see section 2a. - Otherwise, run only the related spec file for your changes.
+
 ## 1. Implement
 
 Your task is to implement functionality per the specifications.
@@ -30,6 +32,7 @@ Your task is to implement functionality per the specifications.
 **When writing Go tests:**
 
 1. **Use map-based table-driven tests** (better than slices — clearer names, catches test dependencies):
+
    ```go
    tests := map[string]struct {
        setup     func(*GameState)
@@ -56,7 +59,7 @@ Your task is to implement functionality per the specifications.
 
 7. **Test behavior, not implementation** — use public APIs, not internal state
 
-8. **No flaky tests**: 
+8. **No flaky tests**:
    - Avoid `time.Sleep()` — use `select` with `time.After()` for timeouts
    - Use seedable randomness
    - Run with `go test -race ./...` to catch race conditions
@@ -77,20 +80,76 @@ make lint
 
 # Verify the projects build
 make build
-
-# E2E tests - run if frontend changed (loop.sh handles servers)
-# The loop will auto-start servers and run E2E if frontend/src/* changed
 ```
 
 If backend tests or typecheck fail, fix them before committing.
 
-## 2a. E2E Test Requirements
+## 2a. E2E Test Strategy (IMPORTANT)
+
+We have ~80% failing E2E tests. Use this tiered strategy:
+
+**Timing expectations:**
+- Single spec file: ~1-2 minutes
+- Full E2E audit (all specs): ~10 minutes
+
+### Every Iteration: Run Related E2E Spec Only
+
+When you modify a feature, run ONLY the related spec file:
+
+```bash
+# Map your work to the right spec:
+# - Board/vertices/edges → npx playwright test interactive-board.spec.ts
+# - Setup phase UI → npx playwright test setup-phase.spec.ts
+# - Trading UI → npx playwright test trading.spec.ts
+# - Robber/discard UI → npx playwright test robber.spec.ts
+# - Dev cards UI → npx playwright test development-cards.spec.ts
+# - Longest road UI → npx playwright test longest-road.spec.ts
+# - Ports UI → npx playwright test ports.spec.ts
+# - Victory screen → npx playwright test victory.spec.ts
+# - Lobby/ready/basic → npx playwright test game-flow.spec.ts
+
+cd frontend && npx playwright test <relevant-spec>.spec.ts --reporter=list
+```
+
+### Every 10th Iteration: Full E2E Audit
+
+On iterations 10, 20, 30... (check `.ralph-iteration` file):
+
+1. Run ALL E2E tests:
+
+   ```bash
+   cd frontend && npx playwright test --reporter=list 2>&1 | tee /tmp/e2e-full.log
+   ```
+
+2. Update `E2E_STATUS.md` with:
+
+   - Total tests, passed, failed per spec
+   - List of failing test names
+   - Brief notes on failure patterns (missing UI? backend error? timing?)
+
+3. Add 1-3 high-priority E2E fix tasks to `IMPLEMENTATION_PLAN.md`
+
+4. **If an audit iteration**: Your primary task is updating E2E_STATUS.md and the plan.
+   You may skip implementing a new feature this iteration.
+
+### Fixing E2E Failures
+
+When you see a failing E2E test:
+
+1. **Check if it's your feature** — fix it now
+2. **Check if it's a pre-existing failure** — note in `E2E_STATUS.md`, continue
+3. **If you have bandwidth** — pick ONE failing test from `E2E_STATUS.md` and fix it
+
+**Test result artifacts** are in `frontend/test-results/` — check screenshots/traces for failures.
+
+## 2b. E2E Test Requirements
 
 **When modifying frontend/src/**, you MUST:
 
 1. Ensure related user flows have Playwright coverage in `frontend/tests/*.spec.ts`
 2. Add `data-cy="..."` attributes to interactive elements (buttons, inputs, etc.)
 3. Test the happy path at minimum
+4. **Run the related spec file** (see 2a above)
 
 **E2E testing philosophy:**
 
@@ -98,6 +157,19 @@ If backend tests or typecheck fail, fix them before committing.
 - One spec file per major flow (game-flow, setup-phase, trading, etc.)
 - Use `data-cy` selectors for stability
 - Wait for WebSocket state changes explicitly
+
+**Spec file mapping:**
+| Feature | Spec File |
+|---------|-----------|
+| Lobby, ready, basic game | `game-flow.spec.ts` |
+| Board clicks, vertices, edges | `interactive-board.spec.ts` |
+| Setup phase placements | `setup-phase.spec.ts` |
+| Robber, discard, steal | `robber.spec.ts` |
+| Bank/player trading | `trading.spec.ts` |
+| Development cards | `development-cards.spec.ts` |
+| Longest road tracking | `longest-road.spec.ts` |
+| Port access, maritime trade | `ports.spec.ts` |
+| Victory detection | `victory.spec.ts` |
 
 ## 3. Update Plan
 

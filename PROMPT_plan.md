@@ -33,6 +33,12 @@ You are analyzing a Settlers from Catan implementation to create a prioritized i
 
 0e. Study `proto/catan/v1/*.proto` to understand the API contract.
 
+0f. **Check E2E test status** (IMPORTANT):
+
+- Review `E2E_STATUS.md` if it exists for known failing tests
+- Check `frontend/test-results/` for recent failure artifacts
+- Run quick E2E audit if needed: `cd frontend && npx playwright test --reporter=list 2>&1 | head -100`
+
 ## 1. Gap Analysis & Plan Creation
 
 Compare existing source code against `specs/*`. Create/update `@IMPLEMENTATION_PLAN.md` as a prioritized bullet point list.
@@ -43,6 +49,27 @@ Consider:
 - Skipped or flaky tests
 - Inconsistent patterns between specs and code
 - Dependencies between features (interactive-board unblocks everything)
+- **Failing E2E tests** — group related failures as tasks
+
+## 1a. E2E Audit Tasks
+
+When updating the plan, include an **E2E Stabilization** section:
+
+1. Group failing E2E tests by spec file
+2. Identify root causes (missing backend logic? missing UI? broken selector?)
+3. Create atomic fix tasks: "Fix E2E: [test name] - [likely cause]"
+
+**Current E2E spec files:**
+
+- `game-flow.spec.ts` — Lobby, ready, basic game start
+- `interactive-board.spec.ts` — Board vertex/edge clicks
+- `setup-phase.spec.ts` — Setup placements
+- `robber.spec.ts` — Robber move, discard, steal
+- `trading.spec.ts` — Bank and player trading
+- `development-cards.spec.ts` — Dev card buying/playing
+- `longest-road.spec.ts` — Road length tracking
+- `ports.spec.ts` — Maritime trade ratios
+- `victory.spec.ts` — Win detection
 
 **Priority Order:**
 

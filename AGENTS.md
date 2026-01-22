@@ -129,7 +129,7 @@ func TestPlaceSettlement(t *testing.T) {
             state := NewGameState(...)
             tt.setup(state)
             err := PlaceSettlement(state, tt.playerID, tt.vertexID)
-            
+
             if tt.wantErr {
                 if err == nil {
                     t.Error("expected error but got none")
@@ -154,10 +154,10 @@ func TestUserService_CreateUser(t *testing.T) {
     mockRepo := &MockUserRepository{users: make(map[string]*User)}
     service := &UserService{repo: mockRepo}
     newUser := &User{Name: "John"}
-    
+
     // Execute
     err := service.CreateUser(newUser)
-    
+
     // Assert
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
@@ -240,14 +240,14 @@ func TestGameHandler_CreateGame(t *testing.T) {
             expectedCode: 400,
         },
     }
-    
+
     for name, tt := range tests {
         t.Run(name, func(t *testing.T) {
             req := httptest.NewRequest(tt.method, "/games", strings.NewReader(tt.body))
             rec := httptest.NewRecorder()
-            
+
             handler.ServeHTTP(rec, req)
-            
+
             if rec.Code != tt.expectedCode {
                 t.Errorf("expected status %d, got %d", tt.expectedCode, rec.Code)
             }
@@ -262,10 +262,10 @@ func TestGameHandler_CreateGame(t *testing.T) {
 func TestConcurrentResourceAccess(t *testing.T) {
     state := NewGameState(...)
     numGoroutines := 100
-    
+
     var wg sync.WaitGroup
     wg.Add(numGoroutines)
-    
+
     for i := 0; i < numGoroutines; i++ {
         go func() {
             defer wg.Done()
@@ -273,9 +273,9 @@ func TestConcurrentResourceAccess(t *testing.T) {
             state.AddResource("p1", pb.TileResource_TILE_RESOURCE_WOOD, 1)
         }()
     }
-    
+
     wg.Wait()
-    
+
     // Verify final state
     if state.Players[0].Resources.Wood != int32(numGoroutines) {
         t.Errorf("race condition detected")
@@ -286,10 +286,11 @@ func TestConcurrentResourceAccess(t *testing.T) {
 ### Common Mistakes to Avoid
 
 1. **Testing implementation, not behavior**:
+
    ```go
    // BAD: Testing internal state
    if cache.internalMap["key"] == "value" { ... }
-   
+
    // GOOD: Testing public behavior
    value, exists := cache.Get("key")
    ```
@@ -297,10 +298,11 @@ func TestConcurrentResourceAccess(t *testing.T) {
 2. **Not testing error cases** — most production bugs happen in error paths
 
 3. **Using `time.Sleep()` in tests** — use channels/signals instead:
+
    ```go
    // BAD
    time.Sleep(100 * time.Millisecond)
-   
+
    // GOOD
    select {
    case result := <-ch:

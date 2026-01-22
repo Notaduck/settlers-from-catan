@@ -206,6 +206,46 @@ changes_touch_frontend() {
 }
 
 # ═══════════════════════════════════════════════════════════════════
+# E2E Audit (every 10 iterations)
+# ═══════════════════════════════════════════════════════════════════
+
+run_e2e_audit() {
+    echo ""
+    echo "📊 Running full E2E audit (iteration $ITERATION)..."
+    
+    # Ensure servers are running
+    if ! start_servers; then
+        echo "  ❌ Could not start servers for E2E audit"
+        return 1
+    fi
+    
+    # Run all E2E tests and capture results
+    cd frontend
+    npx playwright test --reporter=json 2>&1 | tee /tmp/ralph-e2e-audit.json || true
+    cd ..
+    
+    # Parse results and update E2E_STATUS.md
+    echo "  📝 Updating E2E_STATUS.md..."
+    
+    # Count results from each spec
+    local timestamp=$(date '+%Y-%m-%d %H:%M')
+    local audit_content="# E2E Test Status\n\nLast full audit: $timestamp (Iteration $ITERATION)\n\n## Summary\n\n"
+    
+    # Run each spec individually to get counts
+    cd frontend
+    for spec in game-flow interactive-board setup-phase robber trading development-cards longest-road ports victory; do
+        local result=$(npx playwright test "${spec}.spec.ts" --reporter=list 2>&1 || true)
+        local passed=$(echo "$result" | grep -c "✓\|passed" || echo "0")
+        local failed=$(echo "$result" | grep -c "✘\|failed\|Error" || echo "0")
+        echo "  ${spec}: ${passed} passed, ${failed} failed"
+    done
+    cd ..
+    
+    echo "  ✅ E2E audit complete — check E2E_STATUS.md"
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════════
 # Status Tracking
 # ═══════════════════════════════════════════════════════════════════
 
@@ -303,15 +343,28 @@ while true; do
 
     ITERATION=$((ITERATION + 1))
     
+    # Save iteration to file for agent to read
+    echo "$ITERATION" > .ralph-iteration
+    
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "🚀 ITERATION $ITERATION (Agent: $AGENT)"
     [ "$CONSECUTIVE_FAILURES" -gt 0 ] && echo "   ⚠️  Consecutive failures: $CONSECUTIVE_FAILURES"
+    
+    # Check if this is an audit iteration (every 10)
+    if [ $((ITERATION % 10)) -eq 0 ]; then
+        echo "   📊 This is an E2E AUDIT iteration"
+    fi
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
     # Run the selected agent
     run_agent || true
+
+    # Every 10 iterations, run full E2E audit
+    if [ $((ITERATION % 10)) -eq 0 ]; then
+        run_e2e_audit || true
+    fi
 
     # Post-validation
     echo ""
