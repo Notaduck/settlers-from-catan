@@ -344,7 +344,13 @@ export async function waitForGamePhase(page: Page, phase: string) {
  */
 export async function rollDice(page: Page) {
   await page.locator("[data-cy='roll-dice-btn']").click();
-  // Wait for dice result to appear
+  await waitForDiceResult(page);
+}
+
+/**
+ * Wait for dice result to appear (useful after forced dice rolls)
+ */
+export async function waitForDiceResult(page: Page) {
   await expect(page.locator("[data-cy='dice-result']")).toBeVisible({
     timeout: 10000,
   });

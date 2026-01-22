@@ -3,7 +3,21 @@ import {
   startTwoPlayerGame,
   completeSetupPhase,
   grantResources,
+  endTurn,
+  waitForGamePhase,
+  forceDiceRoll,
+  waitForDiceResult,
+  waitForResourcesUpdated,
 } from "./helpers";
+
+async function getResourceCount(
+  page: import("@playwright/test").Page,
+  resource: "wood" | "brick" | "sheep" | "wheat" | "ore"
+) {
+  const text = await page.locator(`[data-cy='resource-${resource}']`).textContent();
+  const match = text?.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
 
 /**
  * Ports E2E Tests
@@ -60,12 +74,15 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant resources for testing trade (4 wood to trade)
     await grantResources(request, hostSession.code, hostSession.playerId, {
       wood: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, { wood: 4 });
 
     // Open bank trade modal
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -99,12 +116,15 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant only 2 wood (not enough for 4:1 trade)
     await grantResources(request, hostSession.code, hostSession.playerId, {
       wood: 2,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, { wood: 2 });
 
     // Open bank trade modal
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -125,7 +145,7 @@ test.describe("Ports - Maritime Trade", () => {
     await hostPage.locator("[data-cy='bank-trade-cancel-btn']").click();
   });
 
-  test("Player with 3:1 port sees 3:1 trade ratio", async ({
+  test("Port access can improve trade ratio when available", async ({
     page,
     context,
     request,
@@ -137,6 +157,9 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // This test assumes setup phase may place settlements near ports
     // To ensure port access, we'll place a settlement on a coastal vertex
@@ -149,43 +172,50 @@ test.describe("Ports - Maritime Trade", () => {
       sheep: 1,
       wheat: 1,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, {
+      wood: 1,
+      brick: 1,
+      sheep: 1,
+      wheat: 1,
+    });
 
-    // Try to build a settlement on a coastal vertex (where ports are located)
-    // Note: This is a best-effort test - actual port access depends on game board layout
-    await hostPage.locator("[data-cy='build-settlement-btn']").click();
+    // Switch to build phase to place settlement
+    await hostPage.locator("[data-cy='build-phase-btn']").click();
 
     // Check if there are any valid coastal vertices available
     const validVertices = hostPage.locator("[data-cy^='vertex-'].vertex--valid");
     const vertexCount = await validVertices.count();
 
-    if (vertexCount > 0) {
-      // Place settlement on first valid vertex
-      await validVertices.first().click();
-      await hostPage.waitForTimeout(500);
-
-      // Check if we got port access by opening trade modal
-      // Grant enough resources to test the ratio
-      await grantResources(request, hostSession.code, hostSession.playerId, {
-        wood: 4, // Enough for both 3:1 and 4:1
-      });
-      await hostPage.waitForTimeout(500);
-
-      await hostPage.locator("[data-cy='bank-trade-btn']").click();
-      await expect(
-        hostPage.locator("[data-cy='bank-trade-modal']")
-      ).toBeVisible();
-
-      // Check the trade ratio - it could be 3:1, 2:1, or 4:1 depending on port access
-      const ratioElement = hostPage.locator("[data-cy='trade-ratio-1']");
-      await expect(ratioElement).toBeVisible();
-      const ratioText = await ratioElement.textContent();
-      
-      // Verify ratio is one of the valid values
-      expect(ratioText).toMatch(/[234]:1/);
-
-      await hostPage.locator("[data-cy='bank-trade-cancel-btn']").click();
+    if (vertexCount === 0) {
+      return;
     }
+
+    // Place settlement on first valid vertex
+    await validVertices.first().click();
+    await hostPage.waitForTimeout(500);
+
+    // Check if we got port access by opening trade modal
+    // Grant enough resources to test the ratio
+    await grantResources(request, hostSession.code, hostSession.playerId, {
+      wood: 4, // Enough for both 3:1 and 4:1
+    });
+    await waitForResourcesUpdated(hostPage, { wood: 4 });
+
+    await hostPage.locator("[data-cy='trade-phase-btn']").click();
+    await hostPage.locator("[data-cy='bank-trade-btn']").click();
+    await expect(
+      hostPage.locator("[data-cy='bank-trade-modal']")
+    ).toBeVisible();
+
+    // Check the trade ratio - it could be 3:1, 2:1, or 4:1 depending on port access
+    const ratioElement = hostPage.locator("[data-cy='trade-ratio-1']");
+    await expect(ratioElement).toBeVisible();
+    const ratioText = await ratioElement.textContent();
+
+    // Verify ratio is one of the valid values
+    expect(ratioText).toMatch(/[234]:1/);
+
+    await hostPage.locator("[data-cy='bank-trade-cancel-btn']").click();
   });
 
   test("Bank trade executes successfully with valid resources", async ({
@@ -200,17 +230,19 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant 4 wood for trading (default 4:1 ratio)
     await grantResources(request, hostSession.code, hostSession.playerId, {
       wood: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, { wood: 4 });
 
     // Verify starting resources
-    await expect(
-      hostPage.locator("[data-cy='resource-wood']")
-    ).toContainText("4");
+    const startingWood = await getResourceCount(hostPage, "wood");
+    const startingBrick = await getResourceCount(hostPage, "brick");
 
     // Open bank trade modal
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -233,12 +265,16 @@ test.describe("Ports - Maritime Trade", () => {
     await hostPage.waitForTimeout(1000);
 
     // Verify resources changed: -4 wood, +1 brick
-    await expect(
-      hostPage.locator("[data-cy='resource-wood']")
-    ).toContainText("0", { timeout: 5000 });
-    await expect(
-      hostPage.locator("[data-cy='resource-brick']")
-    ).toContainText("1", { timeout: 5000 });
+    await expect
+      .poll(async () => getResourceCount(hostPage, "wood"), {
+        timeout: 5000,
+      })
+      .toBe(startingWood - 4);
+    await expect
+      .poll(async () => getResourceCount(hostPage, "brick"), {
+        timeout: 5000,
+      })
+      .toBe(startingBrick + 1);
   });
 
   test("Port access validation - settlement on port vertex grants access", async ({
@@ -253,6 +289,9 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // During setup phase, each player places 2 settlements
     // Check if any of these settlements are on port vertices by checking the trade ratio
@@ -265,7 +304,13 @@ test.describe("Ports - Maritime Trade", () => {
       wheat: 4,
       ore: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, {
+      wood: 4,
+      brick: 4,
+      sheep: 4,
+      wheat: 4,
+      ore: 4,
+    });
 
     // Open bank trade modal and check each resource type's ratio
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -310,6 +355,9 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant resources for testing
     await grantResources(request, hostSession.code, hostSession.playerId, {
@@ -319,7 +367,13 @@ test.describe("Ports - Maritime Trade", () => {
       wheat: 4,
       ore: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, {
+      wood: 4,
+      brick: 4,
+      sheep: 4,
+      wheat: 4,
+      ore: 4,
+    });
 
     // Open bank trade modal
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -379,6 +433,9 @@ test.describe("Ports - Maritime Trade", () => {
       await startTwoPlayerGame(page, context, request);
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant resources to both players
     await grantResources(request, hostSession.code, hostSession.playerId, {
@@ -387,7 +444,8 @@ test.describe("Ports - Maritime Trade", () => {
     await grantResources(request, guestSession.code, guestSession.playerId, {
       wood: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, { wood: 4 });
+    await waitForResourcesUpdated(guestPage, { wood: 4 });
 
     // Check host's trade ratio
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
@@ -402,6 +460,12 @@ test.describe("Ports - Maritime Trade", () => {
     await hostPage.locator("[data-cy='bank-trade-cancel-btn']").click();
 
     // Check guest's trade ratio
+    await endTurn(hostPage);
+    await expect(
+      guestPage.locator("[data-cy='current-player-name']")
+    ).toContainText("Guest", { timeout: 10000 });
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(guestPage);
     await guestPage.locator("[data-cy='bank-trade-btn']").click();
     await expect(
       guestPage.locator("[data-cy='bank-trade-modal']")
@@ -433,6 +497,9 @@ test.describe("Ports - Maritime Trade", () => {
     );
 
     await completeSetupPhase(hostPage, guestPage);
+    await waitForGamePhase(hostPage, "PLAYING");
+    await forceDiceRoll(request, hostSession.code, 8);
+    await waitForDiceResult(hostPage);
 
     // Grant all resources
     await grantResources(request, hostSession.code, hostSession.playerId, {
@@ -442,7 +509,13 @@ test.describe("Ports - Maritime Trade", () => {
       wheat: 4,
       ore: 4,
     });
-    await hostPage.waitForTimeout(500);
+    await waitForResourcesUpdated(hostPage, {
+      wood: 4,
+      brick: 4,
+      sheep: 4,
+      wheat: 4,
+      ore: 4,
+    });
 
     // Open bank trade modal
     await hostPage.locator("[data-cy='bank-trade-btn']").click();
