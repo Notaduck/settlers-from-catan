@@ -1,193 +1,95 @@
 # E2E Test Status
 
 Last full audit: January 22, 2026 - Iteration 2
+Latest partial audit: January 22, 2026 - Iteration 3 (interactive-board, longest-road, ports, robber, setup-phase, trading, victory)
 
-## Summary
+## Latest Partial Audit (Iteration 3)
 
-| Spec File                 | Passed | Failed | Total | Status |
-| ------------------------- | ------ | ------ | ----- | ------ |
-| game-flow.spec.ts         | 4      | 0      | 4     | ✅ PASSING |
-| development-cards.spec.ts | 2      | 10     | 12    | ⚠️ PARTIAL - Timing/connectivity on retry |
-| interactive-board.spec.ts | ?      | ?      | 8     | ❓ NOT TESTED |
-| longest-road.spec.ts      | ?      | ?      | 7     | ❓ NOT TESTED |
-| ports.spec.ts             | ?      | ?      | 10    | ❓ NOT TESTED |
-| robber.spec.ts            | ?      | ?      | 7     | ❓ NOT TESTED |
-| setup-phase.spec.ts       | ?      | ?      | 2     | ❓ NOT TESTED |
-| trading.spec.ts           | 2      | 3      | 12    | ⚠️ PARTIAL - Timed out (Jan 22) |
-| victory.spec.ts           | ?      | ?      | 5     | ❓ NOT TESTED |
-| **TOTAL**                 | **8**  | **13** | **67** | ⚠️ MIXED - Partial trading run, several tests still failing |
+| Spec File                 | Passed | Failed | Flaky | Total | Status |
+| ------------------------- | ------ | ------ | ----- | ----- | ------ |
+| interactive-board.spec.ts | 6      | 0      | 1     | 7     | ⚠️ FLAKY (placement highlight) |
+| longest-road.spec.ts      | 1      | 6      | 0     | 7     | ❌ FAILING |
+| ports.spec.ts             | 1      | 8      | 0     | 9     | ❌ FAILING |
+| robber.spec.ts            | 5      | 2      | 0     | 7     | ❌ FAILING |
+| setup-phase.spec.ts       | 2      | 0      | 0     | 2     | ✅ PASSING |
+| trading.spec.ts           | 5      | 6      | 1     | 12    | ❌ FAILING (1 flaky) |
+| victory.spec.ts           | 4      | 1      | 0     | 5     | ❌ FAILING |
+| **TOTAL (Iteration 3)**   | **24** | **23** | **2** | **49** | ⚠️ MIXED |
 
-**Status**: 🟡 **PARTIAL SUCCESS** - E2E infrastructure working, some tests have timing/retry issues
+## Previously Reported (Not Rerun in Iteration 3)
 
-## Key Findings
+| Spec File                 | Passed | Failed | Total | Status | Notes |
+| ------------------------- | ------ | ------ | ----- | ------ | ----- |
+| game-flow.spec.ts         | 4      | 0      | 4     | ✅ PASSING | Last run Iteration 2 |
+| development-cards.spec.ts | 2      | 10     | 12    | ⚠️ PARTIAL | Last run Iteration 2 (may be outdated) |
 
-**✅ WORKING**: E2E infrastructure is functional
-- Backend services start properly via Playwright webServer config
-- Basic connectivity and game flow works 
-- `game-flow.spec.ts` passes all 4 tests consistently
-- Backend shows proper client registration/unregistration in logs
+## Key Findings (Iteration 3)
 
-**⚠️ ISSUES IDENTIFIED**: Specific test failures
-- Development cards tests: 10/12 failing due to timing/retry connection issues
-- First test attempt may timeout waiting for UI elements
-- Retry attempts fail with `connect ECONNREFUSED ::1:8080` suggesting service lifecycle issues
-- Pattern suggests tests may be too aggressive or services not handling rapid test execution well
-- Trading tests: `trading.spec.ts` partial run timed out after 120s; 3 tests consistently failed (see below)
+**✅ WORKING**
+- setup-phase.spec.ts passes 2/2.
+- interactive-board.spec.ts mostly stable (1 flaky on valid placement highlighting).
 
-**❓ UNKNOWN**: Status of other spec files
-- Need to test remaining 7 spec files to get complete picture
-- infrastructure is working so other tests may pass or have similar isolated issues
+**❌ FAILURES CLUSTER A - Trade UI availability**
+- ports.spec.ts and trading.spec.ts frequently fail to find or click `[data-cy='bank-trade-btn']` or open bank trade modal.
+- trading.spec.ts also fails trade offer modal appearance and trade phase button expectations.
 
-## Confirmed Working Tests
+**❌ FAILURES CLUSTER B - Longest Road UI/flow**
+- longest-road.spec.ts fails on missing road length elements (`[data-cy='road-length-{playerId}']`) and inability to click `[data-cy='build-road-btn']`.
+- Some setups show resource counts not matching expected preconditions.
 
-### game-flow.spec.ts (4/4 passing) ✅
-- ✅ should create a new game and show lobby
-- ✅ should join an existing game  
-- ✅ should allow players to toggle ready state
-- ✅ should start game when both players ready
+**❌ FAILURES CLUSTER C - Robber steal UI**
+- robber.spec.ts fails on steal modal visibility (`[data-cy='steal-modal']` not found) for adjacent-player and steal-transfer tests.
+- Backend logs show `Failed to parse move robber request` during these failures.
 
-## Confirmed Failing Tests  
+**❌ FAILURES CLUSTER D - Victory flow setup**
+- victory.spec.ts fails in “Game shows victory screen when player reaches 10 VP” due to missing `[data-cy='player-ore']` resource readout.
 
-### development-cards.spec.ts (2/12 passing)
-- ✅ should display development cards panel during playing phase
-- ❌ should be able to buy development card with correct resources (SKIPPED)
-- ✅ should not be able to buy development card without resources  
-- ❌ should show correct card types with play buttons (except VP cards) (TIMEOUT on UI elements)
-- ❌ Year of Plenty modal should allow selecting 2 resources (TIMEOUT on UI elements) 
-- ❌ Monopoly modal should allow selecting 1 resource type (TIMEOUT on UI elements)
-- ❌ Monopoly should collect resources from all other players (TIMEOUT on UI elements)
-- ❌ Knight card should increment knight count and trigger Largest Army check (TIMEOUT on UI elements)
-- ❌ Victory Point cards should not have play button (TIMEOUT on UI elements)
-- ❓ should not be able to play dev card bought this turn
-- ❓ Road Building card should appear in dev cards panel
-- ❓ dev cards panel should show total card count
-- ❓ buying dev card should deduct correct resources
+## Notable Flaky Tests (Iteration 3)
 
-## Untested Spec Files
+- interactive-board.spec.ts: `highlights valid placements during setup` (initial run failed, retry passed).
+- trading.spec.ts: `Cannot propose trade without resources` (timeout opening propose trade modal).
 
-### interactive-board.spec.ts (0/8 passing)
-- vertices render on board
-- edges render on board
-- shows placement mode for setup turn
-- clicking vertex during setup places settlement
-- clicking edge during setup places road
-- invalid vertices are not clickable during setup
-- highlights valid placements during setup
+## Detailed Failures (Iteration 3)
 
-### longest-road.spec.ts (0/7 passing)
-- 5 connected roads awards Longest Road bonus
-- Longer road takes Longest Road from another player
-- Tie does not transfer Longest Road (current holder keeps)
-- Longest Road badge shows correct player name
-- Road length displayed for all players
-- No Longest Road badge before 5 roads threshold
-- Longest Road updates in real-time for all players
+### interactive-board.spec.ts (6/7, 1 flaky)
+- ⚠️ `highlights valid placements during setup` (valid vertex count 0 on first run)
 
-### ports.spec.ts (0/10 passing)
-- Ports render on board with correct icons
-- Bank trade shows 4:1 by default (no port access)
-- Cannot bank trade without enough resources
-- Player with 3:1 port sees 3:1 trade ratio
-- Bank trade executes successfully with valid resources
-- Port access validation - settlement on port vertex grants access
-- 2:1 specific port provides best ratio for that resource only
-- Multiple players can have different port access
-- Trade ratio updates when selecting different resources
+### longest-road.spec.ts (1/7)
+- ❌ `5 connected roads awards Longest Road bonus` (resource preconditions mismatch)
+- ❌ `Longer road takes Longest Road from another player` (cannot click build-road button)
+- ❌ `Tie does not transfer Longest Road (current holder keeps)` (cannot click build-road button)
+- ❌ `Longest Road badge shows correct player name` (cannot click build-road button)
+- ❌ `Road length displayed for all players` (missing `road-length-{playerId}` data-cy)
+- ❌ `Longest Road updates in real-time for all players` (cannot click build-road button)
 
-### robber.spec.ts (0/7 passing)
-- Rolling 7 shows discard modal for players with >7 cards
-- Discard modal enforces correct card count
-- After discard, robber move UI appears
-- Clicking hex moves robber
-- Steal UI shows adjacent players
-- Stealing transfers a resource
-- No steal phase when no adjacent players
+### ports.spec.ts (1/9)
+- ❌ `Bank trade shows 4:1 by default` (bank trade button/modal not available)
+- ❌ `Cannot bank trade without enough resources` (bank trade button/modal not available)
+- ❌ `Player with 3:1 port sees 3:1 trade ratio` (bank trade button/modal not available)
+- ❌ `Bank trade executes successfully with valid resources` (bank trade button/modal not available)
+- ❌ `Port access validation - settlement on port vertex grants access` (bank trade button/modal not available)
+- ❌ `2:1 specific port provides best ratio for that resource only` (bank trade button/modal not available)
+- ❌ `Multiple players can have different port access` (bank trade button/modal not available)
+- ❌ `Trade ratio updates when selecting different resources` (bank trade button/modal not available)
 
-### setup-phase.spec.ts (0/2 passing)
-- shows setup phase banner and turn indicator
-- round 2 settlement grants resources toast
+### robber.spec.ts (5/7)
+- ❌ `Steal UI shows adjacent players` (steal modal not visible)
+- ❌ `Stealing transfers a resource` (steal modal not visible)
 
-### trading.spec.ts (0/12 passing)
-- Bank trade 4:1 works
-- Cannot bank trade without 4 resources
-- Player can propose trade to another
-- Player can propose trade to specific player
-- Trade recipient sees offer modal
-- Accepting trade transfers resources
-- Declining trade notifies proposer
-- Cannot trade outside trade phase
-- Cannot propose trade without resources
-- Multiple trades per turn allowed
-- Bank trade button shows during trade phase only
-- Can switch between trade and build phases
+### trading.spec.ts (5/12, 1 flaky)
+- ❌ `Bank trade 4:1 works` (bank trade button/modal not available)
+- ❌ `Trade recipient sees offer modal` (trade offer modal not visible)
+- ❌ `Accepting trade transfers resources` (trade offer modal not visible)
+- ❌ `Declining trade notifies proposer` (resource preconditions mismatch)
+- ❌ `Cannot trade outside trade phase` (trade buttons not present/disabled check fails)
+- ❌ `Bank trade button shows during trade phase only` (trade button not present/disabled check fails)
+- ⚠️ `Cannot propose trade without resources` (flaky: propose trade button timeout)
 
-### trading.spec.ts (partial run - Jan 22, 2026)
-- ✅ Cannot bank trade without 4 resources
-- ✅ Player can propose trade to another (passes on retry)
-- ❌ Bank trade 4:1 works (timeout)
-- ❌ Trade recipient sees offer modal (timeout)
-- ❌ Accepting trade transfers resources (timeout)
-- ❓ Remaining tests not executed due to timeout: propose trade to specific player, decline trade notifies proposer, cannot trade outside trade phase, cannot propose trade without resources, multiple trades per turn allowed, bank trade button shows during trade phase only, can switch between trade and build phases
-
-### victory.spec.ts (0/5 passing)
-- Game shows victory screen when player reaches 10 VP
-- Victory screen shows correct VP breakdown
-- New game button navigates to create game screen
-- Victory screen blocks further game actions
-- Hidden VP cards are revealed in final scores
-
----
-
-## Root Cause Analysis
-
-**PRIMARY ISSUE**: Test timing and UI element visibility
-- Tests timeout waiting for UI elements like `[data-cy='game-waiting']` 
-- Suggests either:
-  1. UI elements are not rendering with expected data-cy attributes
-  2. Game state transitions are not happening as expected 
-  3. Test timing is too aggressive for complex game setup flows
-
-**SECONDARY ISSUE**: Service lifecycle during retries  
-- When tests retry after timeout, backend connection fails with `ECONNREFUSED`
-- Indicates service may be stopping/restarting between test attempts
-- Playwright webServer may not be handling service lifecycle correctly during retries
-
-**INFRASTRUCTURE STATUS**: ✅ WORKING
-- Basic connectivity confirmed working
-- Backend service starts and handles requests properly
-- WebSocket connections work for basic game flows
-- Service logging shows proper client registration/unregistration
-
-**ASSESSMENT**: This is NOT the "critical infrastructure failure" described in implementation plan. The E2E infrastructure works, but some tests have specific timing/UI issues that need individual attention.
-
----
-
-## Fix Log
-
-| Date | Test Fixed | Root Cause | Iteration |
-| ---- | ---------- | ---------- | --------- |
-| 2026-01-22 | E2E infrastructure confirmed working | Infrastructure was working, not broken as initially reported | 2 |
-| 2026-01-22 | game-flow.spec.ts verified 4/4 passing | Basic game flows work correctly | 2 |
-| 2026-01-22 | development-cards timing issues identified | UI element timeouts, not connection failures | 2 |
-
-## Next Steps - PRIORITY ORDER
-
-1. **Investigate development cards UI issues** - Focus on specific failing tests
-   - Check if `data-cy` attributes exist for expected elements in development cards components  
-   - Verify game state transitions for development card flows
-   - Add explicit waits for UI elements that may take time to render
-
-2. **Complete E2E audit for remaining spec files** 
-   - Test remaining 7 spec files to get complete picture
-   - Based on game-flow success, many may pass once tested
-
-3. **Fix identified timing/retry issues**
-   - Improve test stability for development cards spec
-   - Address service lifecycle issues during test retries
+### victory.spec.ts (4/5)
+- ❌ `Game shows victory screen when player reaches 10 VP` (missing `[data-cy='player-ore']` resource readout)
 
 ## Notes
 
-- Test artifacts (screenshots, traces) are in `frontend/test-results/`
-- Run single spec: `cd frontend && npx playwright test <spec>.spec.ts`
-- Run all with report: `cd frontend && npx playwright test --reporter=html`
-- **IMPORTANT**: Backend must be running on port 8080 before test execution
+- Test artifacts (screenshots, traces) are in `frontend/test-results/`.
+- Run single spec: `cd frontend && npx playwright test <spec>.spec.ts --reporter=list`
+- Backend runs on port 8080 via Playwright webServer config.

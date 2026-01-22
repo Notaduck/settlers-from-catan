@@ -94,19 +94,39 @@
 - **Result**: "Year of Plenty modal" test now deterministic; `development-cards.spec.ts` passes 13/13
 - **Notes**: Playwright run restarted backend to pick up new endpoint (DEV_MODE=true)
 
-#### 2. 🔧 MEDIUM - Complete E2E Test Audit
-- **Purpose**: Test remaining 7 spec files individually to get complete status picture  
+#### 2. ✅ MEDIUM - Complete E2E Test Audit (Iteration 3)
+- **Purpose**: Run remaining 7 spec files to update E2E_STATUS.md
 - **Files**: `interactive-board.spec.ts`, `longest-road.spec.ts`, `ports.spec.ts`, `robber.spec.ts`, `setup-phase.spec.ts`, `trading.spec.ts`, `victory.spec.ts`
-- **Expected**: Based on infrastructure working + game-flow passing + dev cards largely working, many may pass
-- **Output**: Complete updated E2E_STATUS.md with all test results
-- **Status**: READY - core infrastructure confirmed working
+- **Output**: Updated `E2E_STATUS.md` with current results
+- **Status**: DONE
+- **Results**:
+  - ✅ `setup-phase.spec.ts` 2/2 passing
+  - ⚠️ `interactive-board.spec.ts` 6/7 passing (1 flaky highlight test)
+  - ❌ `longest-road.spec.ts` 1/7 passing (build-road button/road-length UI missing, resource preconditions mismatch)
+  - ❌ `ports.spec.ts` 1/9 passing (bank trade UI unavailable)
+  - ❌ `robber.spec.ts` 5/7 passing (steal modal not visible; backend logs show move-robber parse errors)
+  - ❌ `trading.spec.ts` 5/12 passing, 1 flaky (bank trade + trade offer UI issues)
+  - ❌ `victory.spec.ts` 4/5 passing (resource readout data-cy missing in victory flow test)
 
-#### 2. 🔧 MEDIUM - Complete E2E Test Audit
-- **Purpose**: Test remaining 7 spec files individually to get complete status picture  
-- **Files**: `interactive-board.spec.ts`, `longest-road.spec.ts`, `ports.spec.ts`, `robber.spec.ts`, `setup-phase.spec.ts`, `trading.spec.ts`, `victory.spec.ts`
-- **Expected**: Based on infrastructure working + game-flow passing, many may pass
-- **Output**: Complete updated E2E_STATUS.md with all test results
-- **Status**: READY - infrastructure confirmed working
+#### 3. 🔧 HIGH - Fix Trade/Port UI availability in E2E
+- **Problem**: `[data-cy='bank-trade-btn']` and bank trade modal are not available in ports/trading specs.
+- **Impact**: 8 failures in `ports.spec.ts`, 3 failures in `trading.spec.ts`.
+- **Next steps**: verify trade-phase gating, ensure bank trade button is rendered/disabled consistently, add waits if needed, ensure modal data-cy exists.
+
+#### 4. 🔧 HIGH - Fix Longest Road UI + build-road flow
+- **Problem**: `build-road-btn` not clickable during tests; `road-length-{playerId}` missing.
+- **Impact**: 6 failures in `longest-road.spec.ts`.
+- **Next steps**: ensure road build button appears in build phase, verify road-length display data-cy attributes.
+
+#### 5. 🔧 MEDIUM - Fix Robber steal modal flow
+- **Problem**: `steal-modal` never appears; backend logs show move-robber payload parse errors.
+- **Impact**: 2 failures in `robber.spec.ts`.
+- **Next steps**: verify move-robber payload schema, ensure steal modal opens when adjacent players exist.
+
+#### 6. 🔧 MEDIUM - Fix Victory flow resource readout selector
+- **Problem**: `[data-cy='player-ore']` missing during victory test setup.
+- **Impact**: 1 failure in `victory.spec.ts`.
+- **Next steps**: ensure resource summary data-cy exists or adjust test selectors.
 
 ----
 
