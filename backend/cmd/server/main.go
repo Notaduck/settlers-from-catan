@@ -35,6 +35,7 @@ func main() {
 	if os.Getenv("DEV_MODE") == "true" {
 		log.Println("DEV_MODE enabled - test endpoints available")
 		http.HandleFunc("/test/grant-resources", handler.HandleGrantResources)
+		http.HandleFunc("/test/grant-dev-card", handler.HandleGrantDevCard)
 		http.HandleFunc("/test/force-dice-roll", handler.HandleForceDiceRoll)
 		http.HandleFunc("/test/set-game-state", handler.HandleSetGameState)
 	}

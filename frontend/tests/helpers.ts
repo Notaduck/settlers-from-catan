@@ -262,6 +262,29 @@ export async function grantResources(
 }
 
 /**
+ * Grant a development card to a player (test endpoint)
+ * Only available when backend is running with DEV_MODE=true
+ */
+export async function grantDevCard(
+  request: APIRequestContext,
+  gameCode: string,
+  playerId: string,
+  cardType: "knight" | "road_building" | "year_of_plenty" | "monopoly" | "victory_point"
+) {
+  const response = await request.post(
+    `${API_BASE}/test/grant-dev-card`,
+    {
+      data: { gameCode, playerId, cardType },
+    }
+  );
+  if (!response.ok()) {
+    const errorText = await response.text();
+    throw new Error(`Failed to grant dev card (${response.status()}): ${errorText}`);
+  }
+  return response.json();
+}
+
+/**
  * Force the next dice roll to a specific value (test endpoint)
  * Only available when backend is running with DEV_MODE=true
  */

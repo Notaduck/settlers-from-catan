@@ -111,6 +111,105 @@ func (h *Handler) HandleGrantResources(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+// HandleGrantDevCard grants a development card to a player (test endpoint only)
+// POST /test/grant-dev-card
+// Body: { gameCode: string, playerId: string, cardType: string }
+func (h *Handler) HandleGrantDevCard(w http.ResponseWriter, r *http.Request) {
+	if !isDevMode() {
+		http.Error(w, "Test endpoints not available", http.StatusNotFound)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		GameCode string `json:"gameCode"`
+		PlayerID string `json:"playerId"`
+		CardType string `json:"cardType"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	cardType, ok := map[string]pb.DevCardType{
+		"knight":         pb.DevCardType_DEV_CARD_TYPE_KNIGHT,
+		"road_building":  pb.DevCardType_DEV_CARD_TYPE_ROAD_BUILDING,
+		"year_of_plenty": pb.DevCardType_DEV_CARD_TYPE_YEAR_OF_PLENTY,
+		"monopoly":       pb.DevCardType_DEV_CARD_TYPE_MONOPOLY,
+		"victory_point":  pb.DevCardType_DEV_CARD_TYPE_VICTORY_POINT,
+	}[req.CardType]
+	if !ok {
+		http.Error(w, "Invalid card type", http.StatusBadRequest)
+		return
+	}
+
+	// Load game state and ID
+	var gameRow struct {
+		ID    string `db:"id"`
+		State string `db:"state"`
+	}
+	err := h.db.Get(&gameRow, "SELECT id, state FROM games WHERE code = ?", req.GameCode)
+	if err != nil {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+
+	var state game.GameState
+	if err := unmarshalOptions.Unmarshal([]byte(gameRow.State), &state); err != nil {
+		http.Error(w, "Failed to deserialize game state", http.StatusInternalServerError)
+		return
+	}
+
+	// Find player and grant dev card
+	var player *game.PlayerState
+	for _, p := range state.Players {
+		if p.Id == req.PlayerID {
+			player = p
+			break
+		}
+	}
+	if player == nil {
+		http.Error(w, "Player not found", http.StatusNotFound)
+		return
+	}
+
+	if player.DevCards == nil {
+		player.DevCards = make(map[int32]int32)
+	}
+	player.DevCards[int32(cardType)]++
+	player.DevCardCount++
+
+	// Mark as playable by ensuring it's not considered "bought this turn"
+	if player.DevCardsPurchasedTurn == nil {
+		player.DevCardsPurchasedTurn = make(map[int32]int32)
+	}
+	player.DevCardsPurchasedTurn[int32(cardType)] = int32(-1)
+
+	// Save updated state
+	stateBytes, err := marshalOptions.Marshal(&state)
+	if err != nil {
+		http.Error(w, "Failed to serialize game state", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.db.Exec("UPDATE games SET state = ? WHERE code = ?", string(stateBytes), req.GameCode)
+	if err != nil {
+		http.Error(w, "Failed to update game state", http.StatusInternalServerError)
+		return
+	}
+
+	// Broadcast updated state to all players
+	h.broadcastGameStateProto(gameRow.ID, &state)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
 // HandleForceDiceRoll forces the next dice roll to a specific value (test endpoint only)
 // POST /test/force-dice-roll
 // Body: { gameCode: string, diceValue: number }

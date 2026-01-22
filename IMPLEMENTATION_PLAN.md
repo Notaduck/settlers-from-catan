@@ -89,11 +89,10 @@
 
 ### NEXT PRIORITY - Complete E2E Test Audit
 
-#### 1. 🔧 MEDIUM - Complete Development Cards Test Fixes  
-- **Purpose**: Address the remaining 1-2 flaky development cards tests
-- **Issue**: "Year of Plenty modal" test is still occasionally failing
-- **Expected**: All 13/13 development cards tests passing consistently
-- **Priority**: MEDIUM - Major blocking issues resolved
+#### 1. ✅ MEDIUM - Complete Development Cards Test Fixes  
+- **Done**: Added `/test/grant-dev-card` dev endpoint and `grantDevCard` helper to remove randomness
+- **Result**: "Year of Plenty modal" test now deterministic; `development-cards.spec.ts` passes 13/13
+- **Notes**: Playwright run restarted backend to pick up new endpoint (DEV_MODE=true)
 
 #### 2. 🔧 MEDIUM - Complete E2E Test Audit
 - **Purpose**: Test remaining 7 spec files individually to get complete status picture  

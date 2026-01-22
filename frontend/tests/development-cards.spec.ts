@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   startTwoPlayerGame,
   completeSetupPhase,
+  grantDevCard,
   grantResources,
   grantResourcesAndWait,
   rollDice,
@@ -168,6 +169,11 @@ test.describe("Development Cards", () => {
     context,
     request,
   }) => {
+    const devModeEnabled = await isDevModeAvailable(request);
+    if (!devModeEnabled) {
+      test.skip("DEV_MODE test endpoints not available. Start backend with DEV_MODE=true");
+    }
+
     const { hostPage, guestPage, hostSession } = await startTwoPlayerGame(
       page,
       context,
@@ -179,83 +185,53 @@ test.describe("Development Cards", () => {
     // Roll dice
     await rollDice(hostPage);
 
-    // Buy dev cards until we get Year of Plenty (or just grant it via mock)
-    // For this test, we'll simulate having the card and test the modal
-    // We'll buy multiple cards and hope to get Year of Plenty
-    for (let i = 0; i < 10; i++) {
-      await grantResources(request, hostSession.code, hostSession.playerId, {
-        ore: 1,
-        wheat: 1,
-        sheep: 1,
-      });
-      await hostPage.waitForTimeout(200);
-      await buyDevelopmentCard(hostPage);
-      await hostPage.waitForTimeout(500);
+    // Grant a Year of Plenty card directly for deterministic test
+    await grantDevCard(request, hostSession.code, hostSession.playerId, "year_of_plenty");
 
-      // Check if we have Year of Plenty card
-      const yearOfPlentyCard = hostPage.locator(
-        "[data-cy='dev-card-year-of-plenty']"
-      );
-      if (await yearOfPlentyCard.isVisible()) {
-        break;
-      }
-    }
-
-    // End turn to make cards playable next turn
-    await endTurn(hostPage);
-    await rollDice(guestPage);
-    await endTurn(guestPage);
-
-    // Now on host's turn again, cards should be playable
-    await rollDice(hostPage);
-
-    // Try to find and play Year of Plenty if we have it
     const yearOfPlentyCard = hostPage.locator(
       "[data-cy='dev-card-year-of-plenty']"
     );
-    if (await yearOfPlentyCard.isVisible()) {
-      const playButton = yearOfPlentyCard.locator(
-        "[data-cy='play-dev-card-btn-year-of-plenty']"
-      );
+    await expect(yearOfPlentyCard).toBeVisible({ timeout: 5000 });
 
-      if (await playButton.isVisible()) {
-        await playButton.click();
+    const playButton = yearOfPlentyCard.locator(
+      "[data-cy='play-dev-card-btn-year-of-plenty']"
+    );
+    await expect(playButton).toBeVisible({ timeout: 5000 });
+    await playButton.click();
 
-        // Modal should open
-        await expect(
-          hostPage.locator("[data-cy='year-of-plenty-modal']")
-        ).toBeVisible({ timeout: 5000 });
+    // Modal should open
+    await expect(
+      hostPage.locator("[data-cy='year-of-plenty-modal']")
+    ).toBeVisible({ timeout: 5000 });
 
-        // Should show resource selectors
-        await expect(
-          hostPage.locator("[data-cy='year-of-plenty-select-wood']")
-        ).toBeVisible();
+    // Should show resource selectors
+    await expect(
+      hostPage.locator("[data-cy='year-of-plenty-select-wood']")
+    ).toBeVisible();
 
-        // Submit button should be disabled initially
-        await expect(
-          hostPage.locator("[data-cy='year-of-plenty-submit']")
-        ).toBeDisabled();
+    // Submit button should be disabled initially
+    await expect(
+      hostPage.locator("[data-cy='year-of-plenty-submit']")
+    ).toBeDisabled();
 
-        // Select 2 resources
-        await hostPage.locator("[data-cy='year-of-plenty-select-wood']").click();
-        await hostPage
-          .locator("[data-cy='year-of-plenty-select-brick']")
-          .click();
+    // Select 2 resources
+    await hostPage.locator("[data-cy='year-of-plenty-select-wood']").click();
+    await hostPage
+      .locator("[data-cy='year-of-plenty-select-brick']")
+      .click();
 
-        // Submit should be enabled now
-        await expect(
-          hostPage.locator("[data-cy='year-of-plenty-submit']")
-        ).toBeEnabled({ timeout: 5000 });
+    // Submit should be enabled now
+    await expect(
+      hostPage.locator("[data-cy='year-of-plenty-submit']")
+    ).toBeEnabled({ timeout: 5000 });
 
-        // Submit
-        await hostPage.locator("[data-cy='year-of-plenty-submit']").click();
+    // Submit
+    await hostPage.locator("[data-cy='year-of-plenty-submit']").click();
 
-        // Modal should close
-        await expect(
-          hostPage.locator("[data-cy='year-of-plenty-modal']")
-        ).not.toBeVisible({ timeout: 5000 });
-      }
-    }
+    // Modal should close
+    await expect(
+      hostPage.locator("[data-cy='year-of-plenty-modal']")
+    ).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Monopoly modal should allow selecting 1 resource type", async ({
