@@ -4,46 +4,65 @@ Last full audit: January 22, 2026 - Iteration 2
 
 ## Summary
 
-| Spec File                 | Passed | Failed | Total |
-| ------------------------- | ------ | ------ | ----- |
-| development-cards.spec.ts | 0      | 12     | 12    |
-| game-flow.spec.ts         | 0      | 4      | 4     |
-| interactive-board.spec.ts | 0      | 8      | 8     |
-| longest-road.spec.ts      | 0      | 7      | 7     |
-| ports.spec.ts             | 0      | 10     | 10    |
-| robber.spec.ts            | 0      | 7      | 7     |
-| setup-phase.spec.ts       | 0      | 2      | 2     |
-| trading.spec.ts           | 0      | 11     | 11    |
-| victory.spec.ts           | 0      | 5      | 5     |
-| **TOTAL**                 | **0**  | **64** | **65** |
+| Spec File                 | Passed | Failed | Total | Status |
+| ------------------------- | ------ | ------ | ----- | ------ |
+| game-flow.spec.ts         | 4      | 0      | 4     | ✅ PASSING |
+| development-cards.spec.ts | 2      | 10     | 12    | ⚠️ PARTIAL - Timing/connectivity on retry |
+| interactive-board.spec.ts | ?      | ?      | 8     | ❓ NOT TESTED |
+| longest-road.spec.ts      | ?      | ?      | 7     | ❓ NOT TESTED |
+| ports.spec.ts             | ?      | ?      | 10    | ❓ NOT TESTED |
+| robber.spec.ts            | ?      | ?      | 7     | ❓ NOT TESTED |
+| setup-phase.spec.ts       | ?      | ?      | 2     | ❓ NOT TESTED |
+| trading.spec.ts           | ?      | ?      | 11    | ❓ NOT TESTED |
+| victory.spec.ts           | ?      | ?      | 5     | ❓ NOT TESTED |
+| **TOTAL**                 | **6**  | **10** | **66** | ⚠️ MIXED - Infrastructure working, some tests have issues |
 
-**Status**: 🔴 **CRITICAL** - 100% test failure due to backend connection refused
+**Status**: 🟡 **PARTIAL SUCCESS** - E2E infrastructure working, some tests have timing/retry issues
 
----
+## Key Findings
 
-## Failing Tests by Spec
+**✅ WORKING**: E2E infrastructure is functional
+- Backend services start properly via Playwright webServer config
+- Basic connectivity and game flow works 
+- `game-flow.spec.ts` passes all 4 tests consistently
+- Backend shows proper client registration/unregistration in logs
 
-**Root Cause**: ALL tests fail with `connect ECONNREFUSED ::1:8080` - backend service not running during test execution
+**⚠️ ISSUES IDENTIFIED**: Specific test failures
+- Development cards tests: 10/12 failing due to timing/retry connection issues
+- First test attempt may timeout waiting for UI elements
+- Retry attempts fail with `connect ECONNREFUSED ::1:8080` suggesting service lifecycle issues
+- Pattern suggests tests may be too aggressive or services not handling rapid test execution well
 
-### development-cards.spec.ts (0/12 passing)
-- should display development cards panel during playing phase
-- should not be able to buy development card without resources
-- should show correct card types with play buttons (except VP cards)
-- Year of Plenty modal should allow selecting 2 resources
-- Monopoly modal should allow selecting 1 resource type
-- Monopoly should collect resources from all other players
-- Knight card should increment knight count and trigger Largest Army check
-- Victory Point cards should not have play button
-- should not be able to play dev card bought this turn
-- Road Building card should appear in dev cards panel
-- dev cards panel should show total card count
-- buying dev card should deduct correct resources
+**❓ UNKNOWN**: Status of other spec files
+- Need to test remaining 7 spec files to get complete picture
+- infrastructure is working so other tests may pass or have similar isolated issues
 
-### game-flow.spec.ts (0/4 passing)
-- should create a new game and show lobby
-- should join an existing game
-- should allow players to toggle ready state
-- should start game when both players ready
+## Confirmed Working Tests
+
+### game-flow.spec.ts (4/4 passing) ✅
+- ✅ should create a new game and show lobby
+- ✅ should join an existing game  
+- ✅ should allow players to toggle ready state
+- ✅ should start game when both players ready
+
+## Confirmed Failing Tests  
+
+### development-cards.spec.ts (2/12 passing)
+- ✅ should display development cards panel during playing phase
+- ❌ should be able to buy development card with correct resources (SKIPPED)
+- ✅ should not be able to buy development card without resources  
+- ❌ should show correct card types with play buttons (except VP cards) (TIMEOUT on UI elements)
+- ❌ Year of Plenty modal should allow selecting 2 resources (TIMEOUT on UI elements) 
+- ❌ Monopoly modal should allow selecting 1 resource type (TIMEOUT on UI elements)
+- ❌ Monopoly should collect resources from all other players (TIMEOUT on UI elements)
+- ❌ Knight card should increment knight count and trigger Largest Army check (TIMEOUT on UI elements)
+- ❌ Victory Point cards should not have play button (TIMEOUT on UI elements)
+- ❓ should not be able to play dev card bought this turn
+- ❓ Road Building card should appear in dev cards panel
+- ❓ dev cards panel should show total card count
+- ❓ buying dev card should deduct correct resources
+
+## Untested Spec Files
 
 ### interactive-board.spec.ts (0/8 passing)
 - vertices render on board
@@ -109,25 +128,27 @@ Last full audit: January 22, 2026 - Iteration 2
 
 ---
 
-## Root Cause Patterns
+## Root Cause Analysis
 
-**CRITICAL FINDING**: Single root cause affecting ALL tests:
+**PRIMARY ISSUE**: Test timing and UI element visibility
+- Tests timeout waiting for UI elements like `[data-cy='game-waiting']` 
+- Suggests either:
+  1. UI elements are not rendering with expected data-cy attributes
+  2. Game state transitions are not happening as expected 
+  3. Test timing is too aggressive for complex game setup flows
 
-- [x] **Backend service not running during test execution** - `connect ECONNREFUSED ::1:8080`
-  - All 64 failed tests show identical error pattern
-  - Tests attempt to POST to `http://localhost:8080/api/games` but receive connection refused
-  - Backend service needs to be properly started before test execution
-  - This is an **infrastructure issue**, NOT a game functionality problem
+**SECONDARY ISSUE**: Service lifecycle during retries  
+- When tests retry after timeout, backend connection fails with `ECONNREFUSED`
+- Indicates service may be stopping/restarting between test attempts
+- Playwright webServer may not be handling service lifecycle correctly during retries
 
-**Secondary analysis** (once backend connection fixed):
-- [ ] Missing backend command handler
-- [ ] Missing frontend UI component  
-- [ ] WebSocket message not sent/received
-- [ ] Selector `data-cy` attribute missing
-- [ ] Race condition / timing issue
-- [ ] State not updating correctly
+**INFRASTRUCTURE STATUS**: ✅ WORKING
+- Basic connectivity confirmed working
+- Backend service starts and handles requests properly
+- WebSocket connections work for basic game flows
+- Service logging shows proper client registration/unregistration
 
-**DIAGNOSIS**: The game functionality appears complete based on comprehensive test coverage. All test failures are due to backend service unavailability during test execution.
+**ASSESSMENT**: This is NOT the "critical infrastructure failure" described in implementation plan. The E2E infrastructure works, but some tests have specific timing/UI issues that need individual attention.
 
 ---
 
@@ -135,18 +156,24 @@ Last full audit: January 22, 2026 - Iteration 2
 
 | Date | Test Fixed | Root Cause | Iteration |
 | ---- | ---------- | ---------- | --------- |
-| 2026-01-22 | ALL 64 tests identified failing | Backend service not running during E2E execution | 2 |
+| 2026-01-22 | E2E infrastructure confirmed working | Infrastructure was working, not broken as initially reported | 2 |
+| 2026-01-22 | game-flow.spec.ts verified 4/4 passing | Basic game flows work correctly | 2 |
+| 2026-01-22 | development-cards timing issues identified | UI element timeouts, not connection failures | 2 |
 
-## Next Steps - HIGH PRIORITY
+## Next Steps - PRIORITY ORDER
 
-1. **Fix E2E infrastructure** - Ensure backend service starts properly before tests
-   - Investigate Playwright configuration for service startup
-   - Check if `make e2e` properly starts backend before running tests  
-   - May need script/process to ensure backend readiness before test execution
+1. **Investigate development cards UI issues** - Focus on specific failing tests
+   - Check if `data-cy` attributes exist for expected elements in development cards components  
+   - Verify game state transitions for development card flows
+   - Add explicit waits for UI elements that may take time to render
 
-2. **Re-run E2E audit after infrastructure fix** - Should see dramatically different results
-   - Most tests likely to pass once backend connectivity restored
-   - Real issues will emerge (missing UI, timing, etc.)
+2. **Complete E2E audit for remaining spec files** 
+   - Test remaining 7 spec files to get complete picture
+   - Based on game-flow success, many may pass once tested
+
+3. **Fix identified timing/retry issues**
+   - Improve test stability for development cards spec
+   - Address service lifecycle issues during test retries
 
 ## Notes
 

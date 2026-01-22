@@ -1,4 +1,4 @@
-.PHONY: all install generate build dev dev-backend dev-frontend stop clean lint test e2e e2e-dev e2e-headed help
+.PHONY: all install generate build dev dev-backend dev-frontend stop clean lint test e2e e2e-dev e2e-headed dashboard help
 
 # Default target
 all: install generate build
@@ -129,6 +129,14 @@ db-reset: ## Reset the SQLite database
 	@echo "🗑️  Resetting database..."
 	rm -f backend/catan.db
 	@echo "✅ Database reset"
+
+# ==================== Ralph Dashboard ====================
+
+dashboard: ## Start the Ralph dashboard (serves on port 5050)
+	@echo "📊 Starting Ralph Dashboard on http://localhost:5050"
+	@npx serve -l 5050 . &
+	@sleep 1
+	@open http://localhost:5050/ralph-dashboard.html 2>/dev/null || echo "Dashboard available at http://localhost:5050/ralph-dashboard.html"
 
 # ==================== Help ====================
 

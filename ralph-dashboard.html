@@ -18,6 +18,9 @@
       --blue: #58a6ff;
       --blue-bg: #58a6ff20;
       --red: #f85149;
+      --red-bg: #f8514920;
+      --purple: #a371f7;
+      --purple-bg: #a371f720;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +50,7 @@
     }
     
     .header h1::before {
-      content: '🔄';
+      content: '🤖';
       font-size: 28px;
     }
     
@@ -67,11 +70,153 @@
       animation: pulse 2s infinite;
     }
     
+    .status-dot.error {
+      background: var(--red);
+    }
+    
+    .status-dot.working {
+      background: var(--yellow);
+    }
+    
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
     
+    /* Ralph Status Section */
+    .ralph-status {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .ralph-status h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ralph-status h2::before {
+      content: '⚡';
+    }
+    
+    .ralph-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .ralph-info-item {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 6px;
+    }
+    
+    .ralph-info-item .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    
+    .ralph-info-item .value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .ralph-info-item .value.iteration {
+      color: var(--purple);
+      font-size: 32px;
+    }
+    
+    .ralph-info-item .value.passing {
+      color: var(--green);
+    }
+    
+    .ralph-info-item .value.failing {
+      color: var(--red);
+    }
+    
+    .ralph-info-item .value.skipped {
+      color: var(--yellow);
+    }
+    
+    .ralph-message {
+      margin-top: 16px;
+      padding: 12px;
+      background: var(--blue-bg);
+      border: 1px solid var(--blue);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .ralph-message.error {
+      background: var(--red-bg);
+      border-color: var(--red);
+    }
+    
+    .ralph-message.success {
+      background: var(--green-bg);
+      border-color: var(--green);
+    }
+    
+    /* Plan Section */
+    .plan-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .plan-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .plan-header:hover {
+      background: var(--border);
+    }
+    
+    .plan-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .plan-header h2::before {
+      content: '📋';
+    }
+    
+    .plan-content {
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .plan-section.expanded .plan-content {
+      display: block;
+    }
+    
+    .plan-raw {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: var(--text-muted);
+    }
+    
+    /* Stats Grid */
     .stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -287,7 +432,8 @@
       transition: transform 0.2s;
     }
     
-    .phase.expanded .chevron {
+    .phase.expanded .chevron,
+    .plan-section.expanded .chevron {
       transform: rotate(90deg);
     }
   </style>
@@ -296,13 +442,53 @@
   <div class="header">
     <h1>Ralph Dashboard</h1>
     <div class="status">
-      <div class="status-dot"></div>
+      <div class="status-dot" id="status-dot"></div>
       <span id="last-update">Updating...</span>
     </div>
   </div>
   
   <div id="error" class="error" style="display: none;"></div>
   
+  <!-- Ralph Status Section -->
+  <div class="ralph-status">
+    <h2>Ralph Status</h2>
+    <div class="ralph-info-grid">
+      <div class="ralph-info-item">
+        <div class="label">Current Iteration</div>
+        <div class="value iteration" id="ralph-iteration">-</div>
+      </div>
+      <div class="ralph-info-item">
+        <div class="label">Build Status</div>
+        <div class="value" id="ralph-build">-</div>
+      </div>
+      <div class="ralph-info-item">
+        <div class="label">E2E Status</div>
+        <div class="value" id="ralph-e2e">-</div>
+      </div>
+      <div class="ralph-info-item">
+        <div class="label">Consecutive Failures</div>
+        <div class="value" id="ralph-failures">-</div>
+      </div>
+      <div class="ralph-info-item">
+        <div class="label">Last Updated</div>
+        <div class="value" id="ralph-timestamp" style="font-size: 14px;">-</div>
+      </div>
+    </div>
+    <div class="ralph-message" id="ralph-message" style="display: none;"></div>
+  </div>
+  
+  <!-- Current Plan Section -->
+  <div class="plan-section" id="plan-section">
+    <div class="plan-header" onclick="togglePlan()">
+      <h2>Current Implementation Plan</h2>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="plan-content">
+      <div class="plan-raw" id="plan-raw">Loading plan...</div>
+    </div>
+  </div>
+  
+  <!-- Task Stats -->
   <div class="stats">
     <div class="stat-card completed">
       <h3>Completed</h3>
@@ -340,10 +526,12 @@
   <div class="phases" id="phases"></div>
   
   <div class="refresh-notice">
-    Auto-refreshes every 5 seconds • <a href="IMPLEMENTATION_PLAN.md" style="color: var(--blue);">View Raw Plan</a>
+    Auto-refreshes every 3 seconds • <a href="IMPLEMENTATION_PLAN.md" style="color: var(--blue);">View Raw Plan</a>
   </div>
 
   <script>
+    let planMarkdown = '';
+    
     // Parse IMPLEMENTATION_PLAN.md and extract tasks
     function parsePlan(markdown) {
       const phases = [];
@@ -393,9 +581,12 @@
           continue;
         }
         
-        // Check for 🔄 in-progress marker
+        // Check for status markers
         if (line.includes('🔄') && currentTask) {
           currentTask.status = 'in-progress';
+        }
+        if (line.includes('✅') && currentTask) {
+          currentTask.status = 'completed';
         }
         
         // File references
@@ -515,37 +706,164 @@
       phase.classList.toggle('expanded');
     }
     
-    async function loadPlan() {
-      try {
-        // Try fetching from local server (if running make dev)
-        let response = await fetch('/IMPLEMENTATION_PLAN.md').catch(() => null);
+    function togglePlan() {
+      document.getElementById('plan-section').classList.toggle('expanded');
+    }
+    
+    function renderRalphStatus(status, iteration) {
+      // Update iteration
+      document.getElementById('ralph-iteration').textContent = iteration || '-';
+      
+      if (!status) {
+        document.getElementById('ralph-build').textContent = '-';
+        document.getElementById('ralph-e2e').textContent = '-';
+        document.getElementById('ralph-failures').textContent = '-';
+        document.getElementById('ralph-timestamp').textContent = '-';
+        return;
+      }
+      
+      // Build status
+      const buildEl = document.getElementById('ralph-build');
+      if (status.buildPassing === true) {
+        buildEl.textContent = '✓ Passing';
+        buildEl.className = 'value passing';
+      } else if (status.buildPassing === false) {
+        buildEl.textContent = '✗ Failing';
+        buildEl.className = 'value failing';
+      } else {
+        buildEl.textContent = '- Unknown';
+        buildEl.className = 'value';
+      }
+      
+      // E2E status
+      const e2eEl = document.getElementById('ralph-e2e');
+      if (status.e2ePassing === true) {
+        e2eEl.textContent = '✓ Passing';
+        e2eEl.className = 'value passing';
+      } else if (status.e2ePassing === false) {
+        e2eEl.textContent = '✗ Failing';
+        e2eEl.className = 'value failing';
+      } else if (status.e2ePassing === 'skipped') {
+        e2eEl.textContent = '⏭ Skipped';
+        e2eEl.className = 'value skipped';
+      } else {
+        e2eEl.textContent = '- Unknown';
+        e2eEl.className = 'value';
+      }
+      
+      // Consecutive failures
+      const failuresEl = document.getElementById('ralph-failures');
+      const failures = status.consecutiveFailures || 0;
+      failuresEl.textContent = failures;
+      failuresEl.className = failures > 0 ? 'value failing' : 'value passing';
+      
+      // Timestamp
+      if (status.timestamp) {
+        const date = new Date(status.timestamp);
+        document.getElementById('ralph-timestamp').textContent = date.toLocaleString();
+      }
+      
+      // Message
+      const messageEl = document.getElementById('ralph-message');
+      if (status.message) {
+        messageEl.textContent = status.message;
+        messageEl.style.display = 'block';
         
-        // Fallback to relative path
+        if (status.buildPassing && (status.e2ePassing === true || status.e2ePassing === 'skipped')) {
+          messageEl.className = 'ralph-message success';
+        } else if (!status.buildPassing || status.e2ePassing === false) {
+          messageEl.className = 'ralph-message error';
+        } else {
+          messageEl.className = 'ralph-message';
+        }
+      } else {
+        messageEl.style.display = 'none';
+      }
+      
+      // Update status dot
+      const statusDot = document.getElementById('status-dot');
+      if (!status.buildPassing || status.e2ePassing === false) {
+        statusDot.className = 'status-dot error';
+      } else if (status.e2ePassing === 'skipped') {
+        statusDot.className = 'status-dot working';
+      } else {
+        statusDot.className = 'status-dot';
+      }
+    }
+    
+    async function loadData() {
+      let hasError = false;
+      
+      // Load plan
+      try {
+        let response = await fetch('/IMPLEMENTATION_PLAN.md').catch(() => null);
         if (!response || !response.ok) {
           response = await fetch('./IMPLEMENTATION_PLAN.md');
         }
         
-        if (!response.ok) throw new Error('Could not load IMPLEMENTATION_PLAN.md');
-        
-        const markdown = await response.text();
-        const phases = parsePlan(markdown);
-        renderDashboard(phases);
-        
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('last-update').textContent = 
-          `Updated ${new Date().toLocaleTimeString()}`;
+        if (response.ok) {
+          planMarkdown = await response.text();
+          document.getElementById('plan-raw').textContent = planMarkdown;
+          const phases = parsePlan(planMarkdown);
+          renderDashboard(phases);
+        }
       } catch (err) {
-        document.getElementById('error').textContent = 
-          `Error loading plan: ${err.message}. Make sure to serve this file via HTTP (e.g., npx serve .)`;
-        document.getElementById('error').style.display = 'block';
+        hasError = true;
+        console.error('Error loading plan:', err);
       }
+      
+      // Load Ralph iteration
+      let iteration = null;
+      try {
+        let response = await fetch('/.ralph-iteration').catch(() => null);
+        if (!response || !response.ok) {
+          response = await fetch('./.ralph-iteration');
+        }
+        
+        if (response && response.ok) {
+          iteration = (await response.text()).trim();
+        }
+      } catch (err) {
+        console.error('Error loading iteration:', err);
+      }
+      
+      // Load Ralph status
+      let status = null;
+      try {
+        let response = await fetch('/.ralph-status.json').catch(() => null);
+        if (!response || !response.ok) {
+          response = await fetch('./.ralph-status.json');
+        }
+        
+        if (response && response.ok) {
+          const text = await response.text();
+          // Handle potential invalid JSON (e.g., "skipped" without quotes)
+          const fixedText = text.replace(/:\s*skipped/g, ': "skipped"');
+          status = JSON.parse(fixedText);
+        }
+      } catch (err) {
+        console.error('Error loading status:', err);
+      }
+      
+      renderRalphStatus(status, iteration);
+      
+      if (hasError) {
+        document.getElementById('error').textContent = 
+          'Some data could not be loaded. Make sure to serve this file via HTTP (e.g., make dashboard or npx serve .)';
+        document.getElementById('error').style.display = 'block';
+      } else {
+        document.getElementById('error').style.display = 'none';
+      }
+      
+      document.getElementById('last-update').textContent = 
+        `Updated ${new Date().toLocaleTimeString()}`;
     }
     
     // Initial load
-    loadPlan();
+    loadData();
     
-    // Auto-refresh every 5 seconds
-    setInterval(loadPlan, 5000);
+    // Auto-refresh every 3 seconds
+    setInterval(loadData, 3000);
   </script>
 </body>
 </html>
