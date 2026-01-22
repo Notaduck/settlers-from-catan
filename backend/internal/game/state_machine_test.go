@@ -315,3 +315,95 @@ func TestEndTurn_DisallowsRollingPhase(t *testing.T) {
 		t.Error("expected error when ending turn during roll phase")
 	}
 }
+
+func TestSetTurnPhase_TogglesTradeAndBuild(t *testing.T) {
+	baseState := func() *pb.GameState {
+		state := NewGameState("g1", "CODE", []string{"Alice", "Bob"}, []string{"p1", "p2"})
+		state.Status = pb.GameStatus_GAME_STATUS_PLAYING
+		state.CurrentTurn = 0
+		state.TurnPhase = pb.TurnPhase_TURN_PHASE_TRADE
+		return state
+	}
+
+	tests := map[string]struct {
+		setup     func(*pb.GameState)
+		playerID  string
+		phase     pb.TurnPhase
+		wantPhase pb.TurnPhase
+		wantErr   bool
+	}{
+		"trade to build": {
+			playerID:  "p1",
+			phase:     pb.TurnPhase_TURN_PHASE_BUILD,
+			wantPhase: pb.TurnPhase_TURN_PHASE_BUILD,
+		},
+		"build to trade": {
+			setup: func(state *pb.GameState) {
+				state.TurnPhase = pb.TurnPhase_TURN_PHASE_BUILD
+			},
+			playerID:  "p1",
+			phase:     pb.TurnPhase_TURN_PHASE_TRADE,
+			wantPhase: pb.TurnPhase_TURN_PHASE_TRADE,
+		},
+		"not current player": {
+			setup: func(state *pb.GameState) {
+				state.CurrentTurn = 1
+			},
+			playerID: "p1",
+			phase:    pb.TurnPhase_TURN_PHASE_BUILD,
+			wantErr:  true,
+		},
+		"wrong game status": {
+			setup: func(state *pb.GameState) {
+				state.Status = pb.GameStatus_GAME_STATUS_WAITING
+			},
+			playerID: "p1",
+			phase:    pb.TurnPhase_TURN_PHASE_BUILD,
+			wantErr:  true,
+		},
+		"cannot switch during roll": {
+			setup: func(state *pb.GameState) {
+				state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
+			},
+			playerID: "p1",
+			phase:    pb.TurnPhase_TURN_PHASE_BUILD,
+			wantErr:  true,
+		},
+		"invalid target phase": {
+			playerID: "p1",
+			phase:    pb.TurnPhase_TURN_PHASE_ROLL,
+			wantErr:  true,
+		},
+		"cannot switch during robber phase": {
+			setup: func(state *pb.GameState) {
+				state.RobberPhase = &pb.RobberPhase{}
+			},
+			playerID: "p1",
+			phase:    pb.TurnPhase_TURN_PHASE_BUILD,
+			wantErr:  true,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			state := baseState()
+			if tt.setup != nil {
+				tt.setup(state)
+			}
+
+			err := SetTurnPhase(state, tt.playerID, tt.phase)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if state.TurnPhase != tt.wantPhase {
+				t.Fatalf("expected phase %v, got %v", tt.wantPhase, state.TurnPhase)
+			}
+		})
+	}
+}

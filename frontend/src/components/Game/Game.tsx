@@ -92,6 +92,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
     proposeTrade,
     respondTrade,
     bankTrade,
+    setTurnPhase,
   } = useGame();
 
   // UI state (for modal closing)
@@ -234,6 +235,10 @@ export function Game({ gameCode, onLeave }: GameProps) {
     !!gameOver ||
     isStatus(gameState?.status, GameStatus.FINISHED, "GAME_STATUS_FINISHED");
   const interactionsDisabled = isGameOver;
+  const isMyTurn = gameState?.players?.[gameState.currentTurn ?? 0]?.id === currentPlayerId;
+  const isPlaying = isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING");
+  const isTradePhase = isTurnPhase(gameState?.turnPhase, TurnPhase.TRADE, "TURN_PHASE_TRADE");
+  const isBuildPhase = isTurnPhase(gameState?.turnPhase, TurnPhase.BUILD, "TURN_PHASE_BUILD");
   
   const canBuyDevCard = useMemo(() => {
     if (interactionsDisabled || !currentPlayer || !gameState) return false;
@@ -563,15 +568,35 @@ export function Game({ gameCode, onLeave }: GameProps) {
               )}
             </div>
           )}
-           {/* Trading/Build Toggle and Trade UI (only in PLAYING+TRADE phase) */}
+           {/* Turn phase switching (TRADE <-> BUILD) */}
            {!interactionsDisabled &&
-             isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING") &&
-             isTurnPhase(
-               gameState?.turnPhase,
-               TurnPhase.TRADE,
-               "TURN_PHASE_TRADE"
-             ) &&
-             currentPlayer?.id === currentPlayerId && (
+             isPlaying &&
+             isMyTurn &&
+             (isTradePhase || isBuildPhase) && (
+             <div className="turn-phase-toggle">
+               <button
+                 className="btn btn-secondary"
+                 data-cy="trade-phase-btn"
+                 onClick={() => setTurnPhase(TurnPhase.TRADE)}
+                 disabled={isTradePhase}
+               >
+                 Trade
+               </button>
+               <button
+                 className="btn btn-secondary"
+                 data-cy="build-phase-btn"
+                 onClick={() => setTurnPhase(TurnPhase.BUILD)}
+                 disabled={isBuildPhase}
+               >
+                 Build
+               </button>
+             </div>
+           )}
+           {/* Trading UI (only in PLAYING+TRADE phase) */}
+           {!interactionsDisabled &&
+             isPlaying &&
+             isTradePhase &&
+             isMyTurn && (
              <div className="trade-phase-control">
                 <button
                   className="btn btn-secondary"

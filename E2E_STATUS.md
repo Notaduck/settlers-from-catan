@@ -13,9 +13,9 @@ Last full audit: January 22, 2026 - Iteration 2
 | ports.spec.ts             | ?      | ?      | 10    | ❓ NOT TESTED |
 | robber.spec.ts            | ?      | ?      | 7     | ❓ NOT TESTED |
 | setup-phase.spec.ts       | ?      | ?      | 2     | ❓ NOT TESTED |
-| trading.spec.ts           | ?      | ?      | 11    | ❓ NOT TESTED |
+| trading.spec.ts           | 2      | 3      | 12    | ⚠️ PARTIAL - Timed out (Jan 22) |
 | victory.spec.ts           | ?      | ?      | 5     | ❓ NOT TESTED |
-| **TOTAL**                 | **6**  | **10** | **66** | ⚠️ MIXED - Infrastructure working, some tests have issues |
+| **TOTAL**                 | **8**  | **13** | **67** | ⚠️ MIXED - Partial trading run, several tests still failing |
 
 **Status**: 🟡 **PARTIAL SUCCESS** - E2E infrastructure working, some tests have timing/retry issues
 
@@ -32,6 +32,7 @@ Last full audit: January 22, 2026 - Iteration 2
 - First test attempt may timeout waiting for UI elements
 - Retry attempts fail with `connect ECONNREFUSED ::1:8080` suggesting service lifecycle issues
 - Pattern suggests tests may be too aggressive or services not handling rapid test execution well
+- Trading tests: `trading.spec.ts` partial run timed out after 120s; 3 tests consistently failed (see below)
 
 **❓ UNKNOWN**: Status of other spec files
 - Need to test remaining 7 spec files to get complete picture
@@ -106,7 +107,7 @@ Last full audit: January 22, 2026 - Iteration 2
 - shows setup phase banner and turn indicator
 - round 2 settlement grants resources toast
 
-### trading.spec.ts (0/11 passing)
+### trading.spec.ts (0/12 passing)
 - Bank trade 4:1 works
 - Cannot bank trade without 4 resources
 - Player can propose trade to another
@@ -118,6 +119,15 @@ Last full audit: January 22, 2026 - Iteration 2
 - Cannot propose trade without resources
 - Multiple trades per turn allowed
 - Bank trade button shows during trade phase only
+- Can switch between trade and build phases
+
+### trading.spec.ts (partial run - Jan 22, 2026)
+- ✅ Cannot bank trade without 4 resources
+- ✅ Player can propose trade to another (passes on retry)
+- ❌ Bank trade 4:1 works (timeout)
+- ❌ Trade recipient sees offer modal (timeout)
+- ❌ Accepting trade transfers resources (timeout)
+- ❓ Remaining tests not executed due to timeout: propose trade to specific player, decline trade notifies proposer, cannot trade outside trade phase, cannot propose trade without resources, multiple trades per turn allowed, bank trade button shows during trade phase only, can switch between trade and build phases
 
 ### victory.spec.ts (0/5 passing)
 - Game shows victory screen when player reaches 10 VP

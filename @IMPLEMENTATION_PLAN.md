@@ -22,10 +22,10 @@ Last updated: 2026-01-22. Sources: specs/*, current backend/frontend code, E2E_S
 - E2E status is unknown (see E2E Stabilization section).
 
 ## PRIORITY 5: TURN PHASE SWITCHING + BUILD CONTROLS (MISSING)
-1) Add explicit turn-phase switching (TRADE → BUILD + optional back)
-- Files: `backend/internal/game/state_machine.go`, `backend/internal/handlers/handlers.go`, `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`, `proto/catan/v1/messages.proto`
-- Go tests: `backend/internal/game/state_machine_test.go` (phase transition validation), `backend/internal/handlers/handlers_test.go` (set_turn_phase message)
-- Playwright: update `frontend/tests/trading.spec.ts` + `frontend/tests/game-flow.spec.ts`
+1) Add explicit turn-phase switching (TRADE → BUILD + optional back) ✅
+- Implemented: `backend/internal/game/state_machine.go`, `backend/internal/handlers/handlers.go`, `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`
+- Tests: `backend/internal/game/state_machine_test.go`, `backend/internal/handlers/handlers_test.go`, `frontend/tests/trading.spec.ts`
+- E2E (trading.spec.ts) timed out at 120s; partial run shows timeouts in bank trade + trade accept/offer modal flows (details in E2E_STATUS.md).
 
 2) Add build-mode selection for settlement/road/city (UI + placement)
 - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/src/components/Board/placement.ts`, `frontend/src/components/Board/Board.tsx`

@@ -151,6 +151,8 @@ func (h *Handler) handleClientMessage(client *hub.Client, raw []byte) {
 		h.handleBuyDevCard(client, msg.payloadBytes(msg.Message.BuyDevCard))
 	case "playDevCard":
 		h.handlePlayDevCard(client, msg.payloadBytes(msg.Message.PlayDevCard))
+	case "setTurnPhase":
+		h.handleSetTurnPhase(client, msg.payloadBytes(msg.Message.SetTurnPhase))
 	default:
 		h.sendError(client, "UNSUPPORTED_MESSAGE", "Unsupported message type")
 	}
@@ -394,6 +396,33 @@ func (h *Handler) handleEndTurn(client *hub.Client, payload []byte) {
 		Phase:          state.TurnPhase,
 	}
 	h.broadcastServerMessage(client.GameID, "turnChanged", turnPayload)
+	h.broadcastGameStateProto(client.GameID, state)
+}
+
+// handleSetTurnPhase switches between TRADE and BUILD during a player's turn.
+func (h *Handler) handleSetTurnPhase(client *hub.Client, payload []byte) {
+	var req catanv1.SetTurnPhaseMessage
+	if err := protojson.Unmarshal(payload, &req); err != nil {
+		h.sendError(client, "INVALID_PAYLOAD", "Failed to parse set turn phase request")
+		return
+	}
+	state, err := h.loadGameState(client.GameID)
+	if err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to load game state")
+		return
+	}
+	if state.Status == game.GameStatusFinished {
+		h.sendError(client, "GAME_OVER", "Game already finished")
+		return
+	}
+	if err := game.SetTurnPhase(state, client.PlayerID, req.GetPhase()); err != nil {
+		h.sendError(client, "TURN_PHASE_ERROR", err.Error())
+		return
+	}
+	if err := h.saveGameState(client.GameID, state); err != nil {
+		h.sendError(client, "INTERNAL_ERROR", "Failed to persist game state")
+		return
+	}
 	h.broadcastGameStateProto(client.GameID, state)
 }
 
@@ -1128,6 +1157,7 @@ type clientEnvelope struct {
 		DiscardCards   json.RawMessage `json:"discardCards,omitempty"`
 		MoveRobber     json.RawMessage `json:"moveRobber,omitempty"`
 		BankTrade      json.RawMessage `json:"bankTrade,omitempty"`
+		SetTurnPhase   json.RawMessage `json:"setTurnPhase,omitempty"`
 		BuyDevCard     json.RawMessage `json:"buyDevCard,omitempty"`
 		PlayDevCard    json.RawMessage `json:"playDevCard,omitempty"`
 	} `json:"message"`

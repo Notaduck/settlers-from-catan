@@ -146,6 +146,7 @@ interface GameContextValue extends GameContextState {
   proposeTrade: (offering: ResourceCount, requesting: ResourceCount, targetPlayerId?: string | null) => void;
   respondTrade: (tradeId: string, accept: boolean) => void;
   bankTrade: (offering: ResourceCount, resourceRequested: Resource) => void;
+  setTurnPhase: (phase: TurnPhase) => void;
 }
 
 
@@ -228,6 +229,12 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
   const endTurn = useCallback(() => {
     sendMessage({
       message: { oneofKind: "endTurn", endTurn: {} },
+    } as ClientMessage);
+  }, [sendMessage]);
+
+  const setTurnPhase = useCallback((phase: TurnPhase) => {
+    sendMessage({
+      message: { oneofKind: "setTurnPhase", setTurnPhase: { phase } },
     } as ClientMessage);
   }, [sendMessage]);
 
@@ -434,6 +441,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     proposeTrade,
     respondTrade,
     bankTrade,
+    setTurnPhase,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

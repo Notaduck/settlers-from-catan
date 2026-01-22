@@ -463,4 +463,30 @@ test.describe('Trading (Bank and Player)', () => {
     // After ending turn, trade button should be disabled (not our turn)
     await expect(bankTradeBtn).toBeDisabled();
   });
+
+  test('Can switch between trade and build phases', async ({ page, context, request }) => {
+    const { hostPage, guestPage } = await startTwoPlayerGame(page, context, request);
+    await completeSetupPhase(hostPage, guestPage);
+
+    await waitForGamePhase(hostPage, 'PLAYING');
+
+    // Roll dice to enter trade phase
+    await rollDice(hostPage);
+
+    const tradeBtn = hostPage.locator('[data-cy="trade-phase-btn"]');
+    const buildBtn = hostPage.locator('[data-cy="build-phase-btn"]');
+    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+
+    await expect(tradeBtn).toBeVisible();
+    await expect(buildBtn).toBeVisible();
+    await expect(bankTradeBtn).toBeVisible();
+
+    // Switch to build phase
+    await buildBtn.click();
+    await expect(bankTradeBtn).toHaveCount(0);
+
+    // Switch back to trade phase
+    await tradeBtn.click();
+    await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
+  });
 });

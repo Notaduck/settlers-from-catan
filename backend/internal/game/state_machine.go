@@ -10,6 +10,7 @@ import (
 var (
 	ErrNotYourTurn              = errors.New("it's not your turn")
 	ErrWrongPhase               = errors.New("cannot perform this action in current phase")
+	ErrInvalidTurnPhase         = errors.New("invalid turn phase")
 	ErrInvalidVertex            = errors.New("invalid vertex ID")
 	ErrInvalidEdge              = errors.New("invalid edge ID")
 	ErrVertexOccupied           = errors.New("vertex is already occupied")
@@ -136,6 +137,35 @@ func EndTurn(state *pb.GameState, playerID string) error {
 	state.Dice = []int32{0, 0}
 	// Increment global turn counter
 	state.TurnCounter++
+	return nil
+}
+
+// SetTurnPhase toggles between TRADE and BUILD phases during a player's turn.
+func SetTurnPhase(state *pb.GameState, playerID string, phase pb.TurnPhase) error {
+	if state.Status != pb.GameStatus_GAME_STATUS_PLAYING {
+		return ErrWrongPhase
+	}
+	if state.RobberPhase != nil {
+		return ErrWrongPhase
+	}
+	if state.CurrentTurn < 0 || int(state.CurrentTurn) >= len(state.Players) {
+		return ErrNotYourTurn
+	}
+	if state.Players[state.CurrentTurn].Id != playerID {
+		return ErrNotYourTurn
+	}
+
+	if phase != pb.TurnPhase_TURN_PHASE_TRADE && phase != pb.TurnPhase_TURN_PHASE_BUILD {
+		return ErrInvalidTurnPhase
+	}
+	if state.TurnPhase != pb.TurnPhase_TURN_PHASE_TRADE && state.TurnPhase != pb.TurnPhase_TURN_PHASE_BUILD {
+		return ErrWrongPhase
+	}
+	if state.TurnPhase == phase {
+		return nil
+	}
+
+	state.TurnPhase = phase
 	return nil
 }
 

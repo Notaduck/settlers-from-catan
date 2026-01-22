@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -291,6 +292,95 @@ func TestHandleClientMessage_BuildStructureUsesProtoJSON(t *testing.T) {
 	}
 	if placed.Building.OwnerId != playerID {
 		t.Fatalf("expected owner %s, got %s", playerID, placed.Building.OwnerId)
+	}
+}
+
+func TestHandleSetTurnPhase_UpdatesTurnPhase(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	h := hub.NewHub()
+	go h.Run()
+
+	handler := NewHandler(database, h)
+
+	tests := map[string]struct {
+		setup     func(*catanv1.GameState)
+		playerID  string
+		phase     catanv1.TurnPhase
+		wantPhase catanv1.TurnPhase
+		wantErr   bool
+	}{
+		"trade to build": {
+			playerID:  "p1",
+			phase:     catanv1.TurnPhase_TURN_PHASE_BUILD,
+			wantPhase: catanv1.TurnPhase_TURN_PHASE_BUILD,
+		},
+		"not your turn": {
+			setup: func(state *catanv1.GameState) {
+				state.CurrentTurn = 1
+			},
+			playerID:  "p1",
+			phase:     catanv1.TurnPhase_TURN_PHASE_BUILD,
+			wantPhase: catanv1.TurnPhase_TURN_PHASE_TRADE,
+			wantErr:   true,
+		},
+	}
+
+	gameIndex := 0
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gameIndex++
+			gameID := fmt.Sprintf("game-phase-%d", gameIndex)
+			code := fmt.Sprintf("TP%03d", gameIndex)
+			state := game.NewGameState(gameID, code, []string{"Alice", "Bob"}, []string{"p1", "p2"})
+			state.Status = game.GameStatusPlaying
+			state.CurrentTurn = 0
+			state.TurnPhase = catanv1.TurnPhase_TURN_PHASE_TRADE
+			if tt.setup != nil {
+				tt.setup(state)
+			}
+
+			stateJSON, err := marshalOptions.Marshal(state)
+			if err != nil {
+				t.Fatalf("failed to marshal state: %v", err)
+			}
+			if _, err := database.Exec(
+				"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+				gameID,
+				code,
+				string(stateJSON),
+				"playing",
+			); err != nil {
+				t.Fatalf("failed to insert game state: %v", err)
+			}
+
+			client := hub.NewClient(h, &websocket.Conn{}, tt.playerID, gameID)
+			h.Register(client)
+
+			payload, err := protojson.Marshal(&catanv1.SetTurnPhaseMessage{Phase: tt.phase})
+			if err != nil {
+				t.Fatalf("failed to marshal set turn phase payload: %v", err)
+			}
+
+			handler.handleSetTurnPhase(client, payload)
+
+			var updatedStateJSON string
+			if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+				t.Fatalf("failed to load updated state: %v", err)
+			}
+			var updatedState catanv1.GameState
+			if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+				t.Fatalf("failed to parse updated state: %v", err)
+			}
+
+			if updatedState.TurnPhase != tt.wantPhase {
+				t.Fatalf("expected phase %v, got %v", tt.wantPhase, updatedState.TurnPhase)
+			}
+			if tt.wantErr && updatedState.TurnPhase != catanv1.TurnPhase_TURN_PHASE_TRADE {
+				t.Fatalf("expected phase to remain trade on error")
+			}
+		})
 	}
 }
 
