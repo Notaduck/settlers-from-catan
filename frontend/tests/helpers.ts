@@ -215,11 +215,18 @@ export async function completeSetupPhase(
 export async function isDevModeAvailable(request: APIRequestContext): Promise<boolean> {
   try {
     const response = await request.post(`${API_BASE}/test/grant-resources`, {
-      data: { gameCode: "test", playerId: "test", resources: {} },
+      data: { gameCode: "nonexistent-game", playerId: "test", resources: {} },
     });
-    // If we get 404, DEV_MODE is not enabled
-    // If we get 400 or other error, DEV_MODE is enabled but request was invalid
-    return response.status() !== 404;
+    const status = response.status();
+    const text = await response.text();
+    
+    // If we get 404 with "Test endpoints not available", DEV_MODE is disabled
+    // If we get 404 with "Game not found", DEV_MODE is enabled but game doesn't exist
+    // If we get 400+, DEV_MODE is enabled
+    if (status === 404) {
+      return text.trim() === "Game not found"; // DEV_MODE enabled, but game not found
+    }
+    return status !== 404; // Any other status means DEV_MODE is enabled
   } catch {
     return false;
   }
@@ -318,6 +325,8 @@ export async function rollDice(page: Page) {
   await expect(page.locator("[data-cy='dice-result']")).toBeVisible({
     timeout: 10000,
   });
+  // Wait a bit more for game state to update to trade phase
+  await page.waitForTimeout(1000);
 }
 
 /**
@@ -365,6 +374,10 @@ export async function buildCity(page: Page, vertexSelector: string) {
  * Buy a development card (assumes player has resources)
  */
 export async function buyDevelopmentCard(page: Page) {
+  // Wait for button to be enabled (resources should be granted first)
+  await expect(page.locator("[data-cy='buy-dev-card-btn']")).toBeEnabled({
+    timeout: 10000
+  });
   await page.locator("[data-cy='buy-dev-card-btn']").click();
   // Wait for resource count to update or card to appear
   await page.waitForTimeout(500);

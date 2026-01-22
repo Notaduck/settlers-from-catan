@@ -36,6 +36,7 @@ export function Port({ port, x, y, index }: PortProps) {
         stroke="#333"
         strokeWidth="1.5"
         opacity="0.9"
+        style={{ pointerEvents: "none" }}
       />
       
       {/* Trade ratio label */}
@@ -47,6 +48,7 @@ export function Port({ port, x, y, index }: PortProps) {
         fontSize="8"
         fontWeight="bold"
         fill="#fff"
+        style={{ pointerEvents: "none" }}
       >
         {label}
       </text>
@@ -61,6 +63,7 @@ export function Port({ port, x, y, index }: PortProps) {
           fontSize="7"
           fontWeight="bold"
           fill="#FFD700"
+          style={{ pointerEvents: "none" }}
         >
           {resourceLabel}
         </text>

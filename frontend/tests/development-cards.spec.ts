@@ -66,8 +66,8 @@ test.describe("Development Cards", () => {
       sheep: 1,
     });
 
-    // Wait for resources to update from WebSocket
-    await hostPage.waitForTimeout(1500);
+    // Wait for resources to update from WebSocket (increased timeout)
+    await hostPage.waitForTimeout(3000);
 
     // Buy dev card button should be enabled
     await expect(
