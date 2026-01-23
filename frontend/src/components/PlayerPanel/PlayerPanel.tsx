@@ -1,4 +1,4 @@
-import type { PlayerState } from "@/types";
+import type { BoardState, PlayerState } from "@/types";
 import { TurnPhase, PlayerColor } from "@/types";
 import { useGame } from "@/context";
 import "./PlayerPanel.css";
@@ -14,11 +14,13 @@ const PLAYER_COLORS: Record<PlayerColor, string> = {
 
 interface PlayerPanelProps {
   players: PlayerState[];
+  board?: BoardState | null;
   currentTurn: number;
   turnPhase: TurnPhase;
   dice: number[];
   gameStatus?: string;
   isGameOver?: boolean;
+  longestRoadPlayerId?: string | null;
 }
 
 const RESOURCE_ICONS: Record<string, string> = {
@@ -28,6 +30,109 @@ const RESOURCE_ICONS: Record<string, string> = {
   wheat: "🌾",
   ore: "�ite",
 };
+
+function getLongestRoadLengths(
+  board: BoardState | null | undefined,
+  players: PlayerState[]
+): Record<string, number> {
+  const lengths: Record<string, number> = {};
+  if (!board) {
+    for (const player of players) {
+      lengths[player.id] = 0;
+    }
+    return lengths;
+  }
+
+  const vertexToEdges = new Map<string, string[]>();
+  const edgeVertices = new Map<string, [string, string]>();
+  const edges = board.edges ?? [];
+
+  for (const edge of edges) {
+    const [v1, v2] = edge.vertices ?? [];
+    if (!v1 || !v2) {
+      continue;
+    }
+    edgeVertices.set(edge.id, [v1, v2]);
+    if (!vertexToEdges.has(v1)) {
+      vertexToEdges.set(v1, []);
+    }
+    if (!vertexToEdges.has(v2)) {
+      vertexToEdges.set(v2, []);
+    }
+    vertexToEdges.get(v1)?.push(edge.id);
+    vertexToEdges.get(v2)?.push(edge.id);
+  }
+
+  const blockedVerticesByPlayer = new Map<string, Set<string>>();
+  for (const player of players) {
+    blockedVerticesByPlayer.set(player.id, new Set());
+  }
+
+  for (const vertex of board.vertices ?? []) {
+    const ownerId = vertex.building?.ownerId;
+    if (!ownerId) {
+      continue;
+    }
+    for (const player of players) {
+      if (player.id !== ownerId) {
+        blockedVerticesByPlayer.get(player.id)?.add(vertex.id);
+      }
+    }
+  }
+
+  for (const player of players) {
+    const playerEdges = edges.filter(
+      (edge) => edge.road?.ownerId === player.id
+    );
+    if (playerEdges.length === 0) {
+      lengths[player.id] = 0;
+      continue;
+    }
+
+    const playerEdgeIds = new Set(playerEdges.map((edge) => edge.id));
+    const blockedVertices = blockedVerticesByPlayer.get(player.id) ?? new Set();
+
+    const dfs = (edgeId: string, visited: Set<string>): number => {
+      visited.add(edgeId);
+      let maxLength = 1;
+      const vertices = edgeVertices.get(edgeId) ?? [];
+      for (const vertexId of vertices) {
+        if (blockedVertices.has(vertexId)) {
+          continue;
+        }
+        const connectedEdges = vertexToEdges.get(vertexId) ?? [];
+        for (const nextEdgeId of connectedEdges) {
+          if (nextEdgeId === edgeId) {
+            continue;
+          }
+          if (!playerEdgeIds.has(nextEdgeId)) {
+            continue;
+          }
+          if (visited.has(nextEdgeId)) {
+            continue;
+          }
+          const length = 1 + dfs(nextEdgeId, visited);
+          if (length > maxLength) {
+            maxLength = length;
+          }
+        }
+      }
+      visited.delete(edgeId);
+      return maxLength;
+    };
+
+    let longest = 0;
+    for (const edge of playerEdges) {
+      const length = dfs(edge.id, new Set());
+      if (length > longest) {
+        longest = length;
+      }
+    }
+    lengths[player.id] = longest;
+  }
+
+  return lengths;
+}
 
 function isTurnPhase(
   phase: TurnPhase | string | undefined,

@@ -1,0 +1,61 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: "Game Code:"
+          - strong [ref=e10]: CLJQVA
+        - generic [ref=e11]: SETUP
+        - button "Leave Game" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Setup Phase - Round 1
+          - generic [ref=e16]: "Current Turn: Host"
+          - generic [ref=e17]: Place Settlement (1/2)
+        - generic [ref=e18]: Place Settlement
+        - generic [ref=e19]:
+          - paragraph [ref=e21]: Loading board...
+          - generic [ref=e22]:
+            - generic [ref=e23]:
+              - heading "Dice" [level=3] [ref=e24]
+              - generic [ref=e25]:
+                - generic [ref=e26]: "?"
+                - generic [ref=e27]: "?"
+              - text: "0"
+            - generic [ref=e28]:
+              - heading "Current Turn" [level=3] [ref=e29]
+              - generic [ref=e30]:
+                - generic [ref=e32]: Host
+                - generic [ref=e33]: (Roll)
+            - generic [ref=e34]:
+              - heading "Your Resources" [level=3] [ref=e35]
+              - generic [ref=e36]:
+                - generic [ref=e37]:
+                  - generic [ref=e38]: 🪵
+                  - generic [ref=e39]: "0"
+                - generic [ref=e40]:
+                  - generic [ref=e41]: 🧱
+                  - generic [ref=e42]: "0"
+                - generic [ref=e43]:
+                  - generic [ref=e44]: 🐑
+                  - generic [ref=e45]: "0"
+                - generic [ref=e46]:
+                  - generic [ref=e47]: 🌾
+                  - generic [ref=e48]: "0"
+                - generic [ref=e49]:
+                  - generic [ref=e50]: �ite
+                  - generic [ref=e51]: "0"
+            - generic [ref=e52]:
+              - heading "Players" [level=3] [ref=e53]
+              - generic [ref=e54]:
+                - generic [ref=e56]: Host
+                - generic [ref=e57]: 0 VP
+              - generic [ref=e58]:
+                - generic [ref=e60]: Guest
+                - generic [ref=e61]: 0 VP
+```
