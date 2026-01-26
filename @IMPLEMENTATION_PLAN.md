@@ -19,3 +19,12 @@ Sources reviewed: `specs/*`, backend (game logic, handlers), frontend (context, 
 ---
 
 #END
+
+## Iteration 1 (2026-01-26)
+- Review pass complete: no incomplete spec items found after scanning `specs/*`, backend game logic, and frontend UI.
+- No code changes required; proceeding with validation-only run and loop restart.
+
+## Iteration 2 (2026-01-26)
+- Reran `frontend/tests/interactive-board.spec.ts` (7/7 passing) and updated `E2E_STATUS.md` to reflect the stable result.
+- No gameplay or UI code changes required.
+- Validation: `make test-backend`, `make typecheck`, `make lint`, `make build`.

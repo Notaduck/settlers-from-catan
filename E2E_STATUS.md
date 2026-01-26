@@ -1,9 +1,15 @@
 # E2E Test Status
 
 Last full audit: January 22, 2026 - Iteration 2
-Latest partial audit: January 22, 2026 - Iteration 3 (interactive-board, longest-road, ports, robber, setup-phase, trading, victory)
+Latest partial audit: January 26, 2026 - Iteration 2 (interactive-board)
 
-## Latest Partial Audit (Iteration 3)
+## Latest Partial Audit (Iteration 2)
+
+| Spec File                 | Passed | Failed | Flaky | Total | Status |
+| ------------------------- | ------ | ------ | ----- | ----- | ------ |
+| interactive-board.spec.ts | 7      | 0      | 0     | 7     | ✅ PASSING |
+
+## Previous Partial Audit (Iteration 3)
 
 | Spec File                 | Passed | Failed | Flaky | Total | Status |
 | ------------------------- | ------ | ------ | ----- | ----- | ------ |
@@ -93,3 +99,4 @@ Latest partial audit: January 22, 2026 - Iteration 3 (interactive-board, longest
 - Test artifacts (screenshots, traces) are in `frontend/test-results/`.
 - Run single spec: `cd frontend && npx playwright test <spec>.spec.ts --reporter=list`
 - Backend runs on port 8080 via Playwright webServer config.
+- Update Jan 26, 2026: `interactive-board.spec.ts` rerun and passing 7/7 (no flake observed).
