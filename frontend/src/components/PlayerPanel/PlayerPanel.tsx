@@ -256,23 +256,33 @@ export function PlayerPanel({
           <div className="resources-grid">
             <div className="resource-item" data-cy="resource-wood">
               <span className="resource-icon">{RESOURCE_ICONS["wood"]}</span>
-              <span className="resource-count">{myPlayer.resources.wood}</span>
+              <span className="resource-count" data-cy="player-wood">
+                {myPlayer.resources.wood}
+              </span>
             </div>
             <div className="resource-item" data-cy="resource-brick">
               <span className="resource-icon">{RESOURCE_ICONS["brick"]}</span>
-              <span className="resource-count">{myPlayer.resources.brick}</span>
+              <span className="resource-count" data-cy="player-brick">
+                {myPlayer.resources.brick}
+              </span>
             </div>
             <div className="resource-item" data-cy="resource-sheep">
               <span className="resource-icon">{RESOURCE_ICONS["sheep"]}</span>
-              <span className="resource-count">{myPlayer.resources.sheep}</span>
+              <span className="resource-count" data-cy="player-sheep">
+                {myPlayer.resources.sheep}
+              </span>
             </div>
             <div className="resource-item" data-cy="resource-wheat">
               <span className="resource-icon">{RESOURCE_ICONS["wheat"]}</span>
-              <span className="resource-count">{myPlayer.resources.wheat}</span>
+              <span className="resource-count" data-cy="player-wheat">
+                {myPlayer.resources.wheat}
+              </span>
             </div>
             <div className="resource-item" data-cy="resource-ore">
               <span className="resource-icon">{RESOURCE_ICONS["ore"]}</span>
-              <span className="resource-count">{myPlayer.resources.ore}</span>
+              <span className="resource-count" data-cy="player-ore">
+                {myPlayer.resources.ore}
+              </span>
             </div>
           </div>
         </div>

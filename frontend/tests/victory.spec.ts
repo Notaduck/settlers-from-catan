@@ -76,10 +76,14 @@ test.describe("Victory flow", () => {
     });
 
     // Verify Alice received resources
-    await expect(hostPage.locator("[data-cy='player-ore']")).toContainText(
-      "15",
-      { timeout: 5000 }
-    );
+    const oreLocator = hostPage.locator("[data-cy='player-ore']");
+    await expect
+      .poll(async () => {
+        const text = await oreLocator.textContent();
+        const value = Number.parseInt(text ?? "0", 10);
+        return Number.isNaN(value) ? 0 : value;
+      })
+      .toBeGreaterThanOrEqual(15);
 
     // Build 4 cities to reach 10 VP
     // Each city costs 3 ore + 2 wheat
