@@ -19,6 +19,13 @@ func ProposeTrade(state *pb.GameState, proposerID string, targetID *string, offe
 		return "", ErrNotYourTurn
 	}
 
+	// Enforce only one active trade per proposer
+	for _, trade := range state.PendingTrades {
+		if trade.ProposerId == proposerID && trade.Status == pb.TradeStatus_TRADE_STATUS_PENDING {
+			return "", fmt.Errorf("You already have a pending trade offer")
+		}
+	}
+
 	if !canFulfillOffer(currentPlayer.Resources, offering) {
 		return "", ErrInsufficientResources
 	}

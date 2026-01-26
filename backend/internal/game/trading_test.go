@@ -38,6 +38,31 @@ func TestProposeTrade(t *testing.T) {
 	}
 }
 
+func TestProposeTrade_OneActivePendingTradePerProposer(t *testing.T) {
+	// Arrange
+	state := basicGameState(makePlayer("me", &catanv1.ResourceCount{Wood: 4}), makePlayer("them", &catanv1.ResourceCount{Sheep: 3}))
+
+	// First trade proposal should succeed
+	id1, err1 := ProposeTrade(state, "me", nil, &catanv1.ResourceCount{Wood: 3}, &catanv1.ResourceCount{Sheep: 2})
+	if err1 != nil || id1 == "" {
+		t.Fatalf("first ProposeTrade failed: %v", err1)
+	}
+
+	// Try to propose second trade (pending not resolved)
+	id2, err2 := ProposeTrade(state, "me", nil, &catanv1.ResourceCount{Wood: 1}, &catanv1.ResourceCount{Brick: 1})
+	if err2 == nil || id2 != "" {
+		t.Errorf("ProposeTrade should fail when proposer already has a pending trade, but got id=%v err=%v", id2, err2)
+	}
+
+	// Resolve pending (accept)
+	state.PendingTrades[0].Status = catanv1.TradeStatus_TRADE_STATUS_ACCEPTED
+	// Should allow new proposal now
+	id3, err3 := ProposeTrade(state, "me", nil, &catanv1.ResourceCount{Wood: 1}, &catanv1.ResourceCount{Brick: 1})
+	if err3 != nil || id3 == "" {
+		t.Fatalf("ProposeTrade not allowed after previous trade resolved: %v", err3)
+	}
+}
+
 func TestRespondTrade_AcceptDecline(t *testing.T) {
 	toID := "them"
 	tradeID := "T1"

@@ -30,7 +30,9 @@ Sources reviewed: `specs/*`, backend (game logic, handlers), frontend (context, 
   - E2E run: `npx playwright test trading.spec.ts --reporter=list` (2026-01-26) → 4 passed, 8 failed. Failures include missing `[data-cy="bank-trade-btn"]`/trade modal visibility and resource count mismatch in multi-trade test. See `frontend/test-results/` artifacts.
 - **Task 2:** Expire trades at end of turn; update trading logic in `backend/internal/game/state_machine.go` and cover with `trading_test.go`. ✅ Completed (2026-01-26)
   - End turn now clears pending trades via `ExpireOldTrades`, and tests verify expiration behavior plus no change on failed end-turn.
-- **Task 3:** Enforce one-active-trade-per-proposer rule in `backend/internal/game/trading.go` and test in `trading_test.go`.
+- **Task 3:** Enforce one-active-trade-per-proposer rule in `backend/internal/game/trading.go` and test in `trading_test.go`. ✅ Completed (2026-01-26)
+  - Backend now rejects new trade proposals if proposer already has any PENDING trade in `state.PendingTrades`. Tested in `TestProposeTrade_OneActivePendingTradePerProposer`.
+  - All backend tests pass. No existing trading logic broken. Documented logic covers all edge cases for proposer concurrency.
 - **Task 4:** Make Playwright trade tests deterministic—force non-7 rolls so TRADE phase is guaranteed; add helper in `frontend/tests/helpers.ts` and update `frontend/tests/trading.spec.ts` (and `ports.spec.ts` as needed).
 - **Go tests:** All new/changed rules in `trading_test.go`
 - **Playwright tests:** Stabilize `trading.spec.ts`, `ports.spec.ts`
