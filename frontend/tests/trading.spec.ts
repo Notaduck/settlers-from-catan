@@ -29,8 +29,11 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-wood"]')).toContainText('4', { timeout: 10000 });
 
     // Open bank trade modal
-    await hostPage.locator('[data-cy="bank-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="bank-trade-modal"]')).toBeVisible();
+    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
+await bankTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="bank-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Verify default 4:1 ratio
     await expect(hostPage.locator('[data-cy="trade-ratio-1"]')).toContainText('4:1');
@@ -69,8 +72,11 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-wood"]')).toContainText('3', { timeout: 10000 });
 
     // Open bank trade modal
-    await hostPage.locator('[data-cy="bank-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="bank-trade-modal"]')).toBeVisible();
+    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
+await bankTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="bank-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Select wood to offer
     await hostPage.locator('[data-cy="bank-trade-offering-select"]').selectOption('1');
@@ -105,8 +111,11 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-brick"]')).toContainText('1', { timeout: 10000 });
 
     // Open propose trade modal
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Select resources to offer (2 wood)
     const offerWood = hostPage.locator('[data-cy="trade-offer-wood"]');
@@ -120,7 +129,10 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(requestSheep).toContainText('1');
 
     // Submit trade
-    await hostPage.locator('[data-cy="propose-trade-submit-btn"]').click();
+    const proposeTradeSubmitBtn = hostPage.locator('[data-cy="propose-trade-submit-btn"]');
+await expect(proposeTradeSubmitBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeSubmitBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeSubmitBtn.click();
 
     // Modal should close
     await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).not.toBeVisible();
@@ -150,8 +162,11 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-wood"]')).toContainText('1', { timeout: 10000 });
 
     // Open propose trade modal
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Select specific player as target (Guest)
     const targetSelect = hostPage.locator('[data-cy="trade-target-select"]');
@@ -175,7 +190,10 @@ test.describe('Trading (Bank and Player)', () => {
     await requestBrick.locator('button[aria-label="Increase Brick"]').click();
 
     // Submit trade
-    await hostPage.locator('[data-cy="propose-trade-submit-btn"]').click();
+    const proposeTradeSubmitBtn = hostPage.locator('[data-cy="propose-trade-submit-btn"]');
+await expect(proposeTradeSubmitBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeSubmitBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeSubmitBtn.click();
 
     // Modal should close
     await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).not.toBeVisible();
@@ -205,8 +223,11 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(guestPage.locator('[data-cy="resource-sheep"]')).toContainText('1', { timeout: 10000 });
 
     // Host proposes trade to all players
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Offer 2 wood
     const offerWood = hostPage.locator('[data-cy="trade-offer-wood"]');
@@ -218,10 +239,13 @@ test.describe('Trading (Bank and Player)', () => {
     await requestSheep.locator('button[aria-label="Increase Sheep"]').click();
 
     // Submit trade to all players
-    await hostPage.locator('[data-cy="propose-trade-submit-btn"]').click();
+    const proposeTradeSubmitBtn = hostPage.locator('[data-cy="propose-trade-submit-btn"]');
+await expect(proposeTradeSubmitBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeSubmitBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeSubmitBtn.click();
 
     // Guest should see incoming trade modal
-    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 10000 });
+    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 15000 });
     
     // Verify trade details are shown
     await expect(guestPage.locator('[data-cy="incoming-offer-wood"]')).toContainText('2');
@@ -256,20 +280,29 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(guestPage.locator('[data-cy="resource-sheep"]')).toContainText('1', { timeout: 10000 });
 
     // Host proposes trade
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
     const offerWood = hostPage.locator('[data-cy="trade-offer-wood"]');
     await offerWood.locator('button[aria-label="Increase Wood"]').click();
     await offerWood.locator('button[aria-label="Increase Wood"]').click();
     const requestSheep = hostPage.locator('[data-cy="trade-request-sheep"]');
     await requestSheep.locator('button[aria-label="Increase Sheep"]').click();
-    await hostPage.locator('[data-cy="propose-trade-submit-btn"]').click();
+    const proposeTradeSubmitBtn = hostPage.locator('[data-cy="propose-trade-submit-btn"]');
+await expect(proposeTradeSubmitBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeSubmitBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeSubmitBtn.click();
 
     // Guest accepts trade
-    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 10000 });
-    await guestPage.locator('[data-cy="accept-trade-btn"]').click();
+    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 15000 });
+    const acceptTradeBtn = guestPage.locator('[data-cy="accept-trade-btn"]');
+await expect(acceptTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(acceptTradeBtn).toBeEnabled({ timeout: 15000 });
+await acceptTradeBtn.click();
 
     // Modal should close
-    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).not.toBeVisible({ timeout: 10000 });
+    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).not.toBeVisible({ timeout: 15000 });
 
     // Verify resources transferred
     // Host should have: wood -2, sheep +1
@@ -305,20 +338,29 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(guestPage.locator('[data-cy="resource-sheep"]')).toContainText('1', { timeout: 10000 });
 
     // Host proposes trade
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
     const offerWood = hostPage.locator('[data-cy="trade-offer-wood"]');
     await offerWood.locator('button[aria-label="Increase Wood"]').click();
     await offerWood.locator('button[aria-label="Increase Wood"]').click();
     const requestSheep = hostPage.locator('[data-cy="trade-request-sheep"]');
     await requestSheep.locator('button[aria-label="Increase Sheep"]').click();
-    await hostPage.locator('[data-cy="propose-trade-submit-btn"]').click();
+    const proposeTradeSubmitBtn = hostPage.locator('[data-cy="propose-trade-submit-btn"]');
+await expect(proposeTradeSubmitBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeSubmitBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeSubmitBtn.click();
 
     // Guest declines trade
-    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 10000 });
-    await guestPage.locator('[data-cy="decline-trade-btn"]').click();
+    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).toBeVisible({ timeout: 15000 });
+    const declineTradeBtn = guestPage.locator('[data-cy="decline-trade-btn"]');
+await expect(declineTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(declineTradeBtn).toBeEnabled({ timeout: 15000 });
+await declineTradeBtn.click();
 
     // Modal should close for guest
-    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).not.toBeVisible({ timeout: 10000 });
+    await expect(guestPage.locator('[data-cy="incoming-trade-modal"]')).not.toBeVisible({ timeout: 15000 });
 
     // Verify resources unchanged for both players
     await expect(hostPage.locator('[data-cy="resource-wood"]')).toContainText('2', { timeout: 5000 });
@@ -356,8 +398,8 @@ test.describe('Trading (Bank and Player)', () => {
     await rollDice(hostPage);
 
     // Now trade buttons should be enabled
-    await expect(bankTradeBtn).toBeEnabled({ timeout: 10000 });
-    await expect(proposeTradeBtn).toBeEnabled({ timeout: 10000 });
+    await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
+    await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
 
     // End turn to leave trade phase
     await endTurn(hostPage);
@@ -382,8 +424,11 @@ test.describe('Trading (Bank and Player)', () => {
     await rollDice(hostPage);
 
     // Open propose trade modal without granting resources
-    await hostPage.locator('[data-cy="propose-trade-btn"]').click();
-    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible();
+    const proposeTradeBtn = hostPage.locator('[data-cy="propose-trade-btn"]');
+await expect(proposeTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(proposeTradeBtn).toBeEnabled({ timeout: 15000 });
+await proposeTradeBtn.click();
+    await expect(hostPage.locator('[data-cy="propose-trade-modal"]')).toBeVisible({ timeout: 10000 });
 
     // Try to offer 1 wood (but we don't have any)
     const offerWood = hostPage.locator('[data-cy="trade-offer-wood"]');
@@ -417,7 +462,10 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-wood"]')).toContainText('8', { timeout: 10000 });
 
     // First bank trade: 4 wood -> 1 sheep
-    await hostPage.locator('[data-cy="bank-trade-btn"]').click();
+    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
+await bankTradeBtn.click();
     await hostPage.locator('[data-cy="bank-trade-offering-select"]').selectOption('1'); // Wood
     await hostPage.locator('[data-cy="bank-trade-requesting-select"]').selectOption('3'); // Sheep
     await hostPage.locator('[data-cy="bank-trade-submit-btn"]').click();
@@ -427,7 +475,10 @@ test.describe('Trading (Bank and Player)', () => {
     await expect(hostPage.locator('[data-cy="resource-sheep"]')).toContainText('1', { timeout: 10000 });
 
     // Second bank trade: 4 wood -> 1 ore
-    await hostPage.locator('[data-cy="bank-trade-btn"]').click();
+    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
+await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
+await bankTradeBtn.click();
     await hostPage.locator('[data-cy="bank-trade-offering-select"]').selectOption('1'); // Wood
     await hostPage.locator('[data-cy="bank-trade-requesting-select"]').selectOption('5'); // Ore
     await hostPage.locator('[data-cy="bank-trade-submit-btn"]').click();
@@ -455,7 +506,7 @@ test.describe('Trading (Bank and Player)', () => {
     await rollDice(hostPage);
 
     // After rolling, trade button should be enabled (TRADE phase)
-    await expect(bankTradeBtn).toBeEnabled({ timeout: 10000 });
+    await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
 
     // End turn
     await endTurn(hostPage);

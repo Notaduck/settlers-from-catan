@@ -2,6 +2,8 @@
 
 ## Ralph Planning Notes (Jan 26, 2026)
 
+- Iteration 3: No open core implementation tasks. E2E infra is the only pending concern; no functional/gameplay/code changes required this iteration. Per Ralph protocol, documenting for plan completion and exiting for loop restart.
+
 - Expired pending trades at end of turn by clearing `PendingTrades` in `EndTurn`, updated `ExpireOldTrades` semantics, and added coverage in `trading_test.go`.
 - Iteration 1 focused on E2E infrastructure readiness checks.
 - Iteration 2 stabilized interactive-board placement highlighting with `data-cy="placement-ready"` and Playwright waits for valid vertex/edge counts.
