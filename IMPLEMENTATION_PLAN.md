@@ -1,5 +1,13 @@
 # IMPLEMENTATION PLAN - Settlers from Catan
 
+## Ralph Planning Notes (Jan 26, 2026)
+
+- Iteration 1 focused on E2E infrastructure readiness checks.
+- Updated `scripts/run-e2e.sh` to wait for backend/frontend readiness with retries instead of a fixed sleep.
+- Forced Playwright webServer backend to start with `DEV_MODE=true` (no reuse) and increased startup timeouts.
+- Fixed lobby start button gating (host-only) and corrected robber move payload to match `{q, r}`.
+- E2E: `npx playwright test robber.spec.ts --reporter=list` passing (7/7) after DEV_MODE fix.
+
 ## Ralph Planning Notes (Jan 22, 2026)
 
 - E2E status referenced from `E2E_STATUS.md` and `frontend/test-results/` (no fresh Playwright run in this iteration).

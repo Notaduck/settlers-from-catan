@@ -11,15 +11,18 @@ export default defineConfig({
   // Auto-start services for E2E tests
   webServer: [
     {
-      command: "cd .. && cd backend && DEV_MODE=true go run ./cmd/server",
+      command: "cd .. && cd backend && go run ./cmd/server",
       port: 8080,
-      timeout: 30000,
-      reuseExistingServer: true,
+      timeout: 60000,
+      reuseExistingServer: false,
+      env: {
+        DEV_MODE: "true",
+      },
     },
     {
       command: "npm run dev",
       port: 3000,
-      timeout: 30000,
+      timeout: 60000,
       reuseExistingServer: true,
     },
   ],

@@ -585,7 +585,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
               </button>
             )}
 
-            {true && (
+            {isHost && (
               <button
                 onClick={startGame}
                 className="btn btn-primary"
@@ -753,7 +753,6 @@ export function Game({ gameCode, onLeave }: GameProps) {
                               sendRobberMove({
                                 q: hex.coord.q,
                                 r: hex.coord.r,
-                                s: -(hex.coord.q + hex.coord.r),
                               });
                             }
                           }

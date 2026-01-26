@@ -47,20 +47,39 @@ cd ..
 
 # Wait for services to start
 echo "⏳ Waiting for services to start..."
-sleep 8
 
-# Check if services are responding
-echo "🔍 Checking backend..."
-if ! curl -s http://localhost:8080/health > /dev/null; then
-    echo "❌ Backend not responding on port 8080"
-    exit 1
-fi
+wait_for_url() {
+    local url=$1
+    local label=$2
+    local timeout_seconds=$3
+    local elapsed=0
 
-echo "🔍 Checking frontend..."
-if ! curl -s http://localhost:3000 > /dev/null; then
-    echo "❌ Frontend not responding on port 3000"  
-    exit 1
-fi
+    while [[ $elapsed -lt $timeout_seconds ]]; do
+        if curl -s "$url" > /dev/null; then
+            echo "✅ $label ready"
+            return 0
+        fi
+
+        # Bail early if either process died
+        if [[ -n $BACKEND_PID ]] && ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+            echo "❌ Backend process exited before becoming ready"
+            return 1
+        fi
+        if [[ -n $FRONTEND_PID ]] && ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
+            echo "❌ Frontend process exited before becoming ready"
+            return 1
+        fi
+
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+
+    echo "❌ Timed out waiting for $label"
+    return 1
+}
+
+wait_for_url "http://localhost:8080/health" "Backend" 60
+wait_for_url "http://localhost:3000" "Frontend" 60
 
 echo "✅ Services ready!"
 
