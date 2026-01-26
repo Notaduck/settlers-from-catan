@@ -10,7 +10,15 @@ import { MonopolyModal } from "./MonopolyModal";
 import { useGame } from "@/context";
 import { Board } from "@/components/Board";
 import { PlayerPanel } from "@/components/PlayerPanel";
-import { GameStatus, PlayerColor, StructureType, DevCardType, ResourceCount, TurnPhase } from "@/types";
+import {
+  BuildingType,
+  GameStatus,
+  PlayerColor,
+  StructureType,
+  DevCardType,
+  ResourceCount,
+  TurnPhase,
+} from "@/types";
 import { GameOver } from "./GameOver";
 import "./GameOver.css";
 import "./Game.css";
@@ -23,6 +31,26 @@ const PLAYER_COLORS: Record<PlayerColor, string> = {
   [PlayerColor.GREEN]: "#2ecc71",
   [PlayerColor.ORANGE]: "#e67e22",
 };
+
+const BUILDING_TYPE_ALIASES: Record<string, BuildingType> = {
+  BUILDING_TYPE_UNSPECIFIED: BuildingType.UNSPECIFIED,
+  BUILDING_TYPE_SETTLEMENT: BuildingType.SETTLEMENT,
+  BUILDING_TYPE_CITY: BuildingType.CITY,
+  SETTLEMENT: BuildingType.SETTLEMENT,
+  CITY: BuildingType.CITY,
+};
+
+function normalizeBuildingType(
+  type: BuildingType | string | undefined
+): BuildingType {
+  if (type === undefined || type === null) {
+    return BuildingType.UNSPECIFIED;
+  }
+  if (typeof type === "string") {
+    return BUILDING_TYPE_ALIASES[type] ?? BuildingType.UNSPECIFIED;
+  }
+  return type;
+}
 
 function isStatus(
   status: GameStatus | string | undefined,
@@ -56,6 +84,12 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const [showBankTrade, setShowBankTrade] = useState(false);
   const [showProposeTrade, setShowProposeTrade] = useState(false);
   const [showIncomingTrade, setShowIncomingTrade] = useState(false);
+  const [buildSelection, setBuildSelection] = useState<
+    "settlement" | "road" | "city" | null
+  >(null);
+  const [pendingBuildSelection, setPendingBuildSelection] = useState<
+    "settlement" | "road" | "city" | null
+  >(null);
   
   // Dev card modals
   const [showYearOfPlenty, setShowYearOfPlenty] = useState(false);
@@ -75,6 +109,7 @@ export function Game({ gameCode, onLeave }: GameProps) {
     build,
     resourceGain,
     clearResourceGain,
+    rollDice,
     // Robber UI
     isRobberDiscardRequired,
     robberDiscardAmount,
@@ -237,8 +272,108 @@ export function Game({ gameCode, onLeave }: GameProps) {
   const interactionsDisabled = isGameOver;
   const isMyTurn = gameState?.players?.[gameState.currentTurn ?? 0]?.id === currentPlayerId;
   const isPlaying = isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING");
+  const isRollPhase = isTurnPhase(gameState?.turnPhase, TurnPhase.ROLL, "TURN_PHASE_ROLL");
   const isTradePhase = isTurnPhase(gameState?.turnPhase, TurnPhase.TRADE, "TURN_PHASE_TRADE");
   const isBuildPhase = isTurnPhase(gameState?.turnPhase, TurnPhase.BUILD, "TURN_PHASE_BUILD");
+
+  useEffect(() => {
+    if (!isPlaying || !isMyTurn) {
+      setBuildSelection(null);
+      setPendingBuildSelection(null);
+    }
+  }, [isPlaying, isMyTurn]);
+
+  useEffect(() => {
+    if (!pendingBuildSelection) {
+      return;
+    }
+    if (!isPlaying || !isMyTurn) {
+      setPendingBuildSelection(null);
+      return;
+    }
+    if (isBuildPhase) {
+      setPendingBuildSelection(null);
+      return;
+    }
+    if (isTradePhase) {
+      setTurnPhase(TurnPhase.BUILD);
+      return;
+    }
+  }, [pendingBuildSelection, isPlaying, isMyTurn, isBuildPhase, isTradePhase, setTurnPhase]);
+
+  const handleSelectBuild = useCallback(
+    (selection: "settlement" | "road" | "city") => {
+      setBuildSelection(selection);
+      if (isRollPhase) {
+        setPendingBuildSelection(selection);
+        rollDice();
+        return;
+      }
+      if (isTradePhase) {
+        setTurnPhase(TurnPhase.BUILD);
+      }
+    },
+    [isRollPhase, isTradePhase, rollDice, setTurnPhase]
+  );
+
+  const validCityVertexIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!gameState?.board || !currentPlayerId) {
+      return ids;
+    }
+    const player = players.find((p) => p.id === currentPlayerId);
+    if (!player) {
+      return ids;
+    }
+    const hasResources =
+      (player.resources?.ore ?? 0) >= 3 &&
+      (player.resources?.wheat ?? 0) >= 2;
+    if (!hasResources) {
+      return ids;
+    }
+    for (const vertex of gameState.board.vertices ?? []) {
+      const building = vertex.building;
+      if (!building || building.ownerId !== currentPlayerId) {
+        continue;
+      }
+      if (normalizeBuildingType(building.type) === BuildingType.SETTLEMENT) {
+        ids.add(vertex.id);
+      }
+    }
+    return ids;
+  }, [gameState?.board, currentPlayerId, players]);
+
+  const effectiveValidVertexIds = useMemo(() => {
+    if (placementMode !== "build") {
+      return placementState.validVertexIds;
+    }
+    if (buildSelection === "road") {
+      return new Set<string>();
+    }
+    if (buildSelection === "city") {
+      return validCityVertexIds;
+    }
+    return placementState.validVertexIds;
+  }, [placementMode, placementState.validVertexIds, buildSelection, validCityVertexIds]);
+
+  const effectiveValidEdgeIds = useMemo(() => {
+    if (placementMode !== "build") {
+      return placementState.validEdgeIds;
+    }
+    if (buildSelection === "settlement" || buildSelection === "city") {
+      return new Set<string>();
+    }
+    return placementState.validEdgeIds;
+  }, [placementMode, placementState.validEdgeIds, buildSelection]);
+
+  const handleBuildVertex = useCallback(
+    (vertexId: string) => {
+      const isCityBuild =
+        placementMode === "build" && buildSelection === "city";
+      build(isCityBuild ? StructureType.CITY : StructureType.SETTLEMENT, vertexId);
+    },
+    [build, placementMode, buildSelection]
+  );
   
   const canBuyDevCard = useMemo(() => {
     if (interactionsDisabled || !currentPlayer || !gameState) return false;
@@ -633,6 +768,31 @@ export function Game({ gameCode, onLeave }: GameProps) {
               {placementModeLabel}
             </div>
           )}
+           {!interactionsDisabled && isPlaying && isMyTurn && (
+            <div className="build-controls" data-cy="build-controls">
+              <button
+                className={`btn btn-secondary ${buildSelection === "settlement" ? "is-active" : ""}`}
+                data-cy="build-settlement-btn"
+                onClick={() => handleSelectBuild("settlement")}
+              >
+                Build Settlement
+              </button>
+              <button
+                className={`btn btn-secondary ${buildSelection === "road" ? "is-active" : ""}`}
+                data-cy="build-road-btn"
+                onClick={() => handleSelectBuild("road")}
+              >
+                Build Road
+              </button>
+              <button
+                className={`btn btn-secondary ${buildSelection === "city" ? "is-active" : ""}`}
+                data-cy="build-city-btn"
+                onClick={() => handleSelectBuild("city")}
+              >
+                Build City
+              </button>
+            </div>
+          )}
            <div className="game-board-content">
              {/* ---- END TRADING ---- */}
              {gameState?.board && (
@@ -646,9 +806,9 @@ export function Game({ gameCode, onLeave }: GameProps) {
                  <Board
                    board={gameState.board}
                    players={gameState.players}
-                   validVertexIds={placementState.validVertexIds}
-                   validEdgeIds={placementState.validEdgeIds}
-                   onBuildSettlement={interactionsDisabled ? undefined : (vertexId) => build(StructureType.SETTLEMENT, vertexId)}
+                   validVertexIds={effectiveValidVertexIds}
+                   validEdgeIds={effectiveValidEdgeIds}
+                   onBuildSettlement={interactionsDisabled ? undefined : handleBuildVertex}
                     onBuildRoad={interactionsDisabled ? undefined : (edgeId) => build(StructureType.ROAD, edgeId)}
                     isRobberMoveMode={isRobberMoveRequired}
                     onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
@@ -662,11 +822,13 @@ export function Game({ gameCode, onLeave }: GameProps) {
              {gameState && (
                <PlayerPanel
                  players={gameState.players}
+                 board={gameState.board}
                   currentTurn={gameState.currentTurn}
                   turnPhase={gameState.turnPhase}
                   dice={gameState.dice}
                   gameStatus={gameState.status as unknown as string}
                   isGameOver={isGameOver}
+                  longestRoadPlayerId={gameState.longestRoadPlayerId ?? null}
                />
              )}
              {!interactionsDisabled &&

@@ -18,9 +18,9 @@ Current snapshot:
 - No changes planned unless regressions appear; files: none; Go tests: none; Playwright: none.
 
 ## PRIORITY 3: VICTORY FLOW + BUILD CONTROLS (blocks victory/longest-road E2E)
-- Add BUILD-phase controls (`data-cy='build-road-btn'`, `build-settlement-btn`, `build-city-btn'`) and a selected build-mode state so board clicks only apply to the chosen structure; files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/Game.css`, `frontend/src/components/Board/placement.ts`; Go tests: none; Playwright: update `frontend/tests/helpers.ts`, `victory.spec.ts`, `longest-road.spec.ts` to use build buttons consistently.
-- Add city upgrade placement validation + highlighting in build mode (only your settlements, not already cities); files: `frontend/src/components/Board/placement.ts`; Go tests: none; Playwright: add/extend victory flow step for city build in `frontend/tests/victory.spec.ts`.
-- Align resource selectors used by victory spec by adding `data-cy='player-{resource}'` aliases (keep existing `resource-{resource}`); files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`; Go tests: none; Playwright: `frontend/tests/victory.spec.ts` should pass without selector edits.
+- ✅ Added BUILD-phase controls (`data-cy='build-road-btn'`, `build-settlement-btn`, `build-city-btn'`) and build-mode gating for board clicks; files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/Game.css`.
+- ✅ Added city upgrade placement validation + highlighting in build mode; files: `frontend/src/components/Game/Game.tsx` (city-only selection with settlement filtering).
+- ⏳ Align resource selectors used by victory spec by adding `data-cy='player-{resource}'` aliases (keep existing `resource-{resource}`); files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`; Go tests: none; Playwright: `frontend/tests/victory.spec.ts` should pass without selector edits.
 
 ## PRIORITY 4: ROBBER FLOW (steal modal not visible)
 - Fix MoveRobber payload shape and steal triggering: ensure client sends only `{q,r}` HexCoord and that steal requests don’t fail proto parsing; reset steal modal state when a new robber phase starts; files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`; Go tests: add cases in `backend/internal/game/robber_test.go` only if server-side behavior changes; Playwright: re-run `frontend/tests/robber.spec.ts` and stabilize any waits around robber-hex clicks.
@@ -37,7 +37,8 @@ Current snapshot:
 - Show “You drew: {Card}” toast on `devCardBought` (client-only, not broadcast); files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`; Go tests: none; Playwright: add a simple assertion in `frontend/tests/development-cards.spec.ts`.
 
 ## PRIORITY 7: LONGEST ROAD (UI missing)
-- Show longest-road holder + per-player road length with data-cy attributes; reuse existing client-side road-length calculation; files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`, `frontend/src/components/Game/Game.tsx` (pass board); Go tests: none; Playwright: update `frontend/tests/longest-road.spec.ts` to assert `[data-cy='longest-road-holder']` and `road-length-{playerId}`.
+- ✅ Show longest-road holder + per-player road length with data-cy attributes; files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`, `frontend/src/components/Game/Game.tsx`.
+- ⚠️ E2E still failing due to deterministic connected-road placement; current test updates attempt to force dice + build connected roads but longest-road bonus still not consistently awarded.
 
 ## PRIORITY 8: PORTS (determinism + enum normalization)
 - Make port placement deterministic at standard coastal positions; files: `backend/internal/game/ports.go`, `backend/internal/game/board.go`; Go tests: update `backend/internal/game/ports_test.go`, `backend/internal/game/board_test.go` to assert deterministic layout; Playwright: re-run `frontend/tests/ports.spec.ts`.
@@ -49,7 +50,16 @@ Current snapshot:
 
 Failing spec groups from `E2E_STATUS.md` (2026-01-22):
 - `interactive-board.spec.ts` (1 flaky): likely placement-state not ready; fix task = add explicit wait for non-zero valid vertices or add a placement-ready marker in UI.
-- `longest-road.spec.ts` (6 failing): missing build buttons + road-length UI; fix task = add build controls + road-length display + update tests to use buttons.
+- `longest-road.spec.ts` (still failing): build buttons + road-length UI now present, tests updated to force dice and try connected road placement; remaining failures stem from not consistently reaching longest-road length >=5/6 and bonus/VP checks. See latest run notes below.
+
+### Latest E2E run notes (2026-01-26)
+- Ran `cd frontend && npx playwright test longest-road.spec.ts --reporter=list`.
+- Result: 3 passed, 4 failed.
+- Failures:
+  - Longest-road bonus not consistently awarded (VP stays 2) even after forced rolls + extra road placements.
+  - Guest longest-road transfer not triggering; connected-length heuristic still stalls below target in some runs.
+  - Road-length assertions using exact “5” fail when length > 5 (e.g., 7).
+- Artifacts: see `frontend/test-results/longest-road-*` for traces/screenshots.
 - `ports.spec.ts` (8 failing): trade UI absent when roll hits 7 + port enums not normalized; fix task = force dice to non-7 in tests + normalize enums + deterministic ports.
 - `robber.spec.ts` (2 failing): steal modal never appears; fix task = align moveRobber payload and reset steal modal state on new robber phase.
 - `trading.spec.ts` (6 failing + 1 flaky): trade modal gating on enum mismatch and random dice; fix task = normalize TradeStatus + force dice roll in tests + add expiry/duplicate-trade rules.

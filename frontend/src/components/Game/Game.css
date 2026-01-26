@@ -224,6 +224,18 @@
   align-items: center;
 }
 
+.build-controls {
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.build-controls .btn.is-active {
+  border: 1px solid #646cff;
+  color: #f3f6ff;
+}
+
 .game-board-content {
   display: flex;
   flex-direction: row;

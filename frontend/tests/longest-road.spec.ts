@@ -1,8 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
 import {
   startTwoPlayerGame,
   completeSetupPhase,
   grantResources,
+  grantResourcesAndWait,
+  forceDiceRoll,
 } from "./helpers";
 
 /**
@@ -15,6 +17,131 @@ import {
  */
 
 test.describe("Longest Road", () => {
+  async function enterBuildPhaseWithForcedRoll(
+    page: Page,
+    request: APIRequestContext,
+    gameCode: string,
+    diceValue: number = 8
+  ) {
+    await forceDiceRoll(request, gameCode, diceValue);
+    await expect(page.locator("[data-cy='dice-result']")).toBeVisible({
+      timeout: 10000,
+    });
+    const buildPhaseBtn = page.locator("[data-cy='build-phase-btn']");
+    if (await buildPhaseBtn.isEnabled()) {
+      await buildPhaseBtn.click();
+    }
+  }
+
+  function parseRoadLength(text: string | null): number {
+    const match = text?.match(/(\d+)/);
+    return match ? Number.parseInt(match[1], 10) : 0;
+  }
+
+  async function expectRoadLengthAtLeast(
+    page: Page,
+    playerId: string,
+    minimum: number
+  ) {
+    await expect(async () => {
+      const text = await page
+        .locator(`[data-cy='road-length-${playerId}']`)
+        .textContent();
+      expect(parseRoadLength(text)).toBeGreaterThanOrEqual(minimum);
+    }).toPass({ timeout: 10000 });
+  }
+
+  function parseEdgeDataCy(dataCy: string | null): [string, string] | null {
+    if (!dataCy) return null;
+    const match = dataCy.match(
+      /^edge-(-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)$/
+    );
+    if (!match) {
+      return null;
+    }
+    return [`${match[1]},${match[2]}`, `${match[3]},${match[4]}`];
+  }
+
+  async function buildConnectedRoads(page: Page, count: number) {
+    const vertexCounts = new Map<string, number>();
+
+    const bumpVertex = (vertex: string) => {
+      vertexCounts.set(vertex, (vertexCounts.get(vertex) ?? 0) + 1);
+    };
+
+    const getEndpoints = () =>
+      new Set(
+        Array.from(vertexCounts.entries())
+          .filter(([, count]) => count === 1)
+          .map(([vertex]) => vertex)
+      );
+
+    for (let i = 0; i < count; i++) {
+      await page.locator("[data-cy='build-road-btn']").click();
+
+      const validEdges = page.locator("[data-cy^='edge-'].edge--valid");
+      await expect(validEdges.first()).toBeVisible({ timeout: 5000 });
+
+      const edgeData = await validEdges.evaluateAll((elements) =>
+        elements.map((el) => el.getAttribute("data-cy"))
+      );
+
+      let chosenDataCy: string | null = null;
+      const endpoints = getEndpoints();
+
+      if (endpoints.size > 0) {
+        for (const candidate of edgeData) {
+          const vertices = parseEdgeDataCy(candidate);
+          if (!vertices) continue;
+          const [v1, v2] = vertices;
+          const v1IsEndpoint = endpoints.has(v1);
+          const v2IsEndpoint = endpoints.has(v2);
+          const v1Seen = vertexCounts.has(v1);
+          const v2Seen = vertexCounts.has(v2);
+
+          if (v1IsEndpoint && !v2Seen) {
+            chosenDataCy = candidate;
+            break;
+          }
+          if (v2IsEndpoint && !v1Seen) {
+            chosenDataCy = candidate;
+            break;
+          }
+        }
+      }
+
+      if (!chosenDataCy && endpoints.size > 0) {
+        for (const candidate of edgeData) {
+          const vertices = parseEdgeDataCy(candidate);
+          if (!vertices) continue;
+          const [v1, v2] = vertices;
+          if (endpoints.has(v1) || endpoints.has(v2)) {
+            chosenDataCy = candidate;
+            break;
+          }
+        }
+      }
+
+      if (!chosenDataCy) {
+        chosenDataCy = edgeData[0] ?? null;
+      }
+
+      if (!chosenDataCy) {
+        throw new Error("No valid edge found for road placement");
+      }
+
+      const targetEdge = page.locator(`[data-cy='${chosenDataCy}']`);
+      await targetEdge.click();
+      const placedVertices = parseEdgeDataCy(chosenDataCy);
+      if (placedVertices) {
+        bumpVertex(placedVertices[0]);
+        bumpVertex(placedVertices[1]);
+      }
+
+      await page.waitForTimeout(500);
+    }
+  }
+
   test("5 connected roads awards Longest Road bonus", async ({
     page,
     context,
@@ -26,31 +153,24 @@ test.describe("Longest Road", () => {
     // Complete setup phase (each player places 2 settlements + 2 roads)
     await completeSetupPhase(hostPage, guestPage);
 
-    // Grant resources to host for building 3 more roads (need 5 total for bonus)
-    // Setup phase gives 2 roads, need 3 more = 3 wood + 3 brick
-    await grantResources(request, hostSession.code, hostSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Grant resources to host for building 4 more roads (need 5 connected for bonus)
+    // Setup phase gives 1-length chain, need 4 more = 4 wood + 4 brick
+    await grantResourcesAndWait(
+      request,
+      hostPage,
+      hostSession.code,
+      hostSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
 
-    // Wait for resource grant to propagate
-    await expect(
-      hostPage.locator("[data-cy='resource-wood']")
-    ).toContainText("3", { timeout: 10000 });
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
 
-    // Build 3 additional roads to reach 5 total
-    // Note: Need to find valid edge placements adjacent to existing roads
-    const validEdges = hostPage.locator("[data-cy^='edge-'].edge--valid");
-    await expect(validEdges.first()).toBeVisible({ timeout: 10000 });
-
-    for (let i = 0; i < 3; i++) {
-      await hostPage.locator("[data-cy='build-road-btn']").click();
-      await expect(validEdges.first()).toBeVisible({ timeout: 5000 });
-      await validEdges.first().click();
-      
-      // Wait for road to be placed
-      await hostPage.waitForTimeout(500);
-    }
+    // Build additional roads until longest road length reaches 5
+    await buildConnectedRoads(hostPage, 6);
+    await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify Longest Road badge appears for host
     await expect(
@@ -85,22 +205,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 3 roads to get 5 total (earns Longest Road)
-    await grantResources(request, hostSession.code, hostSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Host builds 4 roads to get 5 connected (earns Longest Road)
+    await grantResourcesAndWait(
+      request,
+      hostPage,
+      hostSession.code,
+      hostSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
     await hostPage.waitForTimeout(500);
 
-    for (let i = 0; i < 3; i++) {
-      await hostPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = hostPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await hostPage.waitForTimeout(500);
-    }
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
+    await buildConnectedRoads(hostPage, 6);
+    await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify host has Longest Road
     await expect(
@@ -115,26 +235,23 @@ test.describe("Longest Road", () => {
       guestPage.locator("[data-cy='current-player-name']")
     ).toContainText("Guest", { timeout: 10000 });
 
-    // Guest rolls dice
-    await guestPage.locator("[data-cy='roll-dice-btn']").click();
-    await guestPage.waitForTimeout(1000);
+    await enterBuildPhaseWithForcedRoll(guestPage, request, hostSession.code);
 
-    // Guest builds 4 roads to get 6 total (should take Longest Road)
-    await grantResources(request, guestSession.code, guestSession.playerId, {
-      wood: 4,
-      brick: 4,
-    });
+    // Guest builds more roads to exceed host's longest road
+    await grantResourcesAndWait(
+      request,
+      guestPage,
+      guestSession.code,
+      guestSession.playerId,
+      {
+        wood: 10,
+        brick: 10,
+      }
+    );
     await guestPage.waitForTimeout(500);
 
-    for (let i = 0; i < 4; i++) {
-      await guestPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = guestPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await guestPage.waitForTimeout(500);
-    }
+    await buildConnectedRoads(guestPage, 7);
+    await expectRoadLengthAtLeast(guestPage, guestSession.playerId, 6);
 
     // Verify Longest Road transferred to guest
     await expect(
@@ -169,22 +286,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 3 roads to get 5 total (earns Longest Road)
-    await grantResources(request, hostSession.code, hostSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Host builds 4 roads to get 5 connected (earns Longest Road)
+    await grantResourcesAndWait(
+      request,
+      hostPage,
+      hostSession.code,
+      hostSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
     await hostPage.waitForTimeout(500);
 
-    for (let i = 0; i < 3; i++) {
-      await hostPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = hostPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await hostPage.waitForTimeout(500);
-    }
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
+    await buildConnectedRoads(hostPage, 6);
+    await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify host has Longest Road
     await expect(
@@ -199,26 +316,23 @@ test.describe("Longest Road", () => {
       guestPage.locator("[data-cy='current-player-name']")
     ).toContainText("Guest", { timeout: 10000 });
 
-    // Guest rolls dice
-    await guestPage.locator("[data-cy='roll-dice-btn']").click();
-    await guestPage.waitForTimeout(1000);
+    await enterBuildPhaseWithForcedRoll(guestPage, request, hostSession.code);
 
-    // Guest builds 3 roads to also get 5 total (TIE)
-    await grantResources(request, guestSession.code, guestSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Guest builds enough roads to tie with host
+    await grantResourcesAndWait(
+      request,
+      guestPage,
+      guestSession.code,
+      guestSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
     await guestPage.waitForTimeout(500);
 
-    for (let i = 0; i < 3; i++) {
-      await guestPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = guestPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await guestPage.waitForTimeout(500);
-    }
+    await buildConnectedRoads(guestPage, 6);
+    await expectRoadLengthAtLeast(guestPage, guestSession.playerId, 5);
 
     // Verify Longest Road stays with host (tie goes to current holder)
     await expect(
@@ -258,22 +372,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 3 roads to get 5 total
-    await grantResources(request, hostSession.code, hostSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Host builds 4 roads to get 5 connected
+    await grantResourcesAndWait(
+      request,
+      hostPage,
+      hostSession.code,
+      hostSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
     await hostPage.waitForTimeout(500);
 
-    for (let i = 0; i < 3; i++) {
-      await hostPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = hostPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await hostPage.waitForTimeout(500);
-    }
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
+    await buildConnectedRoads(hostPage, 6);
+    await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify Longest Road holder shows correct player name
     const longestRoadBadge = hostPage.locator("[data-cy='longest-road-holder']");
@@ -305,13 +419,13 @@ test.describe("Longest Road", () => {
       hostPage.locator(`[data-cy='road-length-${guestSession.playerId}']`)
     ).toBeVisible();
 
-    // Verify initial road counts (2 roads each from setup phase)
+    // Verify initial road counts (longest path is 1 from setup phase)
     await expect(
       hostPage.locator(`[data-cy='road-length-${hostSession.playerId}']`)
-    ).toContainText("2");
+    ).toContainText("1");
     await expect(
       hostPage.locator(`[data-cy='road-length-${guestSession.playerId}']`)
-    ).toContainText("2");
+    ).toContainText("1");
 
     // Host builds 1 more road
     await grantResources(request, hostSession.code, hostSession.playerId, {
@@ -320,6 +434,7 @@ test.describe("Longest Road", () => {
     });
     await hostPage.waitForTimeout(500);
 
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
     await hostPage.locator("[data-cy='build-road-btn']").click();
     const validEdge = hostPage
       .locator("[data-cy^='edge-'].edge--valid")
@@ -331,12 +446,12 @@ test.describe("Longest Road", () => {
     // Verify host's road count updated
     await expect(
       hostPage.locator(`[data-cy='road-length-${hostSession.playerId}']`)
-    ).toContainText("3");
+    ).toContainText("2");
 
     // Guest's road count should remain unchanged
     await expect(
       hostPage.locator(`[data-cy='road-length-${guestSession.playerId}']`)
-    ).toContainText("2");
+    ).toContainText("1");
   });
 
   test("No Longest Road badge before 5 roads threshold", async ({
@@ -352,7 +467,7 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // After setup, each player has 2 roads (below threshold)
+    // After setup, longest road length is 1 (below threshold)
     // Verify no Longest Road badge is shown
     await expect(
       hostPage.locator("[data-cy='longest-road-holder']")
@@ -372,22 +487,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 3 roads to get 5 total
-    await grantResources(request, hostSession.code, hostSession.playerId, {
-      wood: 3,
-      brick: 3,
-    });
+    // Host builds 4 roads to get 5 connected
+    await grantResourcesAndWait(
+      request,
+      hostPage,
+      hostSession.code,
+      hostSession.playerId,
+      {
+        wood: 8,
+        brick: 8,
+      }
+    );
     await hostPage.waitForTimeout(500);
 
-    for (let i = 0; i < 3; i++) {
-      await hostPage.locator("[data-cy='build-road-btn']").click();
-      const validEdge = hostPage
-        .locator("[data-cy^='edge-'].edge--valid")
-        .first();
-      await expect(validEdge).toBeVisible({ timeout: 5000 });
-      await validEdge.click();
-      await hostPage.waitForTimeout(500);
-    }
+    await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
+    await buildConnectedRoads(hostPage, 6);
+    await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify BOTH host and guest pages show the Longest Road update
     await expect(

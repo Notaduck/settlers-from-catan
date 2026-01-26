@@ -1,0 +1,136 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: "Game Code:"
+          - strong [ref=e10]: ZABQB9
+        - generic [ref=e11]: PLAYING
+        - button "Leave Game" [ref=e12] [cursor=pointer]
+      - generic [ref=e14]:
+        - img [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - generic [ref=e21]: "2"
+              - generic [ref=e22]: •
+            - generic [ref=e23]:
+              - generic [ref=e26]: "11"
+              - generic [ref=e27]: ••
+            - generic [ref=e28]:
+              - generic [ref=e31]: "8"
+              - generic [ref=e32]: •••••
+            - generic [ref=e33]:
+              - generic [ref=e36]: "4"
+              - generic [ref=e37]: •••
+            - generic [ref=e38]:
+              - generic [ref=e41]: "6"
+              - generic [ref=e42]: •••••
+            - generic [ref=e43]:
+              - generic [ref=e46]: "8"
+              - generic [ref=e47]: •••••
+            - generic [ref=e48]:
+              - generic [ref=e51]: "5"
+              - generic [ref=e52]: ••••
+            - generic [ref=e53]:
+              - generic [ref=e56]: "3"
+              - generic [ref=e57]: ••
+            - generic [ref=e63]:
+              - generic [ref=e66]: "6"
+              - generic [ref=e67]: •••••
+            - generic [ref=e68]:
+              - generic [ref=e71]: "9"
+              - generic [ref=e72]: ••••
+            - generic [ref=e73]:
+              - generic [ref=e76]: "5"
+              - generic [ref=e77]: ••••
+            - generic [ref=e78]:
+              - generic [ref=e81]: "3"
+              - generic [ref=e82]: ••
+            - generic [ref=e83]:
+              - generic [ref=e86]: "10"
+              - generic [ref=e87]: •••
+            - generic [ref=e88]:
+              - generic [ref=e91]: "12"
+              - generic [ref=e92]: •
+            - generic [ref=e93]:
+              - generic [ref=e96]: "10"
+              - generic [ref=e97]: •••
+            - generic [ref=e98]:
+              - generic [ref=e101]: "9"
+              - generic [ref=e102]: ••••
+            - generic [ref=e103]:
+              - generic [ref=e106]: "4"
+              - generic [ref=e107]: •••
+            - generic [ref=e108]:
+              - generic [ref=e111]: "11"
+              - generic [ref=e112]: ••
+            - generic [ref=e357]:
+              - generic: 2:1
+            - generic [ref=e358]:
+              - generic: 2:1
+            - generic [ref=e359]:
+              - generic: 2:1
+            - generic [ref=e360]:
+              - generic: 2:1
+            - generic [ref=e361]:
+              - generic: 2:1
+            - generic [ref=e362]:
+              - generic: 2:1
+            - generic [ref=e363]:
+              - generic: 2:1
+            - generic [ref=e364]:
+              - generic: 2:1
+            - generic [ref=e365]:
+              - generic: 2:1
+        - generic [ref=e366]:
+          - generic [ref=e367]:
+            - heading "Dice" [level=3] [ref=e368]
+            - generic [ref=e369]:
+              - generic [ref=e370]: "6"
+              - generic [ref=e371]: "2"
+            - generic [ref=e372]: "Total: 8"
+          - generic [ref=e373]:
+            - heading "Current Turn" [level=3] [ref=e374]
+            - generic [ref=e375]:
+              - generic [ref=e377]: Guest
+              - generic [ref=e378]: (Build)
+          - generic [ref=e379]: "Longest Road: Host (6f887f94-5754-4f46-974f-790475e8c429)"
+          - generic [ref=e380]:
+            - heading "Your Resources" [level=3] [ref=e381]
+            - generic [ref=e382]:
+              - generic [ref=e383]:
+                - generic [ref=e384]: 🪵
+                - generic [ref=e385]: "2"
+              - generic [ref=e386]:
+                - generic [ref=e387]: 🧱
+                - generic [ref=e388]: "2"
+              - generic [ref=e389]:
+                - generic [ref=e390]: 🐑
+                - generic [ref=e391]: "1"
+              - generic [ref=e392]:
+                - generic [ref=e393]: 🌾
+                - generic [ref=e394]: "1"
+              - generic [ref=e395]:
+                - generic [ref=e396]: �ite
+                - generic [ref=e397]: "0"
+          - generic [ref=e398]:
+            - heading "Players" [level=3] [ref=e399]
+            - generic [ref=e400]:
+              - generic [ref=e402]: Host
+              - generic [ref=e403]: 2 VP
+              - generic [ref=e404]: "Roads: 8"
+            - generic [ref=e405]:
+              - generic [ref=e407]: Guest
+              - generic [ref=e408]: 2 VP
+              - generic [ref=e409]: "Roads: 8"
+        - generic [ref=e410]:
+          - generic [ref=e411]:
+            - heading "Development Cards (0)" [level=3] [ref=e412]
+            - button "Buy Card" [disabled] [ref=e413]
+          - generic [ref=e414]: No cards in hand
+```

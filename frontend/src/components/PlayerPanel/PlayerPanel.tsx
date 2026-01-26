@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { BoardState, PlayerState } from "@/types";
 import { TurnPhase, PlayerColor } from "@/types";
 import { useGame } from "@/context";
@@ -158,11 +159,13 @@ function getTurnPhaseName(phase: TurnPhase | string | undefined): string {
 
 export function PlayerPanel({
   players,
+  board,
   currentTurn,
   turnPhase,
   dice,
   gameStatus,
   isGameOver = false,
+  longestRoadPlayerId,
 }: PlayerPanelProps) {
   const { rollDice, endTurn, currentPlayerId } = useGame();
 
@@ -170,6 +173,18 @@ export function PlayerPanel({
   const isMyTurn = currentPlayer?.id === currentPlayerId;
   const isRollPhase = isTurnPhase(turnPhase, TurnPhase.ROLL, "TURN_PHASE_ROLL");
   const myPlayer = players.find((p) => p.id === currentPlayerId);
+  const roadLengths = useMemo(
+    () => getLongestRoadLengths(board ?? null, players),
+    [board, players]
+  );
+  const longestRoadLabel = useMemo(() => {
+    if (!longestRoadPlayerId) {
+      return null;
+    }
+    const holder = players.find((player) => player.id === longestRoadPlayerId);
+    const holderName = holder?.name ?? "Unknown";
+    return `Longest Road: ${holderName} (${longestRoadPlayerId})`;
+  }, [players, longestRoadPlayerId]);
 
   return (
     <div className="player-panel" data-cy="player-panel">
@@ -226,6 +241,12 @@ export function PlayerPanel({
         )}
       </div>
 
+      {longestRoadLabel && (
+        <div className="longest-road-badge" data-cy="longest-road-holder">
+          {longestRoadLabel}
+        </div>
+      )}
+
       {/* My resources */}
       {myPlayer && myPlayer.resources && (
         <div className="resources-section" data-cy="resources-section">
@@ -273,6 +294,12 @@ export function PlayerPanel({
             <span className="player-name">{player.name}</span>
             <span className="player-vp" data-cy={`player-vp-${player.id}`}>
               {player.victoryPoints} VP
+            </span>
+            <span
+              className="player-road-length"
+              data-cy={`road-length-${player.id}`}
+            >
+              Roads: {roadLengths[player.id] ?? 0}
             </span>
           </div>
         ))}

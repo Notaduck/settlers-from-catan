@@ -47,6 +47,16 @@
   border-bottom: 1px solid #333;
 }
 
+.longest-road-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #22304a;
+  border: 1px solid #31446b;
+  color: #f3f6ff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .current-player {
   display: flex;
   align-items: center;
@@ -118,6 +128,12 @@
 .player-vp {
   color: #888;
   font-size: 0.9rem;
+}
+
+.player-road-length {
+  color: #9aa3c7;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
 }
 
 .btn {
