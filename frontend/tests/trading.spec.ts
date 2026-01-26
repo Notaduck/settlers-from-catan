@@ -475,7 +475,7 @@ await bankTradeBtn.click();
     await expect(hostPage.locator('[data-cy="resource-sheep"]')).toContainText('1', { timeout: 10000 });
 
     // Second bank trade: 4 wood -> 1 ore
-    const bankTradeBtn = hostPage.locator('[data-cy="bank-trade-btn"]');
+    // Reuse previously declared bankTradeBtn
 await expect(bankTradeBtn).toBeVisible({ timeout: 10000 });
 await expect(bankTradeBtn).toBeEnabled({ timeout: 15000 });
 await bankTradeBtn.click();
