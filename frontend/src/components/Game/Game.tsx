@@ -313,16 +313,16 @@ export function Game({ gameCode, onLeave }: GameProps) {
       if (cardType === DevCardType.YEAR_OF_PLENTY) {
         setShowYearOfPlenty(true);
       } else if (cardType === DevCardType.MONOPOLY) {
-  if (!showMonopoly) {
-    setShowMonopoly(true);
-    console.log('[MonopolyModal] opened due to Monopoly card play');
-  }
-} else {
+        if (!showMonopoly) {
+          setShowMonopoly(true);
+          console.log('[MonopolyModal] opened due to Monopoly card play');
+        }
+      } else {
         // Knight and Road Building can be played directly
         playDevCard(cardType);
       }
     },
-    [playDevCard],
+    [playDevCard, showMonopoly],
   );
 
   if (error) {
