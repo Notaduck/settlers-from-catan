@@ -820,16 +820,17 @@ export function Game({ gameCode, onLeave }: GameProps) {
                </Suspense>
              )}
              {gameState && (
-               <PlayerPanel
-                 players={gameState.players}
-                 board={gameState.board}
+              <PlayerPanel
+                players={gameState.players}
+                board={gameState.board}
                   currentTurn={gameState.currentTurn}
                   turnPhase={gameState.turnPhase}
                   dice={gameState.dice}
                   gameStatus={gameState.status as unknown as string}
                   isGameOver={isGameOver}
                   longestRoadPlayerId={gameState.longestRoadPlayerId ?? null}
-               />
+                  largestArmyPlayerId={gameState.largestArmyPlayerId ?? null}
+              />
              )}
              {!interactionsDisabled &&
                isStatus(gameState?.status, GameStatus.PLAYING, "GAME_STATUS_PLAYING") && (

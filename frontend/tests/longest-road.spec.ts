@@ -62,8 +62,19 @@ test.describe("Longest Road", () => {
     return [`${match[1]},${match[2]}`, `${match[3]},${match[4]}`];
   }
 
-  async function buildConnectedRoads(page: Page, count: number) {
-    const vertexCounts = new Map<string, number>();
+  async function getRoadLength(page: Page, playerId: string): Promise<number> {
+    const text = await page
+      .locator(`[data-cy='road-length-${playerId}']`)
+      .textContent();
+    return parseRoadLength(text);
+  }
+
+  async function buildConnectedRoads(
+    page: Page,
+    count: number,
+    seedCounts?: Map<string, number>
+  ): Promise<Map<string, number>> {
+    const vertexCounts = seedCounts ?? new Map<string, number>();
 
     const bumpVertex = (vertex: string) => {
       vertexCounts.set(vertex, (vertexCounts.get(vertex) ?? 0) + 1);
@@ -140,6 +151,27 @@ test.describe("Longest Road", () => {
 
       await page.waitForTimeout(500);
     }
+
+    return vertexCounts;
+  }
+
+  async function buildRoadsUntilLength(
+    page: Page,
+    playerId: string,
+    targetLength: number,
+    maxRoads: number = 20
+  ) {
+    let counts: Map<string, number> | undefined;
+    for (let i = 0; i < maxRoads; i++) {
+      const current = await getRoadLength(page, playerId);
+      if (current >= targetLength) {
+        return;
+      }
+      counts = await buildConnectedRoads(page, 1, counts);
+    }
+    throw new Error(
+      `Failed to reach road length ${targetLength} for player ${playerId}`
+    );
   }
 
   test("5 connected roads awards Longest Road bonus", async ({
@@ -153,23 +185,22 @@ test.describe("Longest Road", () => {
     // Complete setup phase (each player places 2 settlements + 2 roads)
     await completeSetupPhase(hostPage, guestPage);
 
-    // Grant resources to host for building 4 more roads (need 5 connected for bonus)
-    // Setup phase gives 1-length chain, need 4 more = 4 wood + 4 brick
+    // Grant resources to host for building enough roads to reach longest road
     await grantResourcesAndWait(
       request,
       hostPage,
       hostSession.code,
       hostSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
 
     await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
 
     // Build additional roads until longest road length reaches 5
-    await buildConnectedRoads(hostPage, 6);
+    await buildRoadsUntilLength(hostPage, hostSession.playerId, 5);
     await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify Longest Road badge appears for host
@@ -184,9 +215,9 @@ test.describe("Longest Road", () => {
     await expect(
       hostPage.locator(`[data-cy='road-length-${hostSession.playerId}']`)
     ).toBeVisible();
-    await expect(
-      hostPage.locator(`[data-cy='road-length-${hostSession.playerId}']`)
-    ).toContainText("5"); // Should show at least 5 roads
+    expect(
+      await getRoadLength(hostPage, hostSession.playerId)
+    ).toBeGreaterThanOrEqual(5);
 
     // Verify host's VP increased by 2 (Longest Road bonus)
     const hostVP = hostPage.locator(
@@ -205,21 +236,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 4 roads to get 5 connected (earns Longest Road)
+    // Host builds enough roads to reach 5 connected (earns Longest Road)
     await grantResourcesAndWait(
       request,
       hostPage,
       hostSession.code,
       hostSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
     await hostPage.waitForTimeout(500);
 
     await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
-    await buildConnectedRoads(hostPage, 6);
+    await buildRoadsUntilLength(hostPage, hostSession.playerId, 5);
+    const hostRoadLength = await getRoadLength(hostPage, hostSession.playerId);
     await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify host has Longest Road
@@ -244,14 +276,22 @@ test.describe("Longest Road", () => {
       guestSession.code,
       guestSession.playerId,
       {
-        wood: 10,
-        brick: 10,
+        wood: 20,
+        brick: 20,
       }
     );
     await guestPage.waitForTimeout(500);
 
-    await buildConnectedRoads(guestPage, 7);
-    await expectRoadLengthAtLeast(guestPage, guestSession.playerId, 6);
+    await buildRoadsUntilLength(
+      guestPage,
+      guestSession.playerId,
+      hostRoadLength + 1
+    );
+    await expectRoadLengthAtLeast(
+      guestPage,
+      guestSession.playerId,
+      hostRoadLength + 1
+    );
 
     // Verify Longest Road transferred to guest
     await expect(
@@ -261,7 +301,10 @@ test.describe("Longest Road", () => {
     // Verify guest's road length
     await expect(
       guestPage.locator(`[data-cy='road-length-${guestSession.playerId}']`)
-    ).toContainText("6");
+    ).toBeVisible();
+    expect(
+      await getRoadLength(guestPage, guestSession.playerId)
+    ).toBeGreaterThanOrEqual(6);
 
     // Verify guest's VP increased by 2
     const guestVP = guestPage.locator(
@@ -286,21 +329,22 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 4 roads to get 5 connected (earns Longest Road)
+    // Host builds enough roads to reach 5 connected (earns Longest Road)
     await grantResourcesAndWait(
       request,
       hostPage,
       hostSession.code,
       hostSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
     await hostPage.waitForTimeout(500);
 
     await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
-    await buildConnectedRoads(hostPage, 6);
+    await buildRoadsUntilLength(hostPage, hostSession.playerId, 5);
+    const hostRoadLength = await getRoadLength(hostPage, hostSession.playerId);
     await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify host has Longest Road
@@ -325,14 +369,14 @@ test.describe("Longest Road", () => {
       guestSession.code,
       guestSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
     await guestPage.waitForTimeout(500);
 
-    await buildConnectedRoads(guestPage, 6);
-    await expectRoadLengthAtLeast(guestPage, guestSession.playerId, 5);
+    await buildRoadsUntilLength(guestPage, guestSession.playerId, hostRoadLength);
+    await expectRoadLengthAtLeast(guestPage, guestSession.playerId, hostRoadLength);
 
     // Verify Longest Road stays with host (tie goes to current holder)
     await expect(
@@ -342,10 +386,21 @@ test.describe("Longest Road", () => {
     // Verify both have same road length
     await expect(
       hostPage.locator(`[data-cy='road-length-${hostSession.playerId}']`)
-    ).toContainText("5");
+    ).toBeVisible();
     await expect(
       guestPage.locator(`[data-cy='road-length-${guestSession.playerId}']`)
-    ).toContainText("5");
+    ).toBeVisible();
+    const finalHostRoadLength = await getRoadLength(
+      hostPage,
+      hostSession.playerId
+    );
+    const finalGuestRoadLength = await getRoadLength(
+      guestPage,
+      guestSession.playerId
+    );
+    expect(finalHostRoadLength).toBeGreaterThanOrEqual(5);
+    expect(finalGuestRoadLength).toBeGreaterThanOrEqual(5);
+    expect(finalHostRoadLength).toEqual(finalGuestRoadLength);
 
     // Verify only host has VP bonus
     const hostVP = hostPage.locator(
@@ -372,21 +427,21 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 4 roads to get 5 connected
+    // Host builds enough roads to get 5 connected
     await grantResourcesAndWait(
       request,
       hostPage,
       hostSession.code,
       hostSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
     await hostPage.waitForTimeout(500);
 
     await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
-    await buildConnectedRoads(hostPage, 6);
+    await buildRoadsUntilLength(hostPage, hostSession.playerId, 5);
     await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify Longest Road holder shows correct player name
@@ -487,21 +542,21 @@ test.describe("Longest Road", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Host builds 4 roads to get 5 connected
+    // Host builds enough roads to get 5 connected
     await grantResourcesAndWait(
       request,
       hostPage,
       hostSession.code,
       hostSession.playerId,
       {
-        wood: 8,
-        brick: 8,
+        wood: 12,
+        brick: 12,
       }
     );
     await hostPage.waitForTimeout(500);
 
     await enterBuildPhaseWithForcedRoll(hostPage, request, hostSession.code);
-    await buildConnectedRoads(hostPage, 6);
+    await buildRoadsUntilLength(hostPage, hostSession.playerId, 5);
     await expectRoadLengthAtLeast(hostPage, hostSession.playerId, 5);
 
     // Verify BOTH host and guest pages show the Longest Road update

@@ -6,8 +6,8 @@ Quick E2E audit command (`cd frontend && npx playwright test --reporter=list 2>&
 
 Current snapshot:
 - Backend rules for robber/trading/dev cards/longest road/ports/victory appear implemented and unit-tested; remaining gaps are mostly UI/selector mismatches and a couple of backend rule gaps (trade expiry, one-trade-per-proposer, dev-card-per-turn).
-- Frontend is missing build controls for BUILD phase (road/settlement/city selection), longest-road UI, and a few data-cy alignment fixes.
-- E2E failures align with trade UI gating (dice=7 randomness), trade status enum mismatch, missing build buttons, and robber move/steal flow not surfacing the steal modal.
+- Frontend build controls and longest-road UI are in place; longest-road E2E stabilized with deterministic road-building helpers and VP display includes Longest Road/Largest Army bonuses.
+- E2E failures align with trade UI gating (dice=7 randomness), trade status enum mismatch, missing victory resource selectors, and robber move/steal flow not surfacing the steal modal.
 
 ---
 
@@ -38,6 +38,7 @@ Current snapshot:
 
 ## PRIORITY 7: LONGEST ROAD (UI missing)
 - ✅ Show longest-road holder + per-player road length with data-cy attributes; files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`, `frontend/src/components/Game/Game.tsx`.
+- ✅ PlayerPanel displays public VP totals including Longest Road/Largest Army bonuses; `frontend/tests/longest-road.spec.ts` passing with deterministic road placement helpers.
 - ⚠️ E2E still failing due to deterministic connected-road placement; current test updates attempt to force dice + build connected roads but longest-road bonus still not consistently awarded.
 
 ## PRIORITY 8: PORTS (determinism + enum normalization)

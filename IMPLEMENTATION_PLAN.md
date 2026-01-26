@@ -113,10 +113,9 @@
 - **Result**: `ports.spec.ts` now passes 9/9 with deterministic dice and resource updates.
 - **Validation**: `npx playwright test ports.spec.ts --reporter=list`, `make test-backend`, `make typecheck`, `make lint`, `make build`.
 
-#### 4. 🔧 HIGH - Fix Longest Road UI + build-road flow
-- **Problem**: `build-road-btn` not clickable during tests; `road-length-{playerId}` missing.
-- **Impact**: 6 failures in `longest-road.spec.ts`.
-- **Next steps**: ensure road build button appears in build phase, verify road-length display data-cy attributes.
+#### 4. ✅ HIGH - Fix Longest Road UI + build-road flow
+- **Fixes**: PlayerPanel now displays public VP totals including Longest Road/Largest Army bonuses; updated E2E helpers to build until target road length and made longest-road spec assertions robust.
+- **Validation**: `npx playwright test longest-road.spec.ts --reporter=list` (7/7 passing), `make test-backend`, `make typecheck`, `make lint`, `make build`.
 
 #### 5. 🔧 MEDIUM - Fix Robber steal modal flow
 - **Problem**: `steal-modal` never appears; backend logs show move-robber payload parse errors.

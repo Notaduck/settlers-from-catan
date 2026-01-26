@@ -22,6 +22,7 @@ interface PlayerPanelProps {
   gameStatus?: string;
   isGameOver?: boolean;
   longestRoadPlayerId?: string | null;
+  largestArmyPlayerId?: string | null;
 }
 
 const RESOURCE_ICONS: Record<string, string> = {
@@ -166,6 +167,7 @@ export function PlayerPanel({
   gameStatus,
   isGameOver = false,
   longestRoadPlayerId,
+  largestArmyPlayerId,
 }: PlayerPanelProps) {
   const { rollDice, endTurn, currentPlayerId } = useGame();
 
@@ -293,7 +295,10 @@ export function PlayerPanel({
             />
             <span className="player-name">{player.name}</span>
             <span className="player-vp" data-cy={`player-vp-${player.id}`}>
-              {player.victoryPoints} VP
+              {player.victoryPoints +
+                (player.id === longestRoadPlayerId ? 2 : 0) +
+                (player.id === largestArmyPlayerId ? 2 : 0)}{" "}
+              VP
             </span>
             <span
               className="player-road-length"
