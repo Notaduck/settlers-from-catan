@@ -1,0 +1,141 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: "Game Code:"
+          - strong [ref=e10]: 8BUXGP
+        - generic [ref=e11]: PLAYING
+        - button "Leave Game" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - button "Trade" [ref=e15] [cursor=pointer]
+          - button "Build" [disabled] [ref=e16]
+        - generic [ref=e17]: Build
+        - generic [ref=e19]:
+          - img [ref=e21]:
+            - generic [ref=e22]:
+              - generic [ref=e23] [cursor=pointer]:
+                - generic [ref=e26]: "12"
+                - generic [ref=e27]: •
+              - generic [ref=e28] [cursor=pointer]:
+                - generic [ref=e31]: "10"
+                - generic [ref=e32]: •••
+              - generic [ref=e33] [cursor=pointer]:
+                - generic [ref=e36]: "4"
+                - generic [ref=e37]: •••
+              - generic [ref=e38] [cursor=pointer]:
+                - generic [ref=e41]: "3"
+                - generic [ref=e42]: ••
+              - generic [ref=e43] [cursor=pointer]:
+                - generic [ref=e46]: "6"
+                - generic [ref=e47]: •••••
+              - generic [ref=e48] [cursor=pointer]:
+                - generic [ref=e51]: "11"
+                - generic [ref=e52]: ••
+              - generic [ref=e53] [cursor=pointer]:
+                - generic [ref=e56]: "9"
+                - generic [ref=e57]: ••••
+              - generic [ref=e58] [cursor=pointer]:
+                - generic [ref=e61]: "6"
+                - generic [ref=e62]: •••••
+              - generic [ref=e63] [cursor=pointer]:
+                - generic [ref=e66]: "10"
+                - generic [ref=e67]: •••
+              - generic [ref=e68] [cursor=pointer]:
+                - generic [ref=e71]: "5"
+                - generic [ref=e72]: ••••
+              - generic [ref=e73] [cursor=pointer]:
+                - generic [ref=e76]: "9"
+                - generic [ref=e77]: ••••
+              - generic [ref=e78] [cursor=pointer]:
+                - generic [ref=e81]: "11"
+                - generic [ref=e82]: ••
+              - generic [ref=e83] [cursor=pointer]:
+                - generic [ref=e86]: "4"
+                - generic [ref=e87]: •••
+              - generic [ref=e88] [cursor=pointer]:
+                - generic [ref=e91]: "8"
+                - generic [ref=e92]: •••••
+              - generic [ref=e93] [cursor=pointer]:
+                - generic [ref=e96]: "5"
+                - generic [ref=e97]: ••••
+              - generic [ref=e98] [cursor=pointer]:
+                - generic [ref=e101]: "8"
+                - generic [ref=e102]: •••••
+              - generic [ref=e103] [cursor=pointer]:
+                - generic [ref=e106]: "3"
+                - generic [ref=e107]: ••
+              - generic [ref=e113] [cursor=pointer]:
+                - generic [ref=e116]: "2"
+                - generic [ref=e117]: •
+              - generic [ref=e362]:
+                - generic: 2:1
+              - generic [ref=e363]:
+                - generic: 2:1
+              - generic [ref=e364]:
+                - generic: 2:1
+              - generic [ref=e365]:
+                - generic: 2:1
+              - generic [ref=e366]:
+                - generic: 2:1
+              - generic [ref=e367]:
+                - generic: 2:1
+              - generic [ref=e368]:
+                - generic: 2:1
+              - generic [ref=e369]:
+                - generic: 2:1
+              - generic [ref=e370]:
+                - generic: 2:1
+          - generic [ref=e371]:
+            - generic [ref=e372]:
+              - heading "Dice" [level=3] [ref=e373]
+              - generic [ref=e374]:
+                - generic [ref=e375]: "2"
+                - generic [ref=e376]: "5"
+              - generic [ref=e377]: "Total: 7"
+            - generic [ref=e378]:
+              - heading "Current Turn" [level=3] [ref=e379]
+              - generic [ref=e380]:
+                - generic [ref=e382]: Host
+                - generic [ref=e383]: (Build)
+              - button "End Turn" [ref=e384] [cursor=pointer]
+            - generic [ref=e385]:
+              - heading "Your Resources" [level=3] [ref=e386]
+              - generic [ref=e387]:
+                - generic [ref=e388]:
+                  - generic [ref=e389]: 🪵
+                  - generic [ref=e390]: "0"
+                - generic [ref=e391]:
+                  - generic [ref=e392]: 🧱
+                  - generic [ref=e393]: "0"
+                - generic [ref=e394]:
+                  - generic [ref=e395]: 🐑
+                  - generic [ref=e396]: "2"
+                - generic [ref=e397]:
+                  - generic [ref=e398]: 🌾
+                  - generic [ref=e399]: "1"
+                - generic [ref=e400]:
+                  - generic [ref=e401]: �ite
+                  - generic [ref=e402]: "0"
+            - generic [ref=e403]:
+              - heading "Players" [level=3] [ref=e404]
+              - generic [ref=e405]:
+                - generic [ref=e407]: Host
+                - generic [ref=e408]: 2 VP
+                - generic [ref=e409]: "Roads: 0"
+              - generic [ref=e410]:
+                - generic [ref=e412]: Guest
+                - generic [ref=e413]: 2 VP
+                - generic [ref=e414]: "Roads: 0"
+          - generic [ref=e415]:
+            - generic [ref=e416]:
+              - heading "Development Cards (0)" [level=3] [ref=e417]
+              - button "Buy Card" [disabled] [ref=e418]
+            - generic [ref=e419]: No cards in hand
+```

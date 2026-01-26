@@ -19,17 +19,19 @@ export function MonopolyModal({ open, onClose, onSubmit }: MonopolyModalProps) {
   const [selected, setSelected] = useState<Resource | null>(null);
 
   const handleSubmit = () => {
-    if (selected !== null) {
-      onSubmit(selected);
-      setSelected(null);
-      onClose();
-    }
-  };
-
-  const handleCancel = () => {
+  if (selected !== null) {
+    console.log('[MonopolyModal] handleSubmit called', selected);
+    onSubmit(selected);
     setSelected(null);
     onClose();
-  };
+  }
+};
+
+  const handleCancel = () => {
+  console.log('[MonopolyModal] cancelled by user');
+  setSelected(null);
+  onClose();
+};
 
   if (!open) return null;
 

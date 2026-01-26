@@ -313,8 +313,11 @@ export function Game({ gameCode, onLeave }: GameProps) {
       if (cardType === DevCardType.YEAR_OF_PLENTY) {
         setShowYearOfPlenty(true);
       } else if (cardType === DevCardType.MONOPOLY) {
-        setShowMonopoly(true);
-      } else {
+  if (!showMonopoly) {
+    setShowMonopoly(true);
+    console.log('[MonopolyModal] opened due to Monopoly card play');
+  }
+} else {
         // Knight and Road Building can be played directly
         playDevCard(cardType);
       }
@@ -490,14 +493,18 @@ export function Game({ gameCode, onLeave }: GameProps) {
               setShowYearOfPlenty(false);
             }}
           />
-          <MonopolyModal
-            open={showMonopoly}
-            onClose={() => setShowMonopoly(false)}
-            onSubmit={(resource) => {
-              playDevCard(DevCardType.MONOPOLY, resource);
-              setShowMonopoly(false);
-            }}
-          />
+<MonopolyModal
+  open={showMonopoly}
+  onClose={() => {
+    console.log('[MonopolyModal] closed by user');
+    setShowMonopoly(false);
+  }}
+  onSubmit={(resource) => {
+    console.log('[MonopolyModal] submitted resource:', resource);
+    playDevCard(DevCardType.MONOPOLY, resource);
+    setShowMonopoly(false);
+  }}
+/>
         </>
       )}
 

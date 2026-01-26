@@ -14,7 +14,7 @@ export default defineConfig({
       command: "cd .. && cd backend && go run ./cmd/server",
       port: 8080,
       timeout: 60000,
-      reuseExistingServer: false,
+      reuseExistingServer: true,
       env: {
         DEV_MODE: "true",
       },

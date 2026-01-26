@@ -1,0 +1,136 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: "Game Code:"
+          - strong [ref=e10]: BLMC4V
+        - generic [ref=e11]: PLAYING
+        - button "Leave Game" [ref=e12] [cursor=pointer]
+      - generic [ref=e14]:
+        - img [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - generic [ref=e21]: "8"
+              - generic [ref=e22]: •••••
+            - generic [ref=e23]:
+              - generic [ref=e26]: "6"
+              - generic [ref=e27]: •••••
+            - generic [ref=e28]:
+              - generic [ref=e31]: "3"
+              - generic [ref=e32]: ••
+            - generic [ref=e33]:
+              - generic [ref=e36]: "8"
+              - generic [ref=e37]: •••••
+            - generic [ref=e38]:
+              - generic [ref=e41]: "5"
+              - generic [ref=e42]: ••••
+            - generic [ref=e43]:
+              - generic [ref=e46]: "6"
+              - generic [ref=e47]: •••••
+            - generic [ref=e48]:
+              - generic [ref=e51]: "9"
+              - generic [ref=e52]: ••••
+            - generic [ref=e53]:
+              - generic [ref=e56]: "9"
+              - generic [ref=e57]: ••••
+            - generic [ref=e58]:
+              - generic [ref=e61]: "11"
+              - generic [ref=e62]: ••
+            - generic [ref=e63]:
+              - generic [ref=e66]: "5"
+              - generic [ref=e67]: ••••
+            - generic [ref=e68]:
+              - generic [ref=e71]: "10"
+              - generic [ref=e72]: •••
+            - generic [ref=e73]:
+              - generic [ref=e76]: "11"
+              - generic [ref=e77]: ••
+            - generic [ref=e78]:
+              - generic [ref=e81]: "2"
+              - generic [ref=e82]: •
+            - generic [ref=e83]:
+              - generic [ref=e86]: "4"
+              - generic [ref=e87]: •••
+            - generic [ref=e88]:
+              - generic [ref=e91]: "12"
+              - generic [ref=e92]: •
+            - generic [ref=e93]:
+              - generic [ref=e96]: "10"
+              - generic [ref=e97]: •••
+            - generic [ref=e98]:
+              - generic [ref=e101]: "3"
+              - generic [ref=e102]: ••
+            - generic [ref=e108]:
+              - generic [ref=e111]: "4"
+              - generic [ref=e112]: •••
+            - generic [ref=e357]:
+              - generic: 2:1
+            - generic [ref=e358]:
+              - generic: 2:1
+            - generic [ref=e359]:
+              - generic: 2:1
+            - generic [ref=e360]:
+              - generic: 2:1
+            - generic [ref=e361]:
+              - generic: 2:1
+            - generic [ref=e362]:
+              - generic: 2:1
+            - generic [ref=e363]:
+              - generic: 2:1
+            - generic [ref=e364]:
+              - generic: 2:1
+            - generic [ref=e365]:
+              - generic: 2:1
+        - generic [ref=e366]:
+          - generic [ref=e367]:
+            - heading "Dice" [level=3] [ref=e368]
+            - generic [ref=e369]:
+              - generic [ref=e370]: "?"
+              - generic [ref=e371]: "?"
+            - text: "0"
+            - button "Roll Dice" [ref=e372] [cursor=pointer]
+          - generic [ref=e373]:
+            - heading "Current Turn" [level=3] [ref=e374]
+            - generic [ref=e375]:
+              - generic [ref=e377]: Alice
+              - generic [ref=e378]: (Roll)
+          - generic [ref=e379]:
+            - heading "Your Resources" [level=3] [ref=e380]
+            - generic [ref=e381]:
+              - generic [ref=e382]:
+                - generic [ref=e383]: 🪵
+                - generic [ref=e384]: "1"
+              - generic [ref=e385]:
+                - generic [ref=e386]: 🧱
+                - generic [ref=e387]: "0"
+              - generic [ref=e388]:
+                - generic [ref=e389]: 🐑
+                - generic [ref=e390]: "1"
+              - generic [ref=e391]:
+                - generic [ref=e392]: 🌾
+                - generic [ref=e393]: "1"
+              - generic [ref=e394]:
+                - generic [ref=e395]: �ite
+                - generic [ref=e396]: "0"
+          - generic [ref=e397]:
+            - heading "Players" [level=3] [ref=e398]
+            - generic [ref=e399]:
+              - generic [ref=e401]: Alice
+              - generic [ref=e402]: 2 VP
+              - generic [ref=e403]: "Roads: 0"
+            - generic [ref=e404]:
+              - generic [ref=e406]: Bob
+              - generic [ref=e407]: 2 VP
+              - generic [ref=e408]: "Roads: 0"
+        - generic [ref=e409]:
+          - generic [ref=e410]:
+            - heading "Development Cards (0)" [level=3] [ref=e411]
+            - button "Buy Card" [disabled] [ref=e412]
+          - generic [ref=e413]: No cards in hand
+```
