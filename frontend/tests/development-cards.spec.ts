@@ -5,6 +5,7 @@ import {
   grantDevCard,
   grantResources,
   grantResourcesAndWait,
+  forceDiceRoll,
   rollDice,
   endTurn,
   buyDevelopmentCard,
@@ -239,6 +240,11 @@ test.describe("Development Cards", () => {
     context,
     request,
   }) => {
+    const devModeEnabled = await isDevModeAvailable(request);
+    if (!devModeEnabled) {
+      test.skip("DEV_MODE test endpoints not available. Start backend with DEV_MODE=true");
+    }
+
     const { hostPage, guestPage, hostSession } = await startTwoPlayerGame(
       page,
       context,
@@ -247,77 +253,53 @@ test.describe("Development Cards", () => {
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Roll dice
+    // Force a non-7 roll to avoid robber flow and roll dice
+    await forceDiceRoll(request, hostSession.code, 8);
     await rollDice(hostPage);
 
-    // Buy dev cards until we get Monopoly
-    for (let i = 0; i < 10; i++) {
-      await grantResources(request, hostSession.code, hostSession.playerId, {
-        ore: 1,
-        wheat: 1,
-        sheep: 1,
-      });
-      await hostPage.waitForTimeout(200);
-      await buyDevelopmentCard(hostPage);
-      await hostPage.waitForTimeout(500);
-
-      // Check if we have Monopoly card
-      const monopolyCard = hostPage.locator("[data-cy='dev-card-monopoly']");
-      if (await monopolyCard.isVisible()) {
-        break;
-      }
-    }
-
-    // End turn to make cards playable next turn
-    await endTurn(hostPage);
-    await rollDice(guestPage);
-    await endTurn(guestPage);
-
-    // Now on host's turn again
-    await rollDice(hostPage);
+    // Grant a Monopoly card directly for deterministic test
+    await grantDevCard(request, hostSession.code, hostSession.playerId, "monopoly");
 
     // Try to find and play Monopoly if we have it
     const monopolyCard = hostPage.locator("[data-cy='dev-card-monopoly']");
-    if (await monopolyCard.isVisible()) {
-      const playButton = monopolyCard.locator(
-        "[data-cy='play-dev-card-btn-monopoly']"
-      );
+    await expect(monopolyCard).toBeVisible({ timeout: 5000 });
 
-      if (await playButton.isVisible()) {
-        await playButton.click();
+    const playButton = monopolyCard.locator(
+      "[data-cy='play-dev-card-btn-monopoly']"
+    );
+    await expect(playButton).toBeVisible({ timeout: 5000 });
+    await playButton.click();
 
-        // Modal should open
-        await expect(
-          hostPage.locator("[data-cy='monopoly-modal']")
-        ).toBeVisible({ timeout: 5000 });
+    // Modal should open
+    await expect(
+      hostPage.locator("[data-cy='monopoly-modal']")
+    ).toBeVisible({ timeout: 5000 });
 
-        // Should show resource selectors
-        await expect(
-          hostPage.locator("[data-cy='monopoly-select-wood']")
-        ).toBeVisible();
+    // Should show resource selectors
+    await expect(
+      hostPage.locator("[data-cy='monopoly-select-wood']")
+    ).toBeVisible();
 
-        // Submit button should be disabled initially
-        await expect(
-          hostPage.locator("[data-cy='monopoly-submit']")
-        ).toBeDisabled();
+    // Submit button should be disabled initially
+    await expect(
+      hostPage.locator("[data-cy='monopoly-submit']")
+    ).toBeDisabled();
 
-        // Select a resource
-        await hostPage.locator("[data-cy='monopoly-select-wheat']").click();
+    // Select a resource
+    await hostPage.locator("[data-cy='monopoly-select-wheat']").click();
 
-        // Submit should be enabled now
-        await expect(
-          hostPage.locator("[data-cy='monopoly-submit']")
-        ).toBeEnabled({ timeout: 5000 });
+    // Submit should be enabled now
+    await expect(
+      hostPage.locator("[data-cy='monopoly-submit']")
+    ).toBeEnabled({ timeout: 5000 });
 
-        // Submit
-        await hostPage.locator("[data-cy='monopoly-submit']").click();
+    // Submit
+    await hostPage.locator("[data-cy='monopoly-submit']").click();
 
-        // Modal should close
-        await expect(
-          hostPage.locator("[data-cy='monopoly-modal']")
-        ).not.toBeVisible({ timeout: 5000 });
-      }
-    }
+    // Modal should close
+    await expect(
+      hostPage.locator("[data-cy='monopoly-modal']")
+    ).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Monopoly should collect resources from all other players", async ({
@@ -325,12 +307,18 @@ test.describe("Development Cards", () => {
     context,
     request,
   }) => {
+    const devModeEnabled = await isDevModeAvailable(request);
+    if (!devModeEnabled) {
+      test.skip("DEV_MODE test endpoints not available. Start backend with DEV_MODE=true");
+    }
+
     const { hostPage, guestPage, hostSession, guestSession } =
       await startTwoPlayerGame(page, context, request);
 
     await completeSetupPhase(hostPage, guestPage);
 
-    // Roll dice
+    // Force a non-7 roll to avoid robber flow and roll dice
+    await forceDiceRoll(request, hostSession.code, 8);
     await rollDice(hostPage);
 
     // Give guest player some wheat
@@ -338,30 +326,8 @@ test.describe("Development Cards", () => {
       wheat: 5,
     });
 
-    // Buy dev cards until we get Monopoly
-    for (let i = 0; i < 15; i++) {
-      await grantResources(request, hostSession.code, hostSession.playerId, {
-        ore: 1,
-        wheat: 1,
-        sheep: 1,
-      });
-      await hostPage.waitForTimeout(200);
-      await buyDevelopmentCard(hostPage);
-      await hostPage.waitForTimeout(500);
-
-      const monopolyCard = hostPage.locator("[data-cy='dev-card-monopoly']");
-      if (await monopolyCard.isVisible()) {
-        break;
-      }
-    }
-
-    // End turn to make cards playable
-    await endTurn(hostPage);
-    await rollDice(guestPage);
-    await endTurn(guestPage);
-
-    // Host's turn again
-    await rollDice(hostPage);
+    // Grant a Monopoly card directly for deterministic test
+    await grantDevCard(request, hostSession.code, hostSession.playerId, "monopoly");
 
     // Record host's wheat count before monopoly
     const hostWheatBefore = await hostPage
@@ -370,33 +336,31 @@ test.describe("Development Cards", () => {
 
     // Play Monopoly if we have it
     const monopolyCard = hostPage.locator("[data-cy='dev-card-monopoly']");
-    if (await monopolyCard.isVisible()) {
-      const playButton = monopolyCard.locator(
-        "[data-cy='play-dev-card-btn-monopoly']"
-      );
+    await expect(monopolyCard).toBeVisible({ timeout: 5000 });
 
-      if (await playButton.isVisible()) {
-        await playButton.click();
-        await expect(
-          hostPage.locator("[data-cy='monopoly-modal']")
-        ).toBeVisible({ timeout: 5000 });
+    const playButton = monopolyCard.locator(
+      "[data-cy='play-dev-card-btn-monopoly']"
+    );
+    await expect(playButton).toBeVisible({ timeout: 5000 });
+    await playButton.click();
+    await expect(
+      hostPage.locator("[data-cy='monopoly-modal']")
+    ).toBeVisible({ timeout: 5000 });
 
-        // Select wheat
-        await hostPage.locator("[data-cy='monopoly-select-wheat']").click();
-        await hostPage.locator("[data-cy='monopoly-submit']").click();
+    // Select wheat
+    await hostPage.locator("[data-cy='monopoly-select-wheat']").click();
+    await hostPage.locator("[data-cy='monopoly-submit']").click();
 
-        // Wait for resource update
-        await hostPage.waitForTimeout(1000);
+    // Wait for resource update
+    await hostPage.waitForTimeout(1000);
 
-        // Host should have gained wheat from guest
-        const hostWheatAfter = await hostPage
-          .locator("[data-cy='resource-wheat']")
-          .textContent();
+    // Host should have gained wheat from guest
+    const hostWheatAfter = await hostPage
+      .locator("[data-cy='resource-wheat']")
+      .textContent();
 
-        // Wheat should have increased (we gave guest 5 wheat earlier)
-        expect(hostWheatAfter).not.toBe(hostWheatBefore);
-      }
-    }
+    // Wheat should have increased (we gave guest 5 wheat earlier)
+    expect(hostWheatAfter).not.toBe(hostWheatBefore);
   });
 
   test("Knight card should increment knight count and trigger Largest Army check", async ({
