@@ -17,6 +17,7 @@ import {
   DevCardType,
   ResourceCount,
   TurnPhase,
+  TradeStatus,
 } from "@/types";
 import { GameOver } from "./GameOver";
 import "./GameOver.css";
@@ -48,6 +49,16 @@ function isTurnPhase(
 ): boolean {
   return (
     phase === expected || phase === (expectedString as unknown as TurnPhase)
+  );
+}
+
+function isTradeStatus(
+  status: TradeStatus | string | undefined,
+  expected: TradeStatus,
+  expectedString: string,
+): boolean {
+  return (
+    status === expected || status === (expectedString as unknown as TradeStatus)
   );
 }
 
@@ -138,7 +149,11 @@ export function Game({ gameCode, onLeave }: GameProps) {
         (trade) =>
           trade.proposerId !== currentPlayerId &&
           (trade.targetId === currentPlayerId || !trade.targetId) &&
-          trade.status === 1, // Assuming 1 is PENDING status
+          isTradeStatus(
+            trade.status,
+            TradeStatus.PENDING,
+            "TRADE_STATUS_PENDING",
+          ),
       ) || null
     );
   }, [gameState?.pendingTrades, currentPlayerId]);

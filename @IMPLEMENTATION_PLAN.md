@@ -24,7 +24,9 @@ Sources reviewed: `specs/*`, backend (game logic, handlers), frontend (context, 
 - **Playwright tests:** re-run/stabilize `frontend/tests/robber.spec.ts` for modal visibility and requires waits on `[data-cy=steal-modal]`/robber-hex selectors.
 
 ## PRIORITY 5: TRADING (trade UI gating, enum mismatch, expiry)
-- **Task 1:** Normalize Frontend/Backend `TradeStatus` handling. Make frontend treat enum as number (not string) for trade/port UI and modal selectors; files: `frontend/src/components/Game/Game.tsx` and related modal components. 
+- **Task 1:** Normalize Frontend/Backend `TradeStatus` handling. Make frontend treat enum as number (not string) for trade/port UI and modal selectors; files: `frontend/src/components/Game/Game.tsx` and related modal components. ✅ Completed (2026-01-26)
+  - Added `isTradeStatus` helper and used `TradeStatus.PENDING` with string fallback `"TRADE_STATUS_PENDING"` to handle protojson enum strings.
+  - E2E run: `npx playwright test trading.spec.ts --reporter=list` (2026-01-26) → 4 passed, 8 failed. Failures include missing `[data-cy="bank-trade-btn"]`/trade modal visibility and resource count mismatch in multi-trade test. See `frontend/test-results/` artifacts.
 - **Task 2:** Expire trades at end of turn; update trading logic in `backend/internal/game/state_machine.go` and cover with `trading_test.go`. 
 - **Task 3:** Enforce one-active-trade-per-proposer rule in `backend/internal/game/trading.go` and test in `trading_test.go`.
 - **Task 4:** Make Playwright trade tests deterministic—force non-7 rolls so TRADE phase is guaranteed; add helper in `frontend/tests/helpers.ts` and update `frontend/tests/trading.spec.ts` (and `ports.spec.ts` as needed).
