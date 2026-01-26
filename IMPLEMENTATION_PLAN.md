@@ -2,6 +2,7 @@
 
 ## Ralph Planning Notes (Jan 26, 2026)
 
+- Iteration 4: No incomplete spec items found after scanning `specs/*`, backend game logic, and frontend UI. Proceeded with validation-only run per protocol.
 - Iteration 2: Reran `interactive-board.spec.ts` (7/7 passing) and updated `E2E_STATUS.md` to reflect current status; no code changes required.
 - Validation: `make test-backend`, `make typecheck`, `make lint`, `make build`.
 - Iteration 3: No open core implementation tasks. E2E infra is the only pending concern; no functional/gameplay/code changes required this iteration. Per Ralph protocol, documenting for plan completion and exiting for loop restart.
