@@ -15,7 +15,7 @@ interface GameSession {
 
 async function createGame(
   request: APIRequestContext,
-  playerName: string
+  playerName: string,
 ): Promise<GameSession> {
   const response = await request.post(`${API_BASE}/api/games`, {
     data: { playerName },
@@ -26,13 +26,13 @@ async function createGame(
 async function joinGame(
   request: APIRequestContext,
   gameCode: string,
-  playerName: string
+  playerName: string,
 ): Promise<GameSession> {
   const response = await request.post(
     `${API_BASE}/api/games/${gameCode}/join`,
     {
       data: { playerName },
-    }
+    },
   );
   const body = await response.json();
   return { code: gameCode, ...body };
@@ -136,9 +136,9 @@ test.describe("Game Start", () => {
 
     // Both ready up - wait for state updates after each click
     await guestPage.locator("[data-cy='ready-btn']").click();
-    await expect(
-      guestPage.locator("[data-cy='cancel-ready-btn']")
-    ).toBeVisible({ timeout: 10000 });
+    await expect(guestPage.locator("[data-cy='cancel-ready-btn']")).toBeVisible(
+      { timeout: 10000 },
+    );
 
     await hostPage.locator("[data-cy='ready-btn']").click();
     await expect(hostPage.locator("[data-cy='cancel-ready-btn']")).toBeVisible({
@@ -146,9 +146,9 @@ test.describe("Game Start", () => {
     });
 
     // Wait for start button to become enabled
-    await expect(
-      hostPage.locator("[data-cy='start-game-btn']")
-    ).toBeEnabled({ timeout: 10000 });
+    await expect(hostPage.locator("[data-cy='start-game-btn']")).toBeEnabled({
+      timeout: 10000,
+    });
 
     // Host starts game
     await hostPage.locator("[data-cy='start-game-btn']").click();

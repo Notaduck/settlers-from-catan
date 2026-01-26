@@ -1,667 +1,760 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ralph Dashboard - Settlers from Catan</title>
-  <style>
-    :root {
-      --bg: #0d1117;
-      --card: #161b22;
-      --border: #30363d;
-      --text: #c9d1d9;
-      --text-muted: #8b949e;
-      --green: #238636;
-      --green-bg: #23863620;
-      --yellow: #d29922;
-      --yellow-bg: #d2992220;
-      --blue: #58a6ff;
-      --blue-bg: #58a6ff20;
-      --red: #f85149;
-      --red-bg: #f8514920;
-      --purple: #a371f7;
-      --purple-bg: #a371f720;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 20px;
-      min-height: 100vh;
-    }
-    
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .header h1 {
-      font-size: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .header h1::before {
-      content: '🤖';
-      font-size: 28px;
-    }
-    
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-    
-    .status-dot.error {
-      background: var(--red);
-    }
-    
-    .status-dot.working {
-      background: var(--yellow);
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    /* Ralph Status Section */
-    .ralph-status {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .ralph-status h2 {
-      font-size: 16px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .ralph-status h2::before {
-      content: '⚡';
-    }
-    
-    .ralph-info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-    }
-    
-    .ralph-info-item {
-      padding: 12px;
-      background: var(--bg);
-      border-radius: 6px;
-    }
-    
-    .ralph-info-item .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    
-    .ralph-info-item .value {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .ralph-info-item .value.iteration {
-      color: var(--purple);
-      font-size: 32px;
-    }
-    
-    .ralph-info-item .value.passing {
-      color: var(--green);
-    }
-    
-    .ralph-info-item .value.failing {
-      color: var(--red);
-    }
-    
-    .ralph-info-item .value.skipped {
-      color: var(--yellow);
-    }
-    
-    .ralph-message {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--blue-bg);
-      border: 1px solid var(--blue);
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    
-    .ralph-message.error {
-      background: var(--red-bg);
-      border-color: var(--red);
-    }
-    
-    .ralph-message.success {
-      background: var(--green-bg);
-      border-color: var(--green);
-    }
-    
-    /* Plan Section */
-    .plan-section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    
-    .plan-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    
-    .plan-header:hover {
-      background: var(--border);
-    }
-    
-    .plan-header h2 {
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .plan-header h2::before {
-      content: '📋';
-    }
-    
-    .plan-content {
-      padding: 16px;
-      max-height: 400px;
-      overflow-y: auto;
-      display: none;
-    }
-    
-    .plan-section.expanded .plan-content {
-      display: block;
-    }
-    
-    .plan-raw {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      color: var(--text-muted);
-    }
-    
-    /* Stats Grid */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .stat-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-    }
-    
-    .stat-card h3 {
-      font-size: 12px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    
-    .stat-card .value {
-      font-size: 32px;
-      font-weight: 600;
-    }
-    
-    .stat-card.completed .value { color: var(--green); }
-    .stat-card.in-progress .value { color: var(--yellow); }
-    .stat-card.pending .value { color: var(--text-muted); }
-    
-    .progress-bar {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .progress-bar h3 {
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    
-    .bar-container {
-      height: 24px;
-      background: var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-    }
-    
-    .bar-completed {
-      background: var(--green);
-      height: 100%;
-      transition: width 0.5s ease;
-    }
-    
-    .bar-in-progress {
-      background: var(--yellow);
-      height: 100%;
-      transition: width 0.5s ease;
-    }
-    
-    .progress-text {
-      margin-top: 8px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    
-    .current-task {
-      background: var(--yellow-bg);
-      border: 1px solid var(--yellow);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .current-task h3 {
-      font-size: 12px;
-      text-transform: uppercase;
-      color: var(--yellow);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .current-task h3::before {
-      content: '⚡';
-    }
-    
-    .current-task .task-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .current-task .task-details {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    
-    .phases {
-      display: grid;
-      gap: 16px;
-    }
-    
-    .phase {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    
-    .phase-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    
-    .phase-header:hover {
-      background: var(--border);
-    }
-    
-    .phase-header h3 {
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .phase-progress {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    
-    .phase-tasks {
-      padding: 8px;
-      display: none;
-    }
-    
-    .phase.expanded .phase-tasks {
-      display: block;
-    }
-    
-    .task {
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 4px;
-      font-size: 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    
-    .task:last-child {
-      margin-bottom: 0;
-    }
-    
-    .task.completed {
-      background: var(--green-bg);
-      color: var(--green);
-    }
-    
-    .task.in-progress {
-      background: var(--yellow-bg);
-      color: var(--yellow);
-    }
-    
-    .task.pending {
-      color: var(--text-muted);
-    }
-    
-    .task-icon {
-      flex-shrink: 0;
-      width: 20px;
-      text-align: center;
-    }
-    
-    .task.completed .task-icon::before { content: '✓'; }
-    .task.in-progress .task-icon::before { content: '◐'; }
-    .task.pending .task-icon::before { content: '○'; }
-    
-    .task-content {
-      flex: 1;
-    }
-    
-    .task-files {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 4px;
-    }
-    
-    .refresh-notice {
-      text-align: center;
-      padding: 20px;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-    
-    .error {
-      background: var(--red);
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-    
-    .chevron {
-      transition: transform 0.2s;
-    }
-    
-    .phase.expanded .chevron,
-    .plan-section.expanded .chevron {
-      transform: rotate(90deg);
-    }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ralph Dashboard - Settlers from Catan</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --border: #30363d;
+        --text: #c9d1d9;
+        --text-muted: #8b949e;
+        --green: #238636;
+        --green-bg: #23863620;
+        --yellow: #d29922;
+        --yellow-bg: #d2992220;
+        --blue: #58a6ff;
+        --blue-bg: #58a6ff20;
+        --red: #f85149;
+        --red-bg: #f8514920;
+        --purple: #a371f7;
+        --purple-bg: #a371f720;
+      }
 
-  <div class="header">
-    <h1>
-      <img src="https://raw.githubusercontent.com/octocat/Hello-World/master/images/ralph-bot.png" alt="Ralph Bot" style="height:48px;width:48px;border-radius:50%;vertical-align:middle;margin-right:10px;box-shadow:0 2px 8px #0002;"> Ralph Dashboard
-    </h1>
-    <div class="status">
-      <div class="status-dot" id="status-dot"></div>
-      <span id="last-update">Last updated: <span id="last-update-time">never</span></span>
-      <button id="refresh-btn" style="margin-left:16px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;">🔄 Refresh</button>
-    </div>
-  </div>
-  
-  <div id="error" class="error" style="display: none;"></div>
-  
-  <!-- Ralph Status Section -->
-  <div class="ralph-status">
-    <h2>Ralph Status</h2>
-    <div class="ralph-info-grid">
-      <div class="ralph-info-item">
-        <div class="label">Current Iteration</div>
-        <div class="value iteration" id="ralph-iteration">-</div>
-      </div>
-      <div class="ralph-info-item">
-        <div class="label">Build Status</div>
-        <div class="value" id="ralph-build">-</div>
-      </div>
-      <div class="ralph-info-item">
-        <div class="label">E2E Status</div>
-        <div class="value" id="ralph-e2e">-</div>
-      </div>
-      <div class="ralph-info-item">
-        <div class="label">Consecutive Failures</div>
-        <div class="value" id="ralph-failures">-</div>
-      </div>
-      <div class="ralph-info-item">
-        <div class="label">Last Updated</div>
-        <div class="value" id="ralph-timestamp" style="font-size: 14px;">-</div>
-      </div>
-    </div>
-    <div class="ralph-message" id="ralph-message" style="display: none;"></div>
-  </div>
-  
-  <!-- Current Plan Section -->
-  <div class="plan-section" id="plan-section">
-    <div class="plan-header" onclick="togglePlan()">
-      <h2>Current Implementation Plan</h2>
-      <span class="chevron">▶</span>
-    </div>
-    <div class="plan-content">
-      <div class="plan-raw" id="plan-raw">Loading plan...</div>
-    </div>
-  </div>
-  
-  <!-- Task Stats -->
-  <div class="stats">
-    <div class="stat-card completed">
-      <h3>Completed</h3>
-      <div class="value" id="stat-completed">0</div>
-    </div>
-    <div class="stat-card in-progress">
-      <h3>In Progress</h3>
-      <div class="value" id="stat-in-progress">0</div>
-    </div>
-    <div class="stat-card pending">
-      <h3>Pending</h3>
-      <div class="value" id="stat-pending">0</div>
-    </div>
-    <div class="stat-card">
-      <h3>Total Tasks</h3>
-      <div class="value" id="stat-total">0</div>
-    </div>
-  </div>
-  
-  <div class="progress-bar">
-    <h3>Overall Progress</h3>
-    <div class="bar-container">
-      <div class="bar-completed" id="bar-completed" style="width: 0%"></div>
-      <div class="bar-in-progress" id="bar-in-progress" style="width: 0%"></div>
-    </div>
-    <div class="progress-text" id="progress-text">Loading...</div>
-  </div>
-  
-  <div id="current-task" class="current-task" style="display: none;">
-    <h3>Currently Working On</h3>
-    <div class="task-title" id="current-task-title"></div>
-    <div class="task-details" id="current-task-details"></div>
-  </div>
-  
-  <div class="phases" id="phases"></div>
-  
-  <div class="refresh-notice">
-    Auto-refreshes every 3 seconds • <a href="IMPLEMENTATION_PLAN.md" style="color: var(--blue);">View Raw Plan</a>
-  </div>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-  <script>
-    let planMarkdown = '';
-    
-    // Parse IMPLEMENTATION_PLAN.md and extract tasks
-    function parsePlan(markdown) {
-      const phases = [];
-      let currentPhase = null;
-      let currentTask = null;
-      let phaseCount = 0;
-      const lines = markdown.split('\n');
-      for (const line of lines) {
-        // Treat any ### or #### heading as a phase
-        const phaseMatch = line.match(/^(###|####)\s+(.+)/);
-        if (phaseMatch) {
-          if (currentPhase) phases.push(currentPhase);
-          phaseCount++;
-          currentPhase = {
-            number: phaseCount,
-            name: phaseMatch[2].replace(/[-:]+$/, '').trim(),
-            tasks: []
-          };
-          continue;
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header h1 {
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header h1::before {
+        content: "🤖";
+        font-size: 28px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulse 2s infinite;
+      }
+
+      .status-dot.error {
+        background: var(--red);
+      }
+
+      .status-dot.working {
+        background: var(--yellow);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
         }
-        // Task line: any bullet point (not just checklists)
-        const taskMatch = line.match(/^\s*[-*]\s+(.*)/);
-        if (taskMatch && currentPhase) {
-          let title = taskMatch[1].replace(/\*\*/g, '').trim();
-          let status = 'pending';
-          if (/✅|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b/i.test(title)) status = 'completed';
-          else if (/🔄|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b/i.test(title)) status = 'in-progress';
-          else if (/⚠️|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b/i.test(title)) status = 'pending';
-          // Remove status markers from title
-          title = title.replace(/(✅|🔄|⚠️|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b)/gi, '').replace(/[-:]+$/, '').trim();
-          currentTask = {
-            id: `${currentPhase.number}.${currentPhase.tasks.length + 1}`,
-            title,
-            status,
-            files: [],
-            details: []
-          };
-          currentPhase.tasks.push(currentTask);
-          continue;
-        }
-        // File references
-        if (currentTask && line.match(/^\s+- Files?:/i)) {
-          currentTask.files.push(line.replace(/^\s+- Files?:\s*/i, '').trim());
-        }
-        // E2E or Unit test references
-        if (currentTask && line.match(/^\s+- (E2E|Unit|Tests?):/i)) {
-          currentTask.details.push(line.trim());
+        50% {
+          opacity: 0.5;
         }
       }
-      if (currentPhase) phases.push(currentPhase);
-      return phases;
-    }
-    
-    function renderDashboard(phases) {
-      let completed = 0, inProgress = 0, pending = 0;
-      let currentTaskData = null;
-      
-      // Count tasks
-      phases.forEach(phase => {
-        phase.tasks.forEach(task => {
-          if (task.status === 'completed') completed++;
-          else if (task.status === 'in-progress') {
-            inProgress++;
-            currentTaskData = { ...task, phase: phase.name };
+
+      /* Ralph Status Section */
+      .ralph-status {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .ralph-status h2 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ralph-status h2::before {
+        content: "⚡";
+      }
+
+      .ralph-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .ralph-info-item {
+        padding: 12px;
+        background: var(--bg);
+        border-radius: 6px;
+      }
+
+      .ralph-info-item .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+
+      .ralph-info-item .value {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .ralph-info-item .value.iteration {
+        color: var(--purple);
+        font-size: 32px;
+      }
+
+      .ralph-info-item .value.passing {
+        color: var(--green);
+      }
+
+      .ralph-info-item .value.failing {
+        color: var(--red);
+      }
+
+      .ralph-info-item .value.skipped {
+        color: var(--yellow);
+      }
+
+      .ralph-message {
+        margin-top: 16px;
+        padding: 12px;
+        background: var(--blue-bg);
+        border: 1px solid var(--blue);
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .ralph-message.error {
+        background: var(--red-bg);
+        border-color: var(--red);
+      }
+
+      .ralph-message.success {
+        background: var(--green-bg);
+        border-color: var(--green);
+      }
+
+      /* Plan Section */
+      .plan-section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+
+      .plan-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .plan-header:hover {
+        background: var(--border);
+      }
+
+      .plan-header h2 {
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .plan-header h2::before {
+        content: "📋";
+      }
+
+      .plan-content {
+        padding: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        display: none;
+      }
+
+      .plan-section.expanded .plan-content {
+        display: block;
+      }
+
+      .plan-raw {
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        color: var(--text-muted);
+      }
+
+      /* Stats Grid */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .stat-card h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      .stat-card .value {
+        font-size: 32px;
+        font-weight: 600;
+      }
+
+      .stat-card.completed .value {
+        color: var(--green);
+      }
+      .stat-card.in-progress .value {
+        color: var(--yellow);
+      }
+      .stat-card.pending .value {
+        color: var(--text-muted);
+      }
+
+      .progress-bar {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+
+      .progress-bar h3 {
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      .bar-container {
+        height: 24px;
+        background: var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+      }
+
+      .bar-completed {
+        background: var(--green);
+        height: 100%;
+        transition: width 0.5s ease;
+      }
+
+      .bar-in-progress {
+        background: var(--yellow);
+        height: 100%;
+        transition: width 0.5s ease;
+      }
+
+      .progress-text {
+        margin-top: 8px;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .current-task {
+        background: var(--yellow-bg);
+        border: 1px solid var(--yellow);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .current-task h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--yellow);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .current-task h3::before {
+        content: "⚡";
+      }
+
+      .current-task .task-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .current-task .task-details {
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .phases {
+        display: grid;
+        gap: 16px;
+      }
+
+      .phase {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .phase-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .phase-header:hover {
+        background: var(--border);
+      }
+
+      .phase-header h3 {
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .phase-progress {
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .phase-tasks {
+        padding: 8px;
+        display: none;
+      }
+
+      .phase.expanded .phase-tasks {
+        display: block;
+      }
+
+      .task {
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .task:last-child {
+        margin-bottom: 0;
+      }
+
+      .task.completed {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+
+      .task.in-progress {
+        background: var(--yellow-bg);
+        color: var(--yellow);
+      }
+
+      .task.pending {
+        color: var(--text-muted);
+      }
+
+      .task-icon {
+        flex-shrink: 0;
+        width: 20px;
+        text-align: center;
+      }
+
+      .task.completed .task-icon::before {
+        content: "✓";
+      }
+      .task.in-progress .task-icon::before {
+        content: "◐";
+      }
+      .task.pending .task-icon::before {
+        content: "○";
+      }
+
+      .task-content {
+        flex: 1;
+      }
+
+      .task-files {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+
+      .refresh-notice {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      .error {
+        background: var(--red);
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+
+      .chevron {
+        transition: transform 0.2s;
+      }
+
+      .phase.expanded .chevron,
+      .plan-section.expanded .chevron {
+        transform: rotate(90deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>
+        <img
+          src="https://raw.githubusercontent.com/octocat/Hello-World/master/images/ralph-bot.png"
+          alt="Ralph Bot"
+          style="
+            height: 48px;
+            width: 48px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 10px;
+            box-shadow: 0 2px 8px #0002;
+          "
+        />
+        Ralph Dashboard
+      </h1>
+      <div class="status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="last-update"
+          >Last updated: <span id="last-update-time">never</span></span
+        >
+        <button
+          id="refresh-btn"
+          style="
+            margin-left: 16px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            cursor: pointer;
+          "
+        >
+          🔄 Refresh
+        </button>
+      </div>
+    </div>
+
+    <div id="error" class="error" style="display: none"></div>
+
+    <!-- Ralph Status Section -->
+    <div class="ralph-status">
+      <h2>Ralph Status</h2>
+      <div class="ralph-info-grid">
+        <div class="ralph-info-item">
+          <div class="label">Current Iteration</div>
+          <div class="value iteration" id="ralph-iteration">-</div>
+        </div>
+        <div class="ralph-info-item">
+          <div class="label">Build Status</div>
+          <div class="value" id="ralph-build">-</div>
+        </div>
+        <div class="ralph-info-item">
+          <div class="label">E2E Status</div>
+          <div class="value" id="ralph-e2e">-</div>
+        </div>
+        <div class="ralph-info-item">
+          <div class="label">Consecutive Failures</div>
+          <div class="value" id="ralph-failures">-</div>
+        </div>
+        <div class="ralph-info-item">
+          <div class="label">Last Updated</div>
+          <div class="value" id="ralph-timestamp" style="font-size: 14px">
+            -
+          </div>
+        </div>
+      </div>
+      <div class="ralph-message" id="ralph-message" style="display: none"></div>
+    </div>
+
+    <!-- Current Plan Section -->
+    <div class="plan-section" id="plan-section">
+      <div class="plan-header" onclick="togglePlan()">
+        <h2>Current Implementation Plan</h2>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="plan-content">
+        <div class="plan-raw" id="plan-raw">Loading plan...</div>
+      </div>
+    </div>
+
+    <!-- Task Stats -->
+    <div class="stats">
+      <div class="stat-card completed">
+        <h3>Completed</h3>
+        <div class="value" id="stat-completed">0</div>
+      </div>
+      <div class="stat-card in-progress">
+        <h3>In Progress</h3>
+        <div class="value" id="stat-in-progress">0</div>
+      </div>
+      <div class="stat-card pending">
+        <h3>Pending</h3>
+        <div class="value" id="stat-pending">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Tasks</h3>
+        <div class="value" id="stat-total">0</div>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <h3>Overall Progress</h3>
+      <div class="bar-container">
+        <div class="bar-completed" id="bar-completed" style="width: 0%"></div>
+        <div
+          class="bar-in-progress"
+          id="bar-in-progress"
+          style="width: 0%"
+        ></div>
+      </div>
+      <div class="progress-text" id="progress-text">Loading...</div>
+    </div>
+
+    <div id="current-task" class="current-task" style="display: none">
+      <h3>Currently Working On</h3>
+      <div class="task-title" id="current-task-title"></div>
+      <div class="task-details" id="current-task-details"></div>
+    </div>
+
+    <div class="phases" id="phases"></div>
+
+    <div class="refresh-notice">
+      Auto-refreshes every 3 seconds •
+      <a href="IMPLEMENTATION_PLAN.md" style="color: var(--blue)"
+        >View Raw Plan</a
+      >
+    </div>
+
+    <script>
+      let planMarkdown = "";
+
+      // Parse IMPLEMENTATION_PLAN.md and extract tasks
+      function parsePlan(markdown) {
+        const phases = [];
+        let currentPhase = null;
+        let currentTask = null;
+        let phaseCount = 0;
+        const lines = markdown.split("\n");
+        for (const line of lines) {
+          // Treat any ### or #### heading as a phase
+          const phaseMatch = line.match(/^(###|####)\s+(.+)/);
+          if (phaseMatch) {
+            if (currentPhase) phases.push(currentPhase);
+            phaseCount++;
+            currentPhase = {
+              number: phaseCount,
+              name: phaseMatch[2].replace(/[-:]+$/, "").trim(),
+              tasks: [],
+            };
+            continue;
           }
-          else pending++;
+          // Task line: any bullet point (not just checklists)
+          const taskMatch = line.match(/^\s*[-*]\s+(.*)/);
+          if (taskMatch && currentPhase) {
+            let title = taskMatch[1].replace(/\*\*/g, "").trim();
+            let status = "pending";
+            if (
+              /✅|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b/i.test(title)
+            )
+              status = "completed";
+            else if (
+              /🔄|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b/i.test(
+                title,
+              )
+            )
+              status = "in-progress";
+            else if (
+              /⚠️|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b/i.test(title)
+            )
+              status = "pending";
+            // Remove status markers from title
+            title = title
+              .replace(
+                /(✅|🔄|⚠️|\bPASS(ING)?\b|\bCOMPLETE(D)?\b|\bNOW PASSING\b|\bIN[- ]?PROGRESS\b|\bFIXING\b|\bWORKING\b|\bBREAKTHROUGH\b|\bFIXES IMPLEMENTED\b|\bFLAKY\b|\bNOT TESTED\b|\bISSUE\b|\bFAIL\b)/gi,
+                "",
+              )
+              .replace(/[-:]+$/, "")
+              .trim();
+            currentTask = {
+              id: `${currentPhase.number}.${currentPhase.tasks.length + 1}`,
+              title,
+              status,
+              files: [],
+              details: [],
+            };
+            currentPhase.tasks.push(currentTask);
+            continue;
+          }
+          // File references
+          if (currentTask && line.match(/^\s+- Files?:/i)) {
+            currentTask.files.push(
+              line.replace(/^\s+- Files?:\s*/i, "").trim(),
+            );
+          }
+          // E2E or Unit test references
+          if (currentTask && line.match(/^\s+- (E2E|Unit|Tests?):/i)) {
+            currentTask.details.push(line.trim());
+          }
+        }
+        if (currentPhase) phases.push(currentPhase);
+        return phases;
+      }
+
+      function renderDashboard(phases) {
+        let completed = 0,
+          inProgress = 0,
+          pending = 0;
+        let currentTaskData = null;
+
+        // Count tasks
+        phases.forEach((phase) => {
+          phase.tasks.forEach((task) => {
+            if (task.status === "completed") completed++;
+            else if (task.status === "in-progress") {
+              inProgress++;
+              currentTaskData = { ...task, phase: phase.name };
+            } else pending++;
+          });
         });
-      });
-      
-      const total = completed + inProgress + pending;
-      
-      // Update stats
-      document.getElementById('stat-completed').textContent = completed;
-      document.getElementById('stat-in-progress').textContent = inProgress;
-      document.getElementById('stat-pending').textContent = pending;
-      document.getElementById('stat-total').textContent = total;
-      
-      // Update progress bar
-      const completedPct = total ? (completed / total * 100) : 0;
-      const inProgressPct = total ? (inProgress / total * 100) : 0;
-      document.getElementById('bar-completed').style.width = `${completedPct}%`;
-      document.getElementById('bar-in-progress').style.width = `${inProgressPct}%`;
-      document.getElementById('progress-text').textContent = 
-        `${completed} of ${total} tasks completed (${Math.round(completedPct)}%)`;
-      
-      // Update current task
-      const currentTaskEl = document.getElementById('current-task');
-      if (currentTaskData) {
-        currentTaskEl.style.display = 'block';
-        document.getElementById('current-task-title').textContent = currentTaskData.title;
-        document.getElementById('current-task-details').textContent = 
-          `Phase: ${currentTaskData.phase}` + 
-          (currentTaskData.files.length ? ` • Files: ${currentTaskData.files.join(', ')}` : '');
-      } else if (pending > 0) {
-        // Show next task
-        let nextTask = null;
-        for (const phase of phases) {
-          for (const task of phase.tasks) {
-            if (task.status === 'pending') {
-              nextTask = { ...task, phase: phase.name };
-              break;
+
+        const total = completed + inProgress + pending;
+
+        // Update stats
+        document.getElementById("stat-completed").textContent = completed;
+        document.getElementById("stat-in-progress").textContent = inProgress;
+        document.getElementById("stat-pending").textContent = pending;
+        document.getElementById("stat-total").textContent = total;
+
+        // Update progress bar
+        const completedPct = total ? (completed / total) * 100 : 0;
+        const inProgressPct = total ? (inProgress / total) * 100 : 0;
+        document.getElementById("bar-completed").style.width =
+          `${completedPct}%`;
+        document.getElementById("bar-in-progress").style.width =
+          `${inProgressPct}%`;
+        document.getElementById("progress-text").textContent =
+          `${completed} of ${total} tasks completed (${Math.round(completedPct)}%)`;
+
+        // Update current task
+        const currentTaskEl = document.getElementById("current-task");
+        if (currentTaskData) {
+          currentTaskEl.style.display = "block";
+          document.getElementById("current-task-title").textContent =
+            currentTaskData.title;
+          document.getElementById("current-task-details").textContent =
+            `Phase: ${currentTaskData.phase}` +
+            (currentTaskData.files.length
+              ? ` • Files: ${currentTaskData.files.join(", ")}`
+              : "");
+        } else if (pending > 0) {
+          // Show next task
+          let nextTask = null;
+          for (const phase of phases) {
+            for (const task of phase.tasks) {
+              if (task.status === "pending") {
+                nextTask = { ...task, phase: phase.name };
+                break;
+              }
             }
+            if (nextTask) break;
           }
-          if (nextTask) break;
+          if (nextTask) {
+            currentTaskEl.style.display = "block";
+            document.querySelector(".current-task h3").innerHTML = "⏭️ Up Next";
+            document.getElementById("current-task-title").textContent =
+              nextTask.title;
+            document.getElementById("current-task-details").textContent =
+              `Phase: ${nextTask.phase}`;
+          }
+        } else {
+          currentTaskEl.style.display = "none";
         }
-        if (nextTask) {
-          currentTaskEl.style.display = 'block';
-          document.querySelector('.current-task h3').innerHTML = '⏭️ Up Next';
-          document.getElementById('current-task-title').textContent = nextTask.title;
-          document.getElementById('current-task-details').textContent = `Phase: ${nextTask.phase}`;
-        }
-      } else {
-        currentTaskEl.style.display = 'none';
-      }
-      
-      // Render phases
-      const phasesEl = document.getElementById('phases');
-      phasesEl.innerHTML = phases.map((phase, i) => {
-        const phaseCompleted = phase.tasks.filter(t => t.status === 'completed').length;
-        const phaseTotal = phase.tasks.length;
-        const isExpanded = phase.tasks.some(t => t.status === 'in-progress') || 
-                          (phaseCompleted < phaseTotal && phases.slice(0, i).every(p => 
-                            p.tasks.every(t => t.status === 'completed')));
-        
-        return `
-          <div class="phase ${isExpanded ? 'expanded' : ''}" data-phase="${i}">
+
+        // Render phases
+        const phasesEl = document.getElementById("phases");
+        phasesEl.innerHTML = phases
+          .map((phase, i) => {
+            const phaseCompleted = phase.tasks.filter(
+              (t) => t.status === "completed",
+            ).length;
+            const phaseTotal = phase.tasks.length;
+            const isExpanded =
+              phase.tasks.some((t) => t.status === "in-progress") ||
+              (phaseCompleted < phaseTotal &&
+                phases
+                  .slice(0, i)
+                  .every((p) =>
+                    p.tasks.every((t) => t.status === "completed"),
+                  ));
+
+            return `
+          <div class="phase ${isExpanded ? "expanded" : ""}" data-phase="${i}">
             <div class="phase-header" onclick="togglePhase(${i})">
               <h3>
                 <span class="chevron">▶</span>
@@ -670,187 +763,198 @@
               <span class="phase-progress">${phaseCompleted}/${phaseTotal}</span>
             </div>
             <div class="phase-tasks">
-              ${phase.tasks.map(task => `
+              ${phase.tasks
+                .map(
+                  (task) => `
                 <div class="task ${task.status}">
                   <span class="task-icon"></span>
                   <div class="task-content">
                     <div>${task.title}</div>
-                    ${task.files.length ? `<div class="task-files">${task.files.join(', ')}</div>` : ''}
+                    ${task.files.length ? `<div class="task-files">${task.files.join(", ")}</div>` : ""}
                   </div>
                 </div>
-              `).join('')}
+              `,
+                )
+                .join("")}
             </div>
           </div>
         `;
-      }).join('');
-    }
-    
+          })
+          .join("");
+      }
 
-    function togglePhase(index) {
-      const phase = document.querySelector(`[data-phase="${index}"]`);
-      if (phase) {
-        phase.classList.toggle('expanded');
+      function togglePhase(index) {
+        const phase = document.querySelector(`[data-phase="${index}"]`);
+        if (phase) {
+          phase.classList.toggle("expanded");
+        }
       }
-    }
-    
-    function togglePlan() {
-      document.getElementById('plan-section').classList.toggle('expanded');
-    }
-    
-    function renderRalphStatus(status, iteration) {
-      // Update iteration
-      document.getElementById('ralph-iteration').textContent = iteration || '-';
-      
-      if (!status) {
-        document.getElementById('ralph-build').textContent = '-';
-        document.getElementById('ralph-e2e').textContent = '-';
-        document.getElementById('ralph-failures').textContent = '-';
-        document.getElementById('ralph-timestamp').textContent = '-';
-        return;
+
+      function togglePlan() {
+        document.getElementById("plan-section").classList.toggle("expanded");
       }
-      
-      // Build status
-      const buildEl = document.getElementById('ralph-build');
-      if (status.buildPassing === true) {
-        buildEl.textContent = '✓ Passing';
-        buildEl.className = 'value passing';
-      } else if (status.buildPassing === false) {
-        buildEl.textContent = '✗ Failing';
-        buildEl.className = 'value failing';
-      } else {
-        buildEl.textContent = '- Unknown';
-        buildEl.className = 'value';
-      }
-      
-      // E2E status
-      const e2eEl = document.getElementById('ralph-e2e');
-      if (status.e2ePassing === true) {
-        e2eEl.textContent = '✓ Passing';
-        e2eEl.className = 'value passing';
-      } else if (status.e2ePassing === false) {
-        e2eEl.textContent = '✗ Failing';
-        e2eEl.className = 'value failing';
-      } else if (status.e2ePassing === 'skipped') {
-        e2eEl.textContent = '⏭ Skipped';
-        e2eEl.className = 'value skipped';
-      } else {
-        e2eEl.textContent = '- Unknown';
-        e2eEl.className = 'value';
-      }
-      
-      // Consecutive failures
-      const failuresEl = document.getElementById('ralph-failures');
-      const failures = status.consecutiveFailures || 0;
-      failuresEl.textContent = failures;
-      failuresEl.className = failures > 0 ? 'value failing' : 'value passing';
-      
-      // Timestamp
-      if (status.timestamp) {
-        const date = new Date(status.timestamp);
-        document.getElementById('ralph-timestamp').textContent = date.toLocaleString();
-      }
-      
-      // Message
-      const messageEl = document.getElementById('ralph-message');
-      if (status.message) {
-        messageEl.textContent = status.message;
-        messageEl.style.display = 'block';
-        
-        if (status.buildPassing && (status.e2ePassing === true || status.e2ePassing === 'skipped')) {
-          messageEl.className = 'ralph-message success';
-        } else if (!status.buildPassing || status.e2ePassing === false) {
-          messageEl.className = 'ralph-message error';
+
+      function renderRalphStatus(status, iteration) {
+        // Update iteration
+        document.getElementById("ralph-iteration").textContent =
+          iteration || "-";
+
+        if (!status) {
+          document.getElementById("ralph-build").textContent = "-";
+          document.getElementById("ralph-e2e").textContent = "-";
+          document.getElementById("ralph-failures").textContent = "-";
+          document.getElementById("ralph-timestamp").textContent = "-";
+          return;
+        }
+
+        // Build status
+        const buildEl = document.getElementById("ralph-build");
+        if (status.buildPassing === true) {
+          buildEl.textContent = "✓ Passing";
+          buildEl.className = "value passing";
+        } else if (status.buildPassing === false) {
+          buildEl.textContent = "✗ Failing";
+          buildEl.className = "value failing";
         } else {
-          messageEl.className = 'ralph-message';
+          buildEl.textContent = "- Unknown";
+          buildEl.className = "value";
         }
-      } else {
-        messageEl.style.display = 'none';
-      }
-      
-      // Update status dot
-      const statusDot = document.getElementById('status-dot');
-      if (!status.buildPassing || status.e2ePassing === false) {
-        statusDot.className = 'status-dot error';
-      } else if (status.e2ePassing === 'skipped') {
-        statusDot.className = 'status-dot working';
-      } else {
-        statusDot.className = 'status-dot';
-      }
-    }
-    
-    async function loadData() {
-      let hasError = false;
-      
-      // Load plan
-      try {
-        let response = await fetch('/IMPLEMENTATION_PLAN.md').catch(() => null);
-        if (!response || !response.ok) {
-          response = await fetch('./IMPLEMENTATION_PLAN.md');
-        }
-        
-        if (response.ok) {
-          planMarkdown = await response.text();
-          document.getElementById('plan-raw').textContent = planMarkdown;
-          const phases = parsePlan(planMarkdown);
-          renderDashboard(phases);
-        }
-      } catch (err) {
-        hasError = true;
-        console.error('Error loading plan:', err);
-      }
-      
-      // Load Ralph iteration
-      let iteration = null;
-      try {
-        let response = await fetch('/.ralph-iteration').catch(() => null);
-        if (!response || !response.ok) {
-          response = await fetch('./.ralph-iteration');
-        }
-        
-        if (response && response.ok) {
-          iteration = (await response.text()).trim();
-        }
-      } catch (err) {
-        console.error('Error loading iteration:', err);
-      }
-      
-      // Load Ralph status
-      let status = null;
-      try {
-        let response = await fetch('/.ralph-status.json').catch(() => null);
-        if (!response || !response.ok) {
-          response = await fetch('./.ralph-status.json');
-        }
-        
-        if (response && response.ok) {
-          const text = await response.text();
-          // Handle potential invalid JSON (e.g., "skipped" without quotes)
-          const fixedText = text.replace(/:\s*skipped/g, ': "skipped"');
-          status = JSON.parse(fixedText);
-        }
-      } catch (err) {
-        console.error('Error loading status:', err);
-      }
-      
-      renderRalphStatus(status, iteration);
-      
-      if (hasError) {
-        document.getElementById('error').textContent = 
-          'Some data could not be loaded. Make sure to serve this file via HTTP (e.g., make dashboard or npx serve .)';
-        document.getElementById('error').style.display = 'block';
-      } else {
-        document.getElementById('error').style.display = 'none';
-      }
-      
-      document.getElementById('last-update').textContent = 
-        `Updated ${new Date().toLocaleTimeString()}`;
-    }
-    
-    // Initial load
-    loadData();
 
-    // Manual refresh only
-    document.getElementById('refresh-btn').onclick = loadData;
-  </script>
-</body>
+        // E2E status
+        const e2eEl = document.getElementById("ralph-e2e");
+        if (status.e2ePassing === true) {
+          e2eEl.textContent = "✓ Passing";
+          e2eEl.className = "value passing";
+        } else if (status.e2ePassing === false) {
+          e2eEl.textContent = "✗ Failing";
+          e2eEl.className = "value failing";
+        } else if (status.e2ePassing === "skipped") {
+          e2eEl.textContent = "⏭ Skipped";
+          e2eEl.className = "value skipped";
+        } else {
+          e2eEl.textContent = "- Unknown";
+          e2eEl.className = "value";
+        }
+
+        // Consecutive failures
+        const failuresEl = document.getElementById("ralph-failures");
+        const failures = status.consecutiveFailures || 0;
+        failuresEl.textContent = failures;
+        failuresEl.className = failures > 0 ? "value failing" : "value passing";
+
+        // Timestamp
+        if (status.timestamp) {
+          const date = new Date(status.timestamp);
+          document.getElementById("ralph-timestamp").textContent =
+            date.toLocaleString();
+        }
+
+        // Message
+        const messageEl = document.getElementById("ralph-message");
+        if (status.message) {
+          messageEl.textContent = status.message;
+          messageEl.style.display = "block";
+
+          if (
+            status.buildPassing &&
+            (status.e2ePassing === true || status.e2ePassing === "skipped")
+          ) {
+            messageEl.className = "ralph-message success";
+          } else if (!status.buildPassing || status.e2ePassing === false) {
+            messageEl.className = "ralph-message error";
+          } else {
+            messageEl.className = "ralph-message";
+          }
+        } else {
+          messageEl.style.display = "none";
+        }
+
+        // Update status dot
+        const statusDot = document.getElementById("status-dot");
+        if (!status.buildPassing || status.e2ePassing === false) {
+          statusDot.className = "status-dot error";
+        } else if (status.e2ePassing === "skipped") {
+          statusDot.className = "status-dot working";
+        } else {
+          statusDot.className = "status-dot";
+        }
+      }
+
+      async function loadData() {
+        let hasError = false;
+
+        // Load plan
+        try {
+          let response = await fetch("/IMPLEMENTATION_PLAN.md").catch(
+            () => null,
+          );
+          if (!response || !response.ok) {
+            response = await fetch("./IMPLEMENTATION_PLAN.md");
+          }
+
+          if (response.ok) {
+            planMarkdown = await response.text();
+            document.getElementById("plan-raw").textContent = planMarkdown;
+            const phases = parsePlan(planMarkdown);
+            renderDashboard(phases);
+          }
+        } catch (err) {
+          hasError = true;
+          console.error("Error loading plan:", err);
+        }
+
+        // Load Ralph iteration
+        let iteration = null;
+        try {
+          let response = await fetch("/.ralph-iteration").catch(() => null);
+          if (!response || !response.ok) {
+            response = await fetch("./.ralph-iteration");
+          }
+
+          if (response && response.ok) {
+            iteration = (await response.text()).trim();
+          }
+        } catch (err) {
+          console.error("Error loading iteration:", err);
+        }
+
+        // Load Ralph status
+        let status = null;
+        try {
+          let response = await fetch("/.ralph-status.json").catch(() => null);
+          if (!response || !response.ok) {
+            response = await fetch("./.ralph-status.json");
+          }
+
+          if (response && response.ok) {
+            const text = await response.text();
+            // Handle potential invalid JSON (e.g., "skipped" without quotes)
+            const fixedText = text.replace(/:\s*skipped/g, ': "skipped"');
+            status = JSON.parse(fixedText);
+          }
+        } catch (err) {
+          console.error("Error loading status:", err);
+        }
+
+        renderRalphStatus(status, iteration);
+
+        if (hasError) {
+          document.getElementById("error").textContent =
+            "Some data could not be loaded. Make sure to serve this file via HTTP (e.g., make dashboard or npx serve .)";
+          document.getElementById("error").style.display = "block";
+        } else {
+          document.getElementById("error").style.display = "none";
+        }
+
+        document.getElementById("last-update").textContent =
+          `Updated ${new Date().toLocaleTimeString()}`;
+      }
+
+      // Initial load
+      loadData();
+
+      // Manual refresh only
+      document.getElementById("refresh-btn").onclick = loadData;
+    </script>
+  </body>
 </html>

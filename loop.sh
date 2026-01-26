@@ -280,7 +280,8 @@ run_opencode() {
     if [ -n "$MODEL" ]; then
         opencode run -m "$MODEL" "$(cat "$PROMPT_FILE")"
     else
-        opencode run -m "github-copilot/claude-sonnet-4" "$(cat "$PROMPT_FILE")"
+        # opencode run -m "github-copilot/claude-sonnet-4" "$(cat "$PROMPT_FILE")"
+        opencode run -m "github-copilot/gpt-4.1" "$(cat "$PROMPT_FILE")"
     fi
 }
 

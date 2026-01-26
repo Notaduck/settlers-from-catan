@@ -1,0 +1,231 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e9]:
+        - heading "Propose Trade" [level=3] [ref=e10]
+        - generic [ref=e11]:
+          - text: "Trade with:"
+          - combobox "Trade with:" [ref=e12]:
+            - option "All Players" [selected]
+            - option "Host"
+            - option "Guest"
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - heading "I Offer" [level=4] [ref=e15]
+            - generic [ref=e16]:
+              - generic [ref=e17]:
+                - generic [ref=e18]: Wood
+                - generic [ref=e19]:
+                  - button "Decrease Wood" [disabled] [ref=e20] [cursor=pointer]: "-"
+                  - generic [ref=e21]: 0/2
+                  - button "Increase Wood" [ref=e22] [cursor=pointer]: +
+              - generic [ref=e23]:
+                - generic [ref=e24]: Brick
+                - generic [ref=e25]:
+                  - button "Decrease Brick" [disabled] [ref=e26] [cursor=pointer]: "-"
+                  - generic [ref=e27]: 0/0
+                  - button "Increase Brick" [disabled] [ref=e28] [cursor=pointer]: +
+              - generic [ref=e29]:
+                - generic [ref=e30]: Sheep
+                - generic [ref=e31]:
+                  - button "Decrease Sheep" [disabled] [ref=e32] [cursor=pointer]: "-"
+                  - generic [ref=e33]: 0/0
+                  - button "Increase Sheep" [disabled] [ref=e34] [cursor=pointer]: +
+              - generic [ref=e35]:
+                - generic [ref=e36]: Wheat
+                - generic [ref=e37]:
+                  - button "Decrease Wheat" [disabled] [ref=e38] [cursor=pointer]: "-"
+                  - generic [ref=e39]: 0/3
+                  - button "Increase Wheat" [ref=e40] [cursor=pointer]: +
+              - generic [ref=e41]:
+                - generic [ref=e42]: Ore
+                - generic [ref=e43]:
+                  - button "Decrease Ore" [disabled] [ref=e44] [cursor=pointer]: "-"
+                  - generic [ref=e45]: 0/0
+                  - button "Increase Ore" [disabled] [ref=e46] [cursor=pointer]: +
+          - generic [ref=e47]:
+            - heading "I Request" [level=4] [ref=e48]
+            - generic [ref=e49]:
+              - generic [ref=e50]:
+                - generic [ref=e51]: Wood
+                - generic [ref=e52]:
+                  - button "Decrease Wood" [disabled] [ref=e53] [cursor=pointer]: "-"
+                  - text: "0"
+                  - button "Increase Wood" [ref=e54] [cursor=pointer]: +
+              - generic [ref=e55]:
+                - generic [ref=e56]: Brick
+                - generic [ref=e57]:
+                  - button "Decrease Brick" [disabled] [ref=e58] [cursor=pointer]: "-"
+                  - text: "0"
+                  - button "Increase Brick" [ref=e59] [cursor=pointer]: +
+              - generic [ref=e60]:
+                - generic [ref=e61]: Sheep
+                - generic [ref=e62]:
+                  - button "Decrease Sheep" [disabled] [ref=e63] [cursor=pointer]: "-"
+                  - text: "0"
+                  - button "Increase Sheep" [ref=e64] [cursor=pointer]: +
+              - generic [ref=e65]:
+                - generic [ref=e66]: Wheat
+                - generic [ref=e67]:
+                  - button "Decrease Wheat" [disabled] [ref=e68] [cursor=pointer]: "-"
+                  - text: "0"
+                  - button "Increase Wheat" [ref=e69] [cursor=pointer]: +
+              - generic [ref=e70]:
+                - generic [ref=e71]: Ore
+                - generic [ref=e72]:
+                  - button "Decrease Ore" [disabled] [ref=e73] [cursor=pointer]: "-"
+                  - text: "0"
+                  - button "Increase Ore" [ref=e74] [cursor=pointer]: +
+        - generic [ref=e75]:
+          - paragraph [ref=e76]:
+            - text: "Offering:"
+            - strong [ref=e77]: "0"
+            - text: resources
+          - paragraph [ref=e78]:
+            - text: "Requesting:"
+            - strong [ref=e79]: "0"
+            - text: resources
+        - generic [ref=e80]:
+          - button "Propose Trade" [disabled] [ref=e81]
+          - button "Cancel" [ref=e82] [cursor=pointer]
+        - paragraph [ref=e83]: Select resources to offer
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - text: "Game Code:"
+          - strong [ref=e86]: RDQKRR
+        - generic [ref=e87]: PLAYING
+        - button "Leave Game" [ref=e88] [cursor=pointer]
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - button "Trade" [disabled] [ref=e91]
+          - button "Build" [ref=e92] [cursor=pointer]
+        - generic [ref=e93]:
+          - button "Trade with Bank" [ref=e94] [cursor=pointer]
+          - button "Propose Trade" [active] [ref=e95] [cursor=pointer]
+        - generic [ref=e96]:
+          - img [ref=e98]:
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - generic [ref=e103]: "3"
+                - generic [ref=e104]: ••
+              - generic [ref=e105]:
+                - generic [ref=e108]: "6"
+                - generic [ref=e109]: •••••
+              - generic [ref=e110]:
+                - generic [ref=e113]: "4"
+                - generic [ref=e114]: •••
+              - generic [ref=e115]:
+                - generic [ref=e118]: "9"
+                - generic [ref=e119]: ••••
+              - generic [ref=e120]:
+                - generic [ref=e123]: "3"
+                - generic [ref=e124]: ••
+              - generic [ref=e125]:
+                - generic [ref=e128]: "10"
+                - generic [ref=e129]: •••
+              - generic [ref=e130]:
+                - generic [ref=e133]: "10"
+                - generic [ref=e134]: •••
+              - generic [ref=e135]:
+                - generic [ref=e138]: "8"
+                - generic [ref=e139]: •••••
+              - generic [ref=e140]:
+                - generic [ref=e143]: "2"
+                - generic [ref=e144]: •
+              - generic [ref=e145]:
+                - generic [ref=e148]: "5"
+                - generic [ref=e149]: ••••
+              - generic [ref=e150]:
+                - generic [ref=e153]: "9"
+                - generic [ref=e154]: ••••
+              - generic [ref=e155]:
+                - generic [ref=e158]: "4"
+                - generic [ref=e159]: •••
+              - generic [ref=e160]:
+                - generic [ref=e163]: "8"
+                - generic [ref=e164]: •••••
+              - generic [ref=e170]:
+                - generic [ref=e173]: "11"
+                - generic [ref=e174]: ••
+              - generic [ref=e175]:
+                - generic [ref=e178]: "6"
+                - generic [ref=e179]: •••••
+              - generic [ref=e180]:
+                - generic [ref=e183]: "5"
+                - generic [ref=e184]: ••••
+              - generic [ref=e185]:
+                - generic [ref=e188]: "12"
+                - generic [ref=e189]: •
+              - generic [ref=e190]:
+                - generic [ref=e193]: "11"
+                - generic [ref=e194]: ••
+              - generic [ref=e439]:
+                - generic: 2:1
+              - generic [ref=e440]:
+                - generic: 2:1
+              - generic [ref=e441]:
+                - generic: 2:1
+              - generic [ref=e442]:
+                - generic: 2:1
+              - generic [ref=e443]:
+                - generic: 2:1
+              - generic [ref=e444]:
+                - generic: 2:1
+              - generic [ref=e445]:
+                - generic: 2:1
+              - generic [ref=e446]:
+                - generic: 2:1
+              - generic [ref=e447]:
+                - generic: 2:1
+          - generic [ref=e448]:
+            - generic [ref=e449]:
+              - heading "Dice" [level=3] [ref=e450]
+              - generic [ref=e451]:
+                - generic [ref=e452]: "4"
+                - generic [ref=e453]: "5"
+              - generic [ref=e454]: "Total: 9"
+            - generic [ref=e455]:
+              - heading "Current Turn" [level=3] [ref=e456]
+              - generic [ref=e457]:
+                - generic [ref=e459]: Host
+                - generic [ref=e460]: (Trade)
+              - button "End Turn" [ref=e461] [cursor=pointer]
+            - generic [ref=e462]:
+              - heading "Your Resources" [level=3] [ref=e463]
+              - generic [ref=e464]:
+                - generic [ref=e465]:
+                  - generic [ref=e466]: 🪵
+                  - generic [ref=e467]: "2"
+                - generic [ref=e468]:
+                  - generic [ref=e469]: 🧱
+                  - generic [ref=e470]: "0"
+                - generic [ref=e471]:
+                  - generic [ref=e472]: 🐑
+                  - generic [ref=e473]: "0"
+                - generic [ref=e474]:
+                  - generic [ref=e475]: 🌾
+                  - generic [ref=e476]: "3"
+                - generic [ref=e477]:
+                  - generic [ref=e478]: �ite
+                  - generic [ref=e479]: "0"
+            - generic [ref=e480]:
+              - heading "Players" [level=3] [ref=e481]
+              - generic [ref=e482]:
+                - generic [ref=e484]: Host
+                - generic [ref=e485]: 2 VP
+                - generic [ref=e486]: "Roads: 0"
+              - generic [ref=e487]:
+                - generic [ref=e489]: Guest
+                - generic [ref=e490]: 2 VP
+                - generic [ref=e491]: "Roads: 0"
+          - generic [ref=e492]:
+            - generic [ref=e493]:
+              - heading "Development Cards (0)" [level=3] [ref=e494]
+              - button "Buy Card" [disabled] [ref=e495]
+            - generic [ref=e496]: No cards in hand
+```

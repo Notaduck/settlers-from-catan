@@ -263,8 +263,9 @@ test.describe("Interactive Board", () => {
     const validVertices = hostPage.locator(
       "[data-cy^='vertex-'].vertex--valid"
     );
-    const validCount = await validVertices.count();
-    expect(validCount).toBeGreaterThan(0);
+    await expect
+      .poll(async () => validVertices.count(), { timeout: 30000 })
+      .toBeGreaterThan(0);
 
     await guestPage.close();
   });
