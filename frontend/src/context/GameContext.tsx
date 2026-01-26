@@ -325,7 +325,10 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     sendMessage({
       message: {
         oneofKind: "moveRobber",
-        moveRobber: { hex, victimId },
+        moveRobber: {
+          hex: { q: hex.q, r: hex.r },
+          victimId,
+        },
       },
     } as ClientMessage);
   }, [sendMessage]);

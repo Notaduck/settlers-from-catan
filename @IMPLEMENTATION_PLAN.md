@@ -19,9 +19,10 @@ Sources reviewed: `specs/*`, backend (game logic, handlers), frontend (context, 
 - Most recent failures were for missing selectors; those have been addressed (`player-{resource}` aliases in `PlayerPanel`). Ensure test maintains tolerance for resource counts after second setup.
 
 ## PRIORITY 4: ROBBER FLOW (E2E failing)
-- **Task:** Align MoveRobber payload structure (should send only `{q, r}` for HexCoord; avoid extra/undefined fields). Reset robber/steal modal state when new robber phase starts; files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`.
-- **Go tests:** update only if server-side logic is changed; otherwise covered
-- **Playwright tests:** re-run/stabilize `frontend/tests/robber.spec.ts` for modal visibility and requires waits on `[data-cy=steal-modal]`/robber-hex selectors.
+- **Status:** ✅ Completed (2026-01-26)
+- **Result:** Sanitized MoveRobber payload to `{q, r}` only and reset steal modal state when robber phase starts; files: `frontend/src/context/GameContext.tsx`, `frontend/src/components/Game/Game.tsx`.
+- **Go tests:** none; no server-side changes
+- **Playwright tests:** `frontend/tests/robber.spec.ts` (7/7 passing)
 
 ## PRIORITY 5: TRADING (trade UI gating, enum mismatch, expiry)
 - **Task 1:** Normalize Frontend/Backend `TradeStatus` handling. Make frontend treat enum as number (not string) for trade/port UI and modal selectors; files: `frontend/src/components/Game/Game.tsx` and related modal components. ✅ Completed (2026-01-26)

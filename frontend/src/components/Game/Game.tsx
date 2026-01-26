@@ -122,6 +122,12 @@ export function Game({ gameCode, onLeave }: GameProps) {
   }, [isRobberDiscardRequired]);
 
   useEffect(() => {
+    if (isRobberStealRequired) {
+      setStealClosed(false);
+    }
+  }, [isRobberStealRequired]);
+
+  useEffect(() => {
     connect();
     return () => disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
