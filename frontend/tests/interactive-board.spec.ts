@@ -112,6 +112,16 @@ async function placeSettlement(page: Page) {
   await expect(placementMode).toContainText("Place Settlement", {
     timeout: 30000,
   });
+  await expect
+    .poll(
+      async () => {
+        const ready = page.locator("[data-cy='placement-ready']");
+        const count = await ready.getAttribute("data-valid-vertices");
+        return Number(count ?? 0);
+      },
+      { timeout: 30000 }
+    )
+    .toBeGreaterThan(0);
   const validVertex = page.locator("[data-cy^='vertex-'].vertex--valid").first();
   await expect(validVertex).toBeVisible({ timeout: 30000 });
   await validVertex.click();
@@ -120,6 +130,16 @@ async function placeSettlement(page: Page) {
 async function placeRoad(page: Page) {
   const placementMode = page.locator("[data-cy='placement-mode']");
   await expect(placementMode).toContainText("Place Road", { timeout: 30000 });
+  await expect
+    .poll(
+      async () => {
+        const ready = page.locator("[data-cy='placement-ready']");
+        const count = await ready.getAttribute("data-valid-edges");
+        return Number(count ?? 0);
+      },
+      { timeout: 30000 }
+    )
+    .toBeGreaterThan(0);
   const validEdge = page.locator("[data-cy^='edge-'].edge--valid").first();
   await expect(validEdge).toBeVisible({ timeout: 30000 });
   await validEdge.click();
@@ -263,6 +283,16 @@ test.describe("Interactive Board", () => {
     const validVertices = hostPage.locator(
       "[data-cy^='vertex-'].vertex--valid"
     );
+    await expect
+      .poll(
+        async () => {
+          const ready = hostPage.locator("[data-cy='placement-ready']");
+          const count = await ready.getAttribute("data-valid-vertices");
+          return Number(count ?? 0);
+        },
+        { timeout: 30000 }
+      )
+      .toBeGreaterThan(0);
     await expect
       .poll(async () => validVertices.count(), { timeout: 30000 })
       .toBeGreaterThan(0);

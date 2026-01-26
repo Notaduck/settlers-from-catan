@@ -6,9 +6,10 @@ Sources reviewed: `specs/*`, backend (game logic, handlers), frontend (context, 
 ---
 
 ## PRIORITY 1: INTERACTIVE BOARD (E2E flaky)
-- **Task:** Stabilize placement highlight E2E by ensuring `frontend/src/components/Board/placement.ts`, `frontend/src/components/Board/Board.tsx` and placement highlighting react to deterministic ready-state for placements; update Playwright in `frontend/tests/interactive-board.spec.ts` to wait for valid vertices > 0 or add an explicit `data-cy="placement-ready"` marker in UI.
+- **Status:** ✅ Completed (2026-01-26)
+- **Result:** Added `data-cy="placement-ready"` with deterministic counts in `frontend/src/components/Game/Game.tsx` and updated Playwright waits in `frontend/tests/interactive-board.spec.ts`. Placement highlight E2E now waits for valid vertices/edges to be ready.
 - **Go tests:** none; already covered
-- **Playwright tests:** update `interactive-board.spec.ts` for highlight waiting and placement-ready assertions
+- **Playwright tests:** updated `interactive-board.spec.ts` for highlight readiness waits
 
 ## PRIORITY 2: SETUP PHASE UI (passing)
 - No new tasks unless regressions found. All criteria, selectors, and E2E pass as of latest audit.

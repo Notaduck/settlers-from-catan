@@ -716,6 +716,20 @@ export function Game({ gameCode, onLeave }: GameProps) {
               <div className="placement-mode" data-cy="placement-mode">
                 {/* (Placement and trading UI are independent; both can be present) */}
                 {placementModeLabel}
+                <span
+                  className="placement-ready"
+                  data-cy="placement-ready"
+                  data-mode={placementMode ?? ""}
+                  data-valid-vertices={placementState.validVertexIds.size}
+                  data-valid-edges={placementState.validEdgeIds.size}
+                  data-ready={
+                    placementState.validVertexIds.size > 0 ||
+                    placementState.validEdgeIds.size > 0
+                      ? "true"
+                      : "false"
+                  }
+                  aria-hidden="true"
+                />
               </div>
             )}
           <div className="game-board-content">

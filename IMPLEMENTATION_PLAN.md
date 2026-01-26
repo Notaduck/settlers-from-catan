@@ -3,6 +3,7 @@
 ## Ralph Planning Notes (Jan 26, 2026)
 
 - Iteration 1 focused on E2E infrastructure readiness checks.
+- Iteration 2 stabilized interactive-board placement highlighting with `data-cy="placement-ready"` and Playwright waits for valid vertex/edge counts.
 - Updated `scripts/run-e2e.sh` to wait for backend/frontend readiness with retries instead of a fixed sleep.
 - Forced Playwright webServer backend to start with `DEV_MODE=true` (no reuse) and increased startup timeouts.
 - Fixed lobby start button gating (host-only) and corrected robber move payload to match `{q, r}`.
