@@ -813,10 +813,10 @@ export function Game({ gameCode, onLeave }: GameProps) {
                     isRobberMoveMode={isRobberMoveRequired}
                     onSelectRobberHex={interactionsDisabled ? undefined : isRobberMoveRequired ? (hex) => {
                       if (hex.coord) {
-                        sendRobberMove({ q: hex.coord.q, r: hex.coord.r, s: -(hex.coord.q + hex.coord.r) });
+                        sendRobberMove({ q: hex.coord.q, r: hex.coord.r });
                       }
                     } : undefined}
-                 />
+                  />
                </Suspense>
              )}
              {gameState && (

@@ -117,10 +117,10 @@
 - **Fixes**: PlayerPanel now displays public VP totals including Longest Road/Largest Army bonuses; updated E2E helpers to build until target road length and made longest-road spec assertions robust.
 - **Validation**: `npx playwright test longest-road.spec.ts --reporter=list` (7/7 passing), `make test-backend`, `make typecheck`, `make lint`, `make build`.
 
-#### 5. 🔧 MEDIUM - Fix Robber steal modal flow
-- **Problem**: `steal-modal` never appears; backend logs show move-robber payload parse errors.
-- **Impact**: 2 failures in `robber.spec.ts`.
-- **Next steps**: verify move-robber payload schema, ensure steal modal opens when adjacent players exist.
+#### 5. ✅ MEDIUM - Fix Robber steal modal flow
+- **Root cause**: Frontend sent `hex` payload with extra `s` field; backend `protojson.Unmarshal` rejected unknown field for `MoveRobberMessage`.
+- **Fix**: Send only `{q, r}` for `moveRobber` payloads.
+- **Result**: `robber.spec.ts` passes 7/7 (`npx playwright test robber.spec.ts --reporter=list`).
 
 #### 6. 🔧 MEDIUM - Fix Victory flow resource readout selector
 - **Problem**: `[data-cy='player-ore']` missing during victory test setup.

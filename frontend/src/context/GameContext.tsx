@@ -136,7 +136,7 @@ interface GameContextValue extends GameContextState {
   isRobberMoveRequired: boolean;
   isRobberStealRequired: boolean;
   sendRobberDiscard: (toDiscard: ResourceCount) => void;
-  sendRobberMove: (hex: { q: number; r: number; s: number }, victimId?: string) => void;
+  sendRobberMove: (hex: { q: number; r: number }, victimId?: string) => void;
   sendRobberSteal: (victimId: string) => void;
   robberStealCandidates: { id: string; name: string; avatarUrl?: string }[];
   // --- Dev Cards ---
@@ -321,7 +321,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     } as ClientMessage);
   }, [sendMessage]);
 
-  const sendRobberMove = useCallback((hex: { q: number; r: number; s: number }, victimId?: string) => {
+  const sendRobberMove = useCallback((hex: { q: number; r: number }, victimId?: string) => {
     sendMessage({
       message: {
         oneofKind: "moveRobber",
