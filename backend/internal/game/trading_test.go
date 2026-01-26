@@ -212,19 +212,77 @@ func TestBankTradeSpecificPortWrongResource(t *testing.T) {
 }
 
 func TestExpireOldTrades(t *testing.T) {
-	pending := catanv1.TradeStatus_TRADE_STATUS_PENDING
-	acc := catanv1.TradeStatus_TRADE_STATUS_ACCEPTED
-	rej := catanv1.TradeStatus_TRADE_STATUS_REJECTED
-	state := basicGameState(
-		makePlayer("me", &catanv1.ResourceCount{Wood: 2}),
-	)
-	state.PendingTrades = []*catanv1.TradeOffer{
-		{Id: "1", Status: pending},
-		{Id: "2", Status: acc},
-		{Id: "3", Status: rej},
+	tests := map[string]struct {
+		trades      []*catanv1.TradeOffer
+		wantPending int
+	}{
+		"clears pending and resolved trades": {
+			trades: []*catanv1.TradeOffer{
+				{Id: "1", Status: catanv1.TradeStatus_TRADE_STATUS_PENDING},
+				{Id: "2", Status: catanv1.TradeStatus_TRADE_STATUS_ACCEPTED},
+				{Id: "3", Status: catanv1.TradeStatus_TRADE_STATUS_REJECTED},
+			},
+			wantPending: 0,
+		},
+		"no trades remains empty": {
+			trades:      []*catanv1.TradeOffer{},
+			wantPending: 0,
+		},
 	}
-	ExpireOldTrades(state)
-	if len(state.PendingTrades) != 1 || state.PendingTrades[0].Id != "1" {
-		t.Errorf("ExpireOldTrades did not leave only pending: %+v", state.PendingTrades)
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			state := basicGameState(
+				makePlayer("me", &catanv1.ResourceCount{Wood: 2}),
+			)
+			state.PendingTrades = tt.trades
+			ExpireOldTrades(state)
+			if len(state.PendingTrades) != tt.wantPending {
+				t.Errorf("ExpireOldTrades: expected %d pending trades, got %d", tt.wantPending, len(state.PendingTrades))
+			}
+		})
+	}
+}
+
+func TestEndTurn_ExpiresPendingTrades(t *testing.T) {
+	tests := map[string]struct {
+		turnPhase   catanv1.TurnPhase
+		wantErr     bool
+		wantPending int
+	}{
+		"successful end turn clears pending trades": {
+			turnPhase:   catanv1.TurnPhase_TURN_PHASE_BUILD,
+			wantErr:     false,
+			wantPending: 0,
+		},
+		"end turn blocked keeps pending trades": {
+			turnPhase:   catanv1.TurnPhase_TURN_PHASE_ROLL,
+			wantErr:     true,
+			wantPending: 1,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			state := basicGameState(
+				makePlayer("me", &catanv1.ResourceCount{Wood: 2}),
+				makePlayer("them", &catanv1.ResourceCount{Wood: 2}),
+			)
+			state.TurnPhase = tt.turnPhase
+			state.PendingTrades = []*catanv1.TradeOffer{
+				{Id: "1", Status: catanv1.TradeStatus_TRADE_STATUS_PENDING},
+			}
+
+			err := EndTurn(state, "me")
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error but got none")
+				}
+			} else if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(state.PendingTrades) != tt.wantPending {
+				t.Errorf("EndTurn: expected %d pending trades, got %d", tt.wantPending, len(state.PendingTrades))
+			}
+		})
 	}
 }

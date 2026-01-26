@@ -135,6 +135,7 @@ func EndTurn(state *pb.GameState, playerID string) error {
 	state.CurrentTurn = (state.CurrentTurn + 1) % int32(len(state.Players))
 	state.TurnPhase = pb.TurnPhase_TURN_PHASE_ROLL
 	state.Dice = []int32{0, 0}
+	ExpireOldTrades(state)
 	// Increment global turn counter
 	state.TurnCounter++
 	return nil

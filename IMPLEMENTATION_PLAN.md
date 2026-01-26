@@ -2,6 +2,7 @@
 
 ## Ralph Planning Notes (Jan 26, 2026)
 
+- Expired pending trades at end of turn by clearing `PendingTrades` in `EndTurn`, updated `ExpireOldTrades` semantics, and added coverage in `trading_test.go`.
 - Iteration 1 focused on E2E infrastructure readiness checks.
 - Iteration 2 stabilized interactive-board placement highlighting with `data-cy="placement-ready"` and Playwright waits for valid vertex/edge counts.
 - Updated `scripts/run-e2e.sh` to wait for backend/frontend readiness with retries instead of a fixed sleep.

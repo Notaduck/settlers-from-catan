@@ -68,15 +68,9 @@ func RespondTrade(state *pb.GameState, tradeID, responderID string, accept bool)
 	return ErrTradeNotFound
 }
 
-// ExpireOldTrades removes all expired or resolved trades (after turn ends).
+// ExpireOldTrades removes all trades at end of turn (pending offers expire).
 func ExpireOldTrades(state *pb.GameState) {
-	pending := []*pb.TradeOffer{}
-	for _, t := range state.PendingTrades {
-		if t.Status == pb.TradeStatus_TRADE_STATUS_PENDING {
-			pending = append(pending, t)
-		}
-	}
-	state.PendingTrades = pending
+	state.PendingTrades = []*pb.TradeOffer{}
 }
 
 // BankTrade exchanges resources at best available port ratio for 1 of choice
