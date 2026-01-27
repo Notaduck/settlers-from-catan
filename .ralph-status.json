@@ -1,8 +1,8 @@
 {
     "iteration": 1,
-    "buildPassing": true,
-    "e2ePassing": skipped,
-    "consecutiveFailures": 0,
-    "message": "Quick validation passed",
-    "timestamp": "2026-01-27T16:45:53Z"
+    "buildPassing": false,
+    "e2ePassing": false,
+    "consecutiveFailures": 1,
+    "message": "Validation failed",
+    "timestamp": "2026-01-27T18:06:04Z"
 }
