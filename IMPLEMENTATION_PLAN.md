@@ -1,63 +1,69 @@
 # IMPLEMENTATION PLAN - Settlers from Catan
 
-## Ralph Planning Notes (Jan 26, 2026)
+## Ralph Planning Notes (Jan 27, 2026)
 
-### Autonomous Iteration Log (Iteration 10)
+### Autonomous Iteration Log (Iteration 12)
 
-- Iteration 10 was a full E2E audit per policy (every 10th).
-- Ran all major Playwright spec files. Only `development-cards.spec.ts` was rerun in this audit; others reference prior partial audits (Iteration 2-3).
-- Audit results written to E2E_STATUS.md.
-
----
-
-## E2E Audit Results/Followup
-
-- 1 failure in development-cards.spec.ts — 'Monopoly modal should allow selecting 1 resource type' (UI not available or backend phase delay)
-- Other major specs not rerun in this audit; issues from prior audits in ports, longest-road, robber, victory, trading remain to be fully revalidated.
+- Iteration 12: Full audit and gap analysis across all features and E2E specs.
+- Last major E2E audit only reran development-cards; others due for retest next iteration.
+- Interactive board is fully implemented and E2E verified.
+- Remaining features (setup-phase, victory, robber, trading, dev cards, longest road, ports) need revalidation by E2E or targeted audit.
 
 ---
 
-## Priority E2E Fix Tasks (Post Full Audit Iteration 10)
+## E2E Stabilization (Critical-Next)
 
-### 1. [HIGH] Fix Monopoly modal flake in development-cards.spec.ts
+1. **Re-run Playwright E2E suites for all remaining spec files:**
+   - `ports.spec.ts`, `trading.spec.ts`, `longest-road.spec.ts`, `robber.spec.ts`, `victory.spec.ts`, `setup-phase.spec.ts`, `game-flow.spec.ts`
+   - For each, log any failing/flaky test and create atomic fix tasks with file/test locations and root causes.
+2. **Document and address root causes for any failures discovered.**
 
-- STATUS: ✅ Fixed in code (Jan 26, 2026)
-- Monopoly modal is now robust against parent state changes and modal state/lifecycle is reliable.
-- Modal shows only via explicit user action, with console logs on open/close for future debugging.
-- Backend action only triggers after resource selection/submit.
-- All unit/type/lint/build checks pass.
-- E2E Playwright UI tests are blocked only by missing test/grant-resources endpoint, not by modal flakiness.
-- NOTE: The E2E/dev "grant-resources" endpoint is already available at /test/grant-resources (backend DEV_MODE only). There is no /api/grant-resources endpoint; all test helpers and specs should use /test/grant-resources for automation.
+## Prioritized Feature Audit
 
-### 2. [MEDIUM] Re-run and categorize all other major spec files in next audit
-- Many known failures from Iteration 3 likely remain (ports, longest-road, trading, robber)
-- Trigger full rerun and triage as main action for next audit iteration
+### [1] E2E Audit and Stabilization [CRITICAL-NEXT]
+- **Files:** All `frontend/tests/*.spec.ts`
+- **Action:** Run full audit, categorize failures, and create atomic tasks to resolve.
 
-### 3. [LOW] Monitor new UI/resource sync issues
-- No screenshots/traces found for failures; ensure Playwright artifacts are available for next audit
+### [2] Setup Phase UI [HIGH]
+- **Files:** `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/tests/setup-phase.spec.ts`
+- **Action:** Confirm setup-phase banner, placement instructions, and E2E test validity. Address any UI/test gaps.
+
+### [3] Victory Flow [HIGH]
+- **Files:** `backend/internal/game/victory_test.go`, `frontend/tests/victory.spec.ts`, `frontend/src/components/Game/Game.tsx`
+- **Action:** Ensure Go victory trigger tests and Playwright coverage for game-over events, overlays, and correct VP display.
+
+### [4] Robber Flow [HIGH]
+- **Files:** `backend/internal/game/robber.go`, `backend/internal/game/robber_test.go`, `frontend/tests/robber.spec.ts`
+- **Action:** Validate discard, move, steal implementation and Playwright coverage. Add missing Go unit tests if found.
+
+### [5] Trading System [MEDIUM]
+- **Files:** `backend/internal/game/trading.go`, `backend/internal/game/trading_test.go`, `frontend/tests/trading.spec.ts`
+- **Action:** Ensure correct implementation of bank/player trades; Playwright coverage for propose/respond/accept/decline. Patch as needed.
+
+### [6] Development Cards [MEDIUM]
+- **Files:** `backend/internal/game/devcards.go`, `backend/internal/game/devcards_test.go`, `frontend/tests/development-cards.spec.ts`
+- **Action:** Confirm backend logic for dev cards; check Knight, Monopoly, Year of Plenty, Road Building, VP handling. Add/validate E2E.
+
+### [7] Longest Road Calculation [MEDIUM]
+- **Files:** `backend/internal/game/longestroad.go`, `backend/internal/game/longestroad_test.go`, `frontend/tests/longest-road.spec.ts`
+- **Action:** Ensure DFS and bonus logic is spec-compliant; all events/recalcs tested in Go and E2E.
+
+### [8] Ports (Maritime Trade) [LOW]
+- **Files:** `backend/internal/game/ports.go`, `backend/internal/game/ports_test.go`, `frontend/tests/ports.spec.ts`
+- **Action:** Confirm board renders 9 ports, UI shows correct ratios, and all trading rules enforced/tested.
 
 ---
 
-## Interactive Board Feature Audit (Iteration 11)
-
-- STATUS: ✅ Fully implemented and E2E verified (Jan 26, 2026)
-- Spec: [specs/interactive-board.md] acceptance criteria documented and mapped one-to-one to Board/Vertex/Edge frontend logic, selectors, and Playwright tests.
-- E2E: All criteria, data-cy attributes, placement flows, and highlights confirmed in `frontend/tests/interactive-board.spec.ts`. No missing or faulty selectors, state, or click behaviors identified.
-- Determined no further changes required for interactive board; feature and tests accepted as complete.
+## General Guidance
+- No further implementation for fully complete/verified features (see interactive board logs).
+- For each new gap, specify atomic file/test changes in future plan updates. Maintain small, testable commits.
 
 ---
 
-## Validation Results - Iteration 10
-
-- Backend Go tests:     PASSED
-- Frontend TypeScript:  PASSED
-- E2E audit:            PARTIAL (see above)
-- Lint/Build:           PASSED
-- Unrelated test bugs:  None observed
+## Commit Steps
+1. git add -A
+2. git commit -m "chore: update implementation plan"
+3. git push
+4. EXIT
 
 ---
-
-## FINAL STATUS
-
-- E2E audit complete (Iteration 10); follow-ups written above. Await codebase changes or next audit.
-- Interactive board feature specifically checked and confirmed complete (Iteration 11); next priority feature: retest/verify ports, longest-road, trading, robber in upcoming audit or normal iterations.
