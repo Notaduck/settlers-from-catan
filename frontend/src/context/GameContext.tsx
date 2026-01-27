@@ -196,6 +196,34 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
       case "gameOver":
         dispatch({ type: "SET_GAME_OVER", payload: msg.gameOver ?? null });
         break;
+      case "devCardBought":
+        if (msg.devCardBought?.playerId && state.gameState) {
+          const { playerId, cardType } = msg.devCardBought;
+          // Only update if it's our client
+          if (playerId === state.currentPlayerId) {
+            // Find current player in local state
+            const updatedPlayers = state.gameState.players.map((p) => {
+              if (p.id !== playerId) return p;
+              // Defensive: copy card bag
+              const existingCards = { ...(p.devCards ?? {}) };
+              existingCards[cardType] = (existingCards[cardType] || 0) + 1;
+              return {
+                ...p,
+                devCards: existingCards,
+                devCardCount: (p.devCardCount ?? 0) + 1,
+              };
+            });
+            // Patch gameState immutably
+            dispatch({
+              type: "SET_GAME_STATE",
+              payload: {
+                ...state.gameState,
+                players: updatedPlayers,
+              },
+            });
+          }
+        }
+        break;
       // Handle other message types as needed
     }
   }, []);
