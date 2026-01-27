@@ -27,7 +27,7 @@
 - Backend action only triggers after resource selection/submit.
 - All unit/type/lint/build checks pass.
 - E2E Playwright UI tests are blocked only by missing test/grant-resources endpoint, not by modal flakiness.
-- Followup: (For test maintainers) Re-enable or implement `/api/grant-resources` endpoint in backend test mode for full Playwright spec automation.
+- NOTE: The E2E/dev "grant-resources" endpoint is already available at /test/grant-resources (backend DEV_MODE only). There is no /api/grant-resources endpoint; all test helpers and specs should use /test/grant-resources for automation.
 
 ### 2. [MEDIUM] Re-run and categorize all other major spec files in next audit
 - Many known failures from Iteration 3 likely remain (ports, longest-road, trading, robber)
@@ -35,6 +35,15 @@
 
 ### 3. [LOW] Monitor new UI/resource sync issues
 - No screenshots/traces found for failures; ensure Playwright artifacts are available for next audit
+
+---
+
+## Interactive Board Feature Audit (Iteration 11)
+
+- STATUS: ✅ Fully implemented and E2E verified (Jan 26, 2026)
+- Spec: [specs/interactive-board.md] acceptance criteria documented and mapped one-to-one to Board/Vertex/Edge frontend logic, selectors, and Playwright tests.
+- E2E: All criteria, data-cy attributes, placement flows, and highlights confirmed in `frontend/tests/interactive-board.spec.ts`. No missing or faulty selectors, state, or click behaviors identified.
+- Determined no further changes required for interactive board; feature and tests accepted as complete.
 
 ---
 
@@ -51,3 +60,4 @@
 ## FINAL STATUS
 
 - E2E audit complete (Iteration 10); follow-ups written above. Await codebase changes or next audit.
+- Interactive board feature specifically checked and confirmed complete (Iteration 11); next priority feature: retest/verify ports, longest-road, trading, robber in upcoming audit or normal iterations.

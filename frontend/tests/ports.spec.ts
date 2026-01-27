@@ -30,6 +30,14 @@ async function getResourceCount(
  */
 
 test.describe("Ports - Maritime Trade", () => {
+  test.beforeAll(async ({ request }) => {
+    // Check for DEV_MODE test endpoints before any tests run
+    const helpers = await import("./helpers");
+    const devModeEnabled = await helpers.isDevModeAvailable(request);
+    if (!devModeEnabled) {
+      test.skip("DEV_MODE test endpoints not available. Start backend with DEV_MODE=true on port 8080");
+    }
+  });
   test("Ports render on board with correct icons", async ({
     page,
     context,
