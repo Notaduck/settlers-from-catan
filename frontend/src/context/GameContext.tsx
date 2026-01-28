@@ -163,11 +163,12 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     currentPlayerId: playerId,
   });
 
-  const handleMessage = useCallback((data: ServerMessage) => {
-    const msg = data.message;
-    if (msg.oneofKind === undefined) return;
+   const handleMessage = useCallback((data: ServerMessage) => {
+     console.log('[GameContext] Received WS message:', data);
+     const msg = data.message;
+     if (msg.oneofKind === undefined) return;
 
-    switch (msg.oneofKind) {
+     switch (msg.oneofKind) {
       case "gameState":
         if (msg.gameState?.state) {
           dispatch({ type: "SET_GAME_STATE", payload: msg.gameState.state });
@@ -226,15 +227,21 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
         break;
       // Handle other message types as needed
     }
-  }, []);
+   }, [state.currentPlayerId, state.gameState]);
 
-  const { isConnected, error, connect, disconnect, sendMessage } = useWebSocket(
-    {
-      onMessage: handleMessage,
-      onConnect: () => dispatch({ type: "SET_CONNECTED", payload: true }),
-      onDisconnect: () => dispatch({ type: "SET_CONNECTED", payload: false }),
-    }
-  );
+   const { isConnected, error, connect, disconnect, sendMessage } = useWebSocket(
+     {
+       onMessage: handleMessage,
+       onConnect: () => {
+         console.log('[GameContext] WS connected');
+         dispatch({ type: "SET_CONNECTED", payload: true });
+       },
+       onDisconnect: () => {
+         console.warn('[GameContext] WS disconnected');
+         dispatch({ type: "SET_CONNECTED", payload: false });
+       },
+     }
+   );
 
   const rollDice = useCallback(() => {
     sendMessage({

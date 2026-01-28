@@ -13,11 +13,14 @@ import {
 } from "./helpers";
 
 test.describe("Development Cards", () => {
-  test("should display development cards panel during playing phase", async ({
-    page,
-    context,
-    request,
-  }) => {
+   test("should display development cards panel during playing phase", async ({
+     page,
+     context,
+     request,
+   }) => {
+     page.on('console', msg => {
+       console.log('BROWSER LOG:', msg.type(), msg.text());
+     });
     const { hostPage, guestPage } = await startTwoPlayerGame(
       page,
       context,

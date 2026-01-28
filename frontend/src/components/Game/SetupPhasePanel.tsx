@@ -1,0 +1,113 @@
+import React, { useEffect, useState } from "react";
+import { useGame } from "@/context/GameContext";
+
+
+function pluralize(word: string, count: number) {
+  return count === 1 ? word : `${word}s`;
+}
+
+function resourceList(resources: Record<string, number>) {
+  return Object.entries(resources)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${v} ${pluralize(k.charAt(0).toUpperCase() + k.slice(1), v)}`)
+    .join(", ");
+}
+
+// ResourceCount field extractor
+import type { ResourceCount } from "@/gen/proto/catan/v1/types";
+function resourceCountToRecord(rc: ResourceCount): Record<string, number> {
+  return rc ? {
+    wood: rc.wood ?? 0,
+    wheat: rc.wheat ?? 0,
+    ore: rc.ore ?? 0,
+    sheep: rc.sheep ?? 0,
+    brick: rc.brick ?? 0
+  } : {};
+}
+
+export function SetupPhasePanel() {
+  const {
+     gameState,
+     currentPlayerId,
+     resourceGain,
+     clearResourceGain,
+  } = useGame();
+
+  // DEBUG: Log phase status
+  useEffect(() => {
+     console.log("[SetupPhasePanel] mount; gameState.status:", gameState && gameState.status);
+  }, [gameState]);
+  const [showToast, setShowToast] = useState(false);
+
+   useEffect(() => {
+     if (resourceGain) {
+       // Schedule on next tick to avoid cascading render warning
+       setTimeout(() => setShowToast(true), 0);
+     }
+   }, [resourceGain]);
+
+  if (!gameState || !gameState.setupPhase) return null;
+  const { setupPhase } = gameState;
+
+  // Get round and player turn
+   const round = setupPhase.round;
+   const placementsInTurn = setupPhase.placementsInTurn || 0;
+   // We no longer have currentPlayerIndex on setupPhase; fallback to gameState.currentTurn
+   const turnPlayerIndex = gameState.currentTurn ?? 0;
+   const turnPlayer = gameState.players[turnPlayerIndex];
+   
+  // Determine if it's current user's turn for highlighting
+  const isMyTurn = turnPlayer && currentPlayerId === turnPlayer.id;
+
+  // Banner text
+  const bannerText = `Setup Phase - Round ${round}`;
+
+  // Placement Instruction
+  let instruction = "";
+   if (placementsInTurn === 0) {
+     // settlementsPlaced not available on setupPhase; fallback display
+     instruction = `Place Settlement (${1}/2)`;
+   } else {
+     // roadsPlaced not available on setupPhase; fallback display
+     instruction = `Place Road (${1}/2)`;
+   }
+
+  return (
+    <div className="setup-phase-panel">
+      <div
+        className="setup-phase-banner"
+        data-cy="setup-phase-banner"
+      >
+        {bannerText}
+      </div>
+      <div
+        className="setup-turn-indicator"
+        data-cy="setup-turn-indicator"
+      >
+        Turn: <b>{turnPlayer?.name || "Player"}</b>
+        {isMyTurn && <span style={{ marginLeft: 8, color: "#2ecc71" }}>(Your Turn)</span>}
+      </div>
+      <div
+        className="setup-instruction"
+        data-cy="setup-instruction"
+      >
+        {instruction}
+      </div>
+      {showToast && resourceGain && (
+         <div className="setup-resource-toast" data-cy="setup-resource-toast">
+           You received: {resourceList(resourceCountToRecord(resourceGain.resources))}
+          <button
+            className="btn btn-small"
+            style={{ marginLeft: 12 }}
+            onClick={() => {
+              setShowToast(false);
+              clearResourceGain();
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

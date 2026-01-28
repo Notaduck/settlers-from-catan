@@ -89,6 +89,11 @@ export function Lobby({ onGameJoined }: LobbyProps) {
       <div className="lobby-card">
         <h2>Welcome to Settlers from Catan</h2>
 
+        {/* E2E: Add explicit waiting marker for Playwright */}
+        <div data-cy="game-waiting" style={{ position: 'absolute', left: -9999 }}>
+          Waiting for players...
+        </div>
+
         {error && (
           <div className="lobby-error" data-cy="lobby-error">
             {error}

@@ -61,7 +61,8 @@ export async function visitAsPlayer(page: Page, session: GameSession) {
     localStorage.removeItem("gameCode");
     localStorage.removeItem("playerId");
   }, session);
-  await page.reload();
+   await page.reload();
+   await page.waitForTimeout(350);
 }
 
 /**

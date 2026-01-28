@@ -64,6 +64,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       wsRef.current = ws;
 
       ws.onopen = () => {
+          console.log(`[useWebSocket] WS opened: ${wsUrl}`);
         setIsConnected(true);
         setError(null);
         if (pendingMessagesRef.current.length > 0) {
@@ -76,6 +77,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       };
 
       ws.onclose = () => {
+          console.warn(`[useWebSocket] WS closed: ${wsUrl} (readyState: ${ws.readyState})`);
         setIsConnected(false);
         wsRef.current = null;
         optionsRef.current.onDisconnect?.();
@@ -88,7 +90,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         }, 1000);
       };
 
-      ws.onerror = () => {
+      ws.onerror = (err) => {
+          console.error(`[useWebSocket] WS error: ${wsUrl} (readyState: ${ws.readyState})`, err);
         setError("WebSocket connection error");
       };
 

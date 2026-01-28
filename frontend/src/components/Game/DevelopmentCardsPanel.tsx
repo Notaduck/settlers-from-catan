@@ -24,6 +24,7 @@ export interface DevelopmentCardsPanelProps {
   canPlay: boolean;
   onBuyCard: () => void;
   onPlayCard: (cardType: DevCardType) => void;
+  turnCounter: number;
 }
 
 export function DevelopmentCardsPanel({
@@ -32,6 +33,7 @@ export function DevelopmentCardsPanel({
   canPlay,
   onBuyCard,
   onPlayCard,
+  turnCounter,
 }: DevelopmentCardsPanelProps) {
   const devCards = useMemo(() => {
     if (!currentPlayer?.devCards) return [];
@@ -80,17 +82,23 @@ export function DevelopmentCardsPanel({
                 <span className="dev-card-name">{card.label}</span>
                 <span className="dev-card-count">×{card.count}</span>
               </div>
-              {card.type !== DevCardType.VICTORY_POINT && (
-                <button
-                  className="btn btn-small"
-                  data-cy={`play-dev-card-btn-${card.key}`}
-                  onClick={() => onPlayCard(card.type as DevCardType)}
-                  disabled={!canPlay}
-                  title={!canPlay ? "Cannot play dev cards right now" : `Play ${card.label}`}
-                >
-                  Play
-                </button>
-              )}
+               {card.type !== DevCardType.VICTORY_POINT && (
+                 <button
+                   className="btn btn-small"
+                   data-cy={`play-dev-card-btn-${card.key}`}
+                   onClick={() => onPlayCard(card.type as DevCardType)}
+                   disabled={!canPlay || (currentPlayer?.devCardsPurchasedTurn?.[card.type] === turnCounter)}
+                   title={
+                     !canPlay
+                       ? "Cannot play dev cards right now"
+                       : currentPlayer?.devCardsPurchasedTurn?.[card.type] === turnCounter
+                       ? "You may not play a development card in the turn you bought it."
+                       : `Play ${card.label}`
+                   }
+                 >
+                   Play
+                 </button>
+               )}
             </div>
           ))}
         </div>
