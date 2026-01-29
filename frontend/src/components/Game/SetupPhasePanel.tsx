@@ -46,7 +46,14 @@ export function SetupPhasePanel() {
      }
    }, [resourceGain]);
 
-  if (!gameState || !gameState.setupPhase) return null;
+  if (!gameState || !gameState.setupPhase) {
+    // Instead of null, show a loading placeholder so E2E test always has selector.
+    return (
+      <div className="setup-phase-panel" data-cy="setup-phase-banner">
+        <div>Waiting for setup phase&hellip;</div>
+      </div>
+    );
+  }
   const { setupPhase } = gameState;
 
   // Get round and player turn
@@ -64,13 +71,17 @@ export function SetupPhasePanel() {
 
   // Placement Instruction
   let instruction = "";
-   if (placementsInTurn === 0) {
-     // settlementsPlaced not available on setupPhase; fallback display
-     instruction = `Place Settlement (${1}/2)`;
-   } else {
-     // roadsPlaced not available on setupPhase; fallback display
-     instruction = `Place Road (${1}/2)`;
-   }
+  let stepNum = 1;
+  if (setupPhase.round === 1) {
+    stepNum = 1;
+  } else if (setupPhase.round === 2) {
+    stepNum = 2;
+  }
+  if (placementsInTurn === 0) {
+    instruction = `Place Settlement (${stepNum}/2)`;
+  } else {
+    instruction = `Place Road (${stepNum}/2)`;
+  }
 
   return (
     <div className="setup-phase-panel">

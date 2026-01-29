@@ -1,0 +1,38 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.57.0","options":{},"platform":"darwin","wallTime":1769713635104,"monotonicTime":99225.263,"sdkLanguage":"javascript","contextId":"request-context@6e3f926b2d3729d6316fe3ad725770f3","title":"development-cards.spec.ts:46 › Development Cards › should be able to buy development card with correct resources"}
+{"type":"before","callId":"call@13","startTime":99228.78,"class":"APIRequestContext","method":"fetch","params":{"url":"http://localhost:8080/test/grant-resources","method":"POST","jsonData":"{\"gameCode\":\"nonexistent-game\",\"playerId\":\"test\",\"resources\":{}}","timeout":10000},"stepId":"pw:api@37","beforeSnapshot":"before@call@13"}
+{"type":"log","callId":"call@13","time":99234.831,"message":"→ POST http://localhost:8080/test/grant-resources"}
+{"type":"log","callId":"call@13","time":99234.857,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"}
+{"type":"log","callId":"call@13","time":99234.863,"message":"  accept: */*"}
+{"type":"log","callId":"call@13","time":99234.891,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@13","time":99234.901,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@13","time":99234.907,"message":"  content-length: 64"}
+{"type":"log","callId":"call@13","time":99239.908,"message":"← 404 Not Found"}
+{"type":"log","callId":"call@13","time":99239.918,"message":"  content-type: text/plain; charset=utf-8"}
+{"type":"log","callId":"call@13","time":99239.923,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@13","time":99239.935,"message":"  date: Thu, 29 Jan 2026 19:07:15 GMT"}
+{"type":"log","callId":"call@13","time":99239.941,"message":"  content-length: 15"}
+{"type":"after","callId":"call@13","endTime":99240.087,"result":{"response":{"url":"http://localhost:8080/test/grant-resources","status":404,"statusText":"Not Found","headers":[{"name":"Content-Type","value":"text/plain; charset=utf-8"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"Date","value":"Thu, 29 Jan 2026 19:07:15 GMT"},{"name":"Content-Length","value":"15"}],"fetchUid":"53605d0020ae44f29bc8f1ea71319dad"}},"afterSnapshot":"after@call@13"}
+{"type":"before","callId":"call@16","startTime":99241.61,"class":"APIRequestContext","method":"fetch","params":{"url":"http://localhost:8080/api/games","method":"POST","jsonData":"{\"playerName\":\"Host\"}","timeout":10000},"stepId":"pw:api@38","beforeSnapshot":"before@call@16"}
+{"type":"log","callId":"call@16","time":99242.11,"message":"→ POST http://localhost:8080/api/games"}
+{"type":"log","callId":"call@16","time":99242.117,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"}
+{"type":"log","callId":"call@16","time":99242.121,"message":"  accept: */*"}
+{"type":"log","callId":"call@16","time":99242.124,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@16","time":99242.128,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":99242.131,"message":"  content-length: 21"}
+{"type":"log","callId":"call@16","time":99246.634,"message":"← 200 OK"}
+{"type":"log","callId":"call@16","time":99246.641,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":99246.645,"message":"  date: Thu, 29 Jan 2026 19:07:15 GMT"}
+{"type":"log","callId":"call@16","time":99246.648,"message":"  content-length: 172"}
+{"type":"after","callId":"call@16","endTime":99246.708,"result":{"response":{"url":"http://localhost:8080/api/games","status":200,"statusText":"OK","headers":[{"name":"Content-Type","value":"application/json"},{"name":"Date","value":"Thu, 29 Jan 2026 19:07:15 GMT"},{"name":"Content-Length","value":"172"}],"fetchUid":"a035f6e8bf63fe7fbf7edf91da850a89"}},"afterSnapshot":"after@call@16"}
+{"type":"before","callId":"call@19","startTime":99248.03,"class":"APIRequestContext","method":"fetch","params":{"url":"http://localhost:8080/api/games/KQXZSV/join","method":"POST","jsonData":"{\"playerName\":\"Guest\"}","timeout":10000},"stepId":"pw:api@39","beforeSnapshot":"before@call@19"}
+{"type":"log","callId":"call@19","time":99248.342,"message":"→ POST http://localhost:8080/api/games/KQXZSV/join"}
+{"type":"log","callId":"call@19","time":99248.349,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"}
+{"type":"log","callId":"call@19","time":99248.352,"message":"  accept: */*"}
+{"type":"log","callId":"call@19","time":99248.356,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@19","time":99248.359,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@19","time":99248.362,"message":"  content-length: 22"}
+{"type":"log","callId":"call@19","time":99252.284,"message":"← 200 OK"}
+{"type":"log","callId":"call@19","time":99252.29,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@19","time":99252.293,"message":"  date: Thu, 29 Jan 2026 19:07:15 GMT"}
+{"type":"log","callId":"call@19","time":99252.296,"message":"  content-length: 349"}
+{"type":"after","callId":"call@19","endTime":99252.349,"result":{"response":{"url":"http://localhost:8080/api/games/KQXZSV/join","status":200,"statusText":"OK","headers":[{"name":"Content-Type","value":"application/json"},{"name":"Date","value":"Thu, 29 Jan 2026 19:07:15 GMT"},{"name":"Content-Length","value":"349"}],"fetchUid":"2ceb8d03226a97a2959451c7b769556a"}},"afterSnapshot":"after@call@19"}

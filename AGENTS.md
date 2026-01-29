@@ -454,3 +454,8 @@ If something is unclear:
   - `backend/internal/game/*_test.go`
   - `frontend/tests/game-flow.spec.ts`
     and extend patterns already used in the repo.
+
+## Kill Services running on port 3000 and 8080
+
+Use the following cmd:
+npx kill-port 3000 8080
