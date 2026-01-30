@@ -965,7 +965,7 @@ function Board({
   }
 
   return (
-    <div className="board-container" data-cy="board">
+    <div className="board-container" data-cy="game-board-container">
       <div className="board-canvas-wrapper" data-cy="board-canvas">
         <Canvas
           className="board-canvas"
@@ -1092,7 +1092,7 @@ function Board2D({
   );
 
   return (
-    <div className="board-container" data-cy="board">
+    <div className="board-container" data-cy="game-board-container">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="board-svg"

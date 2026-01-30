@@ -1,5 +1,6 @@
 import React from "react";
 import { useGame } from "@/context/GameContext";
+import Board from "@/components/Board/Board";
 import { SetupPhasePanel } from "./SetupPhasePanel";
 import { DevelopmentCardsPanel } from "./DevelopmentCardsPanel";
 import { GameStatus } from "@/gen/proto/catan/v1/types";
@@ -10,24 +11,43 @@ interface GameProps {
 }
 
 export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
-  // Silence unused prop lint:
-  void _gameCode;
-  void _onLeave;
-  const { gameState } = useGame();
+   // Silence unused prop lint:
+   void _gameCode;
+   void _onLeave;
+   const { gameState } = useGame();
 
-  // DEBUG: Log on every render
-  // Props supplied from App, not used yet: gameCode =
-  console.log("[Game render] gameState:", gameState && {status: gameState.status, players: gameState.players, turn: gameState.currentTurn, setupPhase: gameState.setupPhase});
+   // DEBUG: Log on every render
+   // Props supplied from App, not used yet: gameCode =
+   console.log("[Game render] gameState:", gameState && {status: gameState.status, players: gameState.players, turn: gameState.currentTurn, setupPhase: gameState.setupPhase});
 
-  if (gameState?.status === GameStatus.SETUP) {
-    // Render setup phase: game board container + setup panel
-    return (
-       <div data-cy="game-board-container" className="game-board-container">
-         <div data-cy="game-phase">SETUP</div>
-         <SetupPhasePanel />
-         {/* Place board rendering here if exists, or placeholder for now */}
-         <div data-cy="board-placeholder">[Board will be rendered here during setup]</div>
+   // Show E2E-visible waiting room if status is 'waiting'
+   if (gameState?.status === "waiting") {
+     return (
+       <div className="game-waiting-banner" data-cy="game-waiting" style={{ textAlign: 'center', marginTop: '4rem', fontSize: '1.5rem', color: '#888' }}>
+         Waiting for players to join...
        </div>
+     );
+   }
+
+   if (gameState?.status === GameStatus.SETUP) {
+    // Render setup phase: game board container + setup panel, with actual Board
+    const { placementState, placementMode, build } = useGame();
+    // Set handlers depending on mode
+    const onBuildSettlement = placementMode === "settlement" ? (vertexId: string) => build("settlement", vertexId) : undefined;
+    const onBuildRoad = placementMode === "road" ? (edgeId: string) => build("road", edgeId) : undefined;
+    return (
+      <div className="game-board-container">
+        <div data-cy="game-phase">SETUP</div>
+        <SetupPhasePanel />
+        <Board
+          board={gameState.board}
+          players={gameState.players}
+          validVertexIds={placementState?.validVertexIds}
+          validEdgeIds={placementState?.validEdgeIds}
+          onBuildSettlement={onBuildSettlement}
+          onBuildRoad={onBuildRoad}
+        />
+      </div>
     );
   }
 
@@ -41,19 +61,26 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     const onBuyCard = () => {};
     const onPlayCard = (cardType: import("@/types").DevCardType) => { void cardType; /* no-op */ };
     return (
-      <div data-cy="game-board-container" className="game-board-container">
-        {/* Add board/game UI as needed here */}
-         <div className="main-game-ui">
-           <div data-cy="game-phase">PLAYING</div>
-           <DevelopmentCardsPanel
-             currentPlayer={currentPlayer}
-             canBuy={canBuy}
-             canPlay={canPlay}
-             onBuyCard={onBuyCard}
-             onPlayCard={onPlayCard}
-             turnCounter={gameState.turnCounter}
-           />
-         </div>
+      <div className="game-board-container">
+        <Board
+          board={gameState.board}
+          players={gameState.players}
+          validVertexIds={placementState?.validVertexIds}
+          validEdgeIds={placementState?.validEdgeIds}
+          onBuildSettlement={placementMode === "build" ? (vertexId: string) => build("settlement", vertexId) : undefined}
+          onBuildRoad={placementMode === "build" ? (edgeId: string) => build("road", edgeId) : undefined}
+        />
+        <div className="main-game-ui">
+          <div data-cy="game-phase">PLAYING</div>
+          <DevelopmentCardsPanel
+            currentPlayer={currentPlayer}
+            canBuy={canBuy}
+            canPlay={canPlay}
+            onBuyCard={onBuyCard}
+            onPlayCard={onPlayCard}
+            turnCounter={gameState.turnCounter}
+          />
+        </div>
       </div>
     );
   }
