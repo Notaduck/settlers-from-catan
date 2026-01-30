@@ -104,3 +104,17 @@ func (h *Hub) Register(client *Client) {
 func (h *Hub) Unregister(client *Client) {
 	h.unregister <- client
 }
+
+// GetClientsForGame returns the clients registered for a given gameID
+func (h *Hub) GetClientsForGame(gameID string) []*Client {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	m := h.games[gameID]
+	out := make([]*Client, 0, len(m))
+	for c := range m {
+		if c != nil {
+			out = append(out, c)
+		}
+	}
+	return out
+}

@@ -82,7 +82,7 @@ func TestHandleCreateGame_PersistsStateAndPlayer(t *testing.T) {
 		t.Fatalf("failed to load game state: %v", err)
 	}
 	var state catanv1.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(stateJSON), &state); err != nil {
+	if err := protojson.Unmarshal([]byte(stateJSON), &state); err != nil {
 		t.Fatalf("failed to parse game state: %v", err)
 	}
 	if len(state.Players) != 1 || state.Players[0].Name != "Alice" {
@@ -167,7 +167,7 @@ func TestHandleMoveRobber_AllowsStealWithoutHex(t *testing.T) {
 		StealPendingPlayerId: &thiefID,
 	}
 
-	stateJSON, err := marshalOptions.Marshal(state)
+	stateJSON, err := protojson.Marshal(state)
 	if err != nil {
 		t.Fatalf("failed to marshal state: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestHandleMoveRobber_AllowsStealWithoutHex(t *testing.T) {
 		t.Fatalf("failed to load updated state: %v", err)
 	}
 	var updatedState catanv1.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+	if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
 		t.Fatalf("failed to parse updated state: %v", err)
 	}
 
@@ -247,7 +247,7 @@ func TestHandleClientMessage_BuildStructureUsesProtoJSON(t *testing.T) {
 
 	vertexID := state.Board.Vertices[0].Id
 
-	stateJSON, err := marshalOptions.Marshal(state)
+	stateJSON, err := protojson.Marshal(state)
 	if err != nil {
 		t.Fatalf("failed to marshal state: %v", err)
 	}
@@ -273,7 +273,7 @@ func TestHandleClientMessage_BuildStructureUsesProtoJSON(t *testing.T) {
 	}
 
 	var updatedState catanv1.GameState
-	if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+	if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
 		t.Fatalf("failed to parse updated state: %v", err)
 	}
 
@@ -341,7 +341,7 @@ func TestHandleSetTurnPhase_UpdatesTurnPhase(t *testing.T) {
 				tt.setup(state)
 			}
 
-			stateJSON, err := marshalOptions.Marshal(state)
+			stateJSON, err := protojson.Marshal(state)
 			if err != nil {
 				t.Fatalf("failed to marshal state: %v", err)
 			}
@@ -370,7 +370,7 @@ func TestHandleSetTurnPhase_UpdatesTurnPhase(t *testing.T) {
 				t.Fatalf("failed to load updated state: %v", err)
 			}
 			var updatedState catanv1.GameState
-			if err := unmarshalOptions.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+			if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
 				t.Fatalf("failed to parse updated state: %v", err)
 			}
 
