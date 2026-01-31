@@ -9,6 +9,13 @@
 - Interactive board is fully implemented and E2E verified.
 - Remaining features (setup-phase, victory, robber, trading, dev cards, longest road, ports) need revalidation by E2E or targeted audit.
 
+### Autonomous Iteration Log (Iteration 1)
+
+- Implemented websocket handling + lobby game flow (ready/start/build) and ensured game state broadcasts use proto-style envelopes with enum numbers.
+- Added lobby UI in Game view (ready/start buttons, player list) and auto-connect on mount.
+- Fixed board `data-cy="board"` marker for game-flow E2E.
+- Validations: `make test-backend`, `make typecheck`, `make lint`, `make build`, `npx playwright test game-flow.spec.ts --reporter=list`.
+
 ---
 
 ## E2E Stabilization (Critical-Next)
@@ -37,7 +44,7 @@
 - [ ] Patch server-side state machine or websocket logic so phase banners and setup instructions initialize and propagate. Test that all setup-phase tiles/placements register. Files: `backend/internal/game/setup.go`, `frontend/tests/setup-phase.spec.ts`, `frontend/src/components/Game/Game.tsx`
 
 #### game-flow.spec.ts
-- [ ] Debug initial lobby/game creation, join/ready, and phase transitions between lobby→setup→playing. Files: `frontend/src/context/GameContext.tsx`, `frontend/src/hooks/useWebSocket.ts`, `backend/internal/hub/hub.go`
+- [x] Debug initial lobby/game creation, join/ready, and phase transitions between lobby→setup→playing. Files: `frontend/src/context/GameContext.tsx`, `frontend/src/hooks/useWebSocket.ts`, `backend/internal/hub/hub.go`
 
 #### ports.spec.ts
 - [ ] Fix port state propagation from backend so all ports render, support maritime trade, and correct bank ratios/settings for each player. Files: `backend/internal/game/ports.go`, `frontend/src/components/Ports.tsx`

@@ -969,6 +969,7 @@ function Board({
       <div className="board-canvas-wrapper" data-cy="board-canvas">
         <Canvas
           className="board-canvas"
+          data-cy="board"
           shadows
           dpr={[1, 2]}
           camera={{ position: [8, 10, 8], fov: 45, near: 0.1, far: 100 }}
@@ -1097,7 +1098,7 @@ function Board2D({
         viewBox={`0 0 ${width} ${height}`}
         className="board-svg"
         preserveAspectRatio="xMidYMid meet"
-        data-cy="board-svg"
+        data-cy="board"
       >
         <g transform={`translate(${offsetX}, ${offsetY})`}>
           {validHexes.map((hex) => {

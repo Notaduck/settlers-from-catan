@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"google.golang.org/protobuf/proto"
 	pb "settlers_from_catan/gen/proto/catan/v1"
 )
 
@@ -16,11 +17,17 @@ func (h *Handler) broadcastGameStatePersonalized(gameID string, state *pb.GameSt
 			continue
 		}
 		personalized := redactedGameStateForPlayer(state, client.PlayerID)
-		m := map[string]interface{}{
-			"type":    "game_state",
-			"payload": personalized,
+		stateJSON, err := wsMarshal.Marshal(personalized)
+		if err != nil {
+			continue
 		}
-		msg, err := json.Marshal(m)
+		envelope := serverEnvelope{
+			Message: serverMessage{
+				OneofKind: "gameState",
+				GameState: &gameStateWire{State: stateJSON},
+			},
+		}
+		msg, err := json.Marshal(envelope)
 		if err == nil {
 			client.Send(msg)
 		}
@@ -32,9 +39,10 @@ func redactedGameStateForPlayer(src *pb.GameState, playerID string) *pb.GameStat
 	if src == nil {
 		return nil
 	}
-	b, _ := json.Marshal(src)
-	var out pb.GameState
-	_ = json.Unmarshal(b, &out)
+	out, ok := proto.Clone(src).(*pb.GameState)
+	if !ok || out == nil {
+		return nil
+	}
 	for i, p := range out.Players {
 		if p.Id != playerID {
 			p.DevCards = nil
@@ -43,5 +51,5 @@ func redactedGameStateForPlayer(src *pb.GameState, playerID string) *pb.GameStat
 			out.Players[i] = p
 		}
 	}
-	return &out
+	return out
 }

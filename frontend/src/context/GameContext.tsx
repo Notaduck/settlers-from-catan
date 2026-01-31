@@ -4,6 +4,7 @@ import {
   useReducer,
   useCallback,
   useMemo,
+  useEffect,
   type ReactNode,
 } from "react";
 import type {
@@ -230,7 +231,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     }
    }, [state.currentPlayerId, state.gameState]);
 
-   const { isConnected, error, connect, disconnect, sendMessage } = useWebSocket(
+  const { isConnected, error, connect, disconnect, sendMessage } = useWebSocket(
      {
        onMessage: handleMessage,
        onConnect: () => {
@@ -243,6 +244,15 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
        },
      }
    );
+
+  useEffect(() => {
+    const token =
+      sessionStorage.getItem("sessionToken") ||
+      localStorage.getItem("sessionToken");
+    if (token) {
+      connect();
+    }
+  }, [connect]);
 
   const rollDice = useCallback(() => {
     sendMessage({

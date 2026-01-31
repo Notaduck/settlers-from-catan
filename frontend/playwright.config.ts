@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
+  tsconfig: './tsconfig.test.json',
   testDir: "./tests",
   fullyParallel: false,
   retries: 1,
