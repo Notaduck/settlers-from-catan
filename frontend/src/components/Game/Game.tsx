@@ -3,6 +3,8 @@ import { useGame } from "@/context/GameContext";
 import Board from "@/components/Board/Board";
 import { SetupPhasePanel } from "./SetupPhasePanel";
 import { DevCardPanel } from "../DevCardPanel";
+import { GameOver } from "./GameOver";
+import { PlayerPanel } from "../PlayerPanel/PlayerPanel";
 
 interface GameProps {
   gameCode: string;
@@ -22,10 +24,10 @@ const PLAYER_COLORS: Record<PlayerColor, string> = {
 export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
   // Silence unused prop lint:
   void _gameCode;
-  void _onLeave;
   // Always call useGame ONCE at top
   const {
     gameState,
+    gameOver,
     placementState,
     placementMode,
     build,
@@ -53,6 +55,10 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     );
   }
 
+  const gameOverOverlay = (
+    <GameOver gameState={gameState} gameOver={gameOver} onNewGame={_onLeave} />
+  );
+
   // Show E2E-visible waiting room if status is WAITING
   if (gameState.status === GameStatus.WAITING) {
     const players = gameState.players ?? [];
@@ -62,73 +68,76 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     const allReady = players.length >= 2 && players.every((p) => p.isReady);
 
     return (
-      <div className="game-waiting" data-cy="game-waiting">
-        <h2>Lobby</h2>
-        <p>Share this code with friends to join the game.</p>
-        <div className="game-code" data-cy="game-code">
-          Game Code: <strong>{gameState.code}</strong>
-        </div>
+      <>
+        <div className="game-waiting" data-cy="game-waiting">
+          <h2>Lobby</h2>
+          <p>Share this code with friends to join the game.</p>
+          <div className="game-code" data-cy="game-code">
+            Game Code: <strong>{gameState.code}</strong>
+          </div>
 
-        <div className="players-list">
-          <h3>Players</h3>
-          {players.map((player) => (
-            <div
-              key={player.id}
-              className={`player-item ${player.isReady ? "ready" : ""}`}
-            >
-              <span
-                className="player-color"
-                style={{
-                  backgroundColor:
-                    PLAYER_COLORS[(player.color as PlayerColor) ?? PlayerColor.UNSPECIFIED],
-                }}
-              />
-              <span className="player-name">
-                {player.name}
-                {player.isHost && <span className="host-badge">HOST</span>}
-              </span>
-              <span
-                className={`ready-status ${player.isReady ? "ready" : "not-ready"}`}
+          <div className="players-list">
+            <h3>Players</h3>
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className={`player-item ${player.isReady ? "ready" : ""}`}
               >
-                {player.isReady ? "✓ Ready" : "Not Ready"}
-              </span>
-            </div>
-          ))}
-        </div>
+                <span
+                  className="player-color"
+                  style={{
+                    backgroundColor:
+                      PLAYER_COLORS[(player.color as PlayerColor) ?? PlayerColor.UNSPECIFIED],
+                  }}
+                />
+                <span className="player-name">
+                  {player.name}
+                  {player.isHost && <span className="host-badge">HOST</span>}
+                </span>
+                <span
+                  className={`ready-status ${player.isReady ? "ready" : "not-ready"}`}
+                >
+                  {player.isReady ? "✓ Ready" : "Not Ready"}
+                </span>
+              </div>
+            ))}
+          </div>
 
-        <div className="lobby-actions">
-          {isReady ? (
-            <button
-              className="btn btn-secondary"
-              data-cy="cancel-ready-btn"
-              onClick={() => setReady(false)}
-            >
-              Cancel Ready
-            </button>
-          ) : (
-            <button
-              className="btn btn-primary btn-ready"
-              data-cy="ready-btn"
-              onClick={() => setReady(true)}
-            >
-              Ready
-            </button>
-          )}
-          {isHost && (
-            <button
-              className="btn btn-primary"
-              data-cy="start-game-btn"
-              disabled={!allReady}
-              onClick={() => startGame()}
-            >
-              Start Game
-            </button>
+          <div className="lobby-actions">
+            {isReady ? (
+              <button
+                className="btn btn-secondary"
+                data-cy="cancel-ready-btn"
+                onClick={() => setReady(false)}
+              >
+                Cancel Ready
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary btn-ready"
+                data-cy="ready-btn"
+                onClick={() => setReady(true)}
+              >
+                Ready
+              </button>
+            )}
+            {isHost && (
+              <button
+                className="btn btn-primary"
+                data-cy="start-game-btn"
+                disabled={!allReady}
+                onClick={() => startGame()}
+              >
+                Start Game
+              </button>
+            )}
+          </div>
+          {!allReady && (
+            <div className="waiting-hint">Waiting for all players to be ready...</div>
           )}
         </div>
-        {!allReady && (
-          <div className="waiting-hint">Waiting for all players to be ready...</div>
-        )}
-      </div>
+        {gameOverOverlay}
+      </>
     );
   }
 
@@ -146,18 +155,21 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
         ? (edgeId: string) => build(StructureType.ROAD, edgeId)
         : undefined;
     return (
-      <div className="game-board-container">
-        <div data-cy="game-phase">SETUP</div>
-        <SetupPhasePanel />
-        <Board
-          board={board}
-          players={gameState.players}
-          validVertexIds={placementState?.validVertexIds}
-          validEdgeIds={placementState?.validEdgeIds}
-          onBuildSettlement={onBuildSettlement}
-          onBuildRoad={onBuildRoad}
-        />
-      </div>
+      <>
+        <div className="game-board-container">
+          <div data-cy="game-phase">SETUP</div>
+          <SetupPhasePanel />
+          <Board
+            board={board}
+            players={gameState.players}
+            validVertexIds={placementState?.validVertexIds}
+            validEdgeIds={placementState?.validEdgeIds}
+            onBuildSettlement={onBuildSettlement}
+            onBuildRoad={onBuildRoad}
+          />
+        </div>
+        {gameOverOverlay}
+      </>
     );
   }
 
@@ -167,6 +179,7 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     gameState.players?.length
   ) {
     const board = gameState.board!;
+    const isGameOver = Boolean(gameOver);
     const onBuildSettlement =
       placementMode === "build"
         ? (vertexId: string) => build(StructureType.SETTLEMENT, vertexId)
@@ -176,36 +189,53 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
         ? (edgeId: string) => build(StructureType.ROAD, edgeId)
         : undefined;
     return (
-      <div className="game-board-container">
-        <Board
-          board={board}
-          players={gameState.players}
-          validVertexIds={placementState?.validVertexIds}
-          validEdgeIds={placementState?.validEdgeIds}
-          onBuildSettlement={onBuildSettlement}
-          onBuildRoad={onBuildRoad}
-        />
-        <div className="main-game-ui">
-          <div data-cy="game-phase">PLAYING</div>
-          <DevCardPanel />
+      <>
+        <div className="game-board-container">
+          <Board
+            board={board}
+            players={gameState.players}
+            validVertexIds={placementState?.validVertexIds}
+            validEdgeIds={placementState?.validEdgeIds}
+            onBuildSettlement={onBuildSettlement}
+            onBuildRoad={onBuildRoad}
+          />
+          <div className="main-game-ui">
+            <div data-cy="game-phase">PLAYING</div>
+            <PlayerPanel
+              players={gameState.players}
+              board={board}
+              currentTurn={gameState.currentTurn}
+              turnPhase={gameState.turnPhase}
+              dice={gameState.dice ?? []}
+              gameStatus={gameState.status}
+              isGameOver={isGameOver}
+              longestRoadPlayerId={gameState.longestRoadPlayerId}
+              largestArmyPlayerId={gameState.largestArmyPlayerId}
+            />
+            <DevCardPanel />
+          </div>
         </div>
-      </div>
+        {gameOverOverlay}
+      </>
     );
   }
 
   // Fallback state
   const sessionToken = sessionStorage.getItem("sessionToken");
   return (
-    <div className="lobby-actions">
-      <div data-cy="main-game-placeholder">
-        {sessionToken == null
-          ? "ERROR: No session token found in sessionStorage"
-          : `Game in progress or not started. Status: ${
-              typeof gameState?.status !== "undefined"
-                ? String(gameState.status)
-                : "undefined"
-            }`}
+    <>
+      <div className="lobby-actions">
+        <div data-cy="main-game-placeholder">
+          {sessionToken == null
+            ? "ERROR: No session token found in sessionStorage"
+            : `Game in progress or not started. Status: ${
+                typeof gameState?.status !== "undefined"
+                  ? String(gameState.status)
+                  : "undefined"
+              }`}
+        </div>
       </div>
-    </div>
+      {gameOverOverlay}
+    </>
   );
 }

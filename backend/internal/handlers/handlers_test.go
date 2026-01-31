@@ -384,6 +384,206 @@ func TestHandleSetTurnPhase_UpdatesTurnPhase(t *testing.T) {
 	}
 }
 
+func TestHandleGrantResources_AddsResources(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	handler := NewHandler(database, hub.NewHub())
+
+	type resourceDelta struct {
+		Wood  int32 `json:"wood"`
+		Brick int32 `json:"brick"`
+		Sheep int32 `json:"sheep"`
+		Wheat int32 `json:"wheat"`
+		Ore   int32 `json:"ore"`
+	}
+	type resourceSnapshot struct {
+		Wood  int32
+		Brick int32
+		Sheep int32
+		Wheat int32
+		Ore   int32
+	}
+
+	tests := map[string]struct {
+		initial *catanv1.ResourceCount
+		delta   resourceDelta
+		want    resourceSnapshot
+	}{
+		"adds to existing resources": {
+			initial: &catanv1.ResourceCount{Wood: 1, Brick: 2},
+			delta:   resourceDelta{Wood: 3, Ore: 2},
+			want:    resourceSnapshot{Wood: 4, Brick: 2, Ore: 2},
+		},
+		"initializes resources when nil": {
+			initial: nil,
+			delta:   resourceDelta{Sheep: 2, Wheat: 1},
+			want:    resourceSnapshot{Sheep: 2, Wheat: 1},
+		},
+	}
+
+	testIndex := 0
+	for name, tt := range tests {
+		testIndex++
+		index := testIndex
+		t.Run(name, func(t *testing.T) {
+			gameID := fmt.Sprintf("game-grant-%d", index)
+			code := fmt.Sprintf("GR%03d", index)
+			playerID := "p1"
+			state := game.NewGameState(gameID, code, []string{"Alice"}, []string{playerID})
+			state.Status = game.GameStatusPlaying
+			state.Players[0].Resources = tt.initial
+
+			stateJSON, err := protojson.Marshal(state)
+			if err != nil {
+				t.Fatalf("failed to marshal state: %v", err)
+			}
+			if _, err := database.Exec(
+				"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+				gameID,
+				code,
+				string(stateJSON),
+				"playing",
+			); err != nil {
+				t.Fatalf("failed to insert game state: %v", err)
+			}
+
+			payload := map[string]any{
+				"gameCode": code,
+				"playerId": playerID,
+				"resources": map[string]int32{
+					"wood":  tt.delta.Wood,
+					"brick": tt.delta.Brick,
+					"sheep": tt.delta.Sheep,
+					"wheat": tt.delta.Wheat,
+					"ore":   tt.delta.Ore,
+				},
+			}
+			body, _ := json.Marshal(payload)
+			req := httptest.NewRequest(http.MethodPost, "/test/grant-resources", bytes.NewBuffer(body))
+			recorder := httptest.NewRecorder()
+
+			handler.HandleGrantResources(recorder, req)
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", recorder.Code)
+			}
+
+			var updatedStateJSON string
+			if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+				t.Fatalf("failed to load updated state: %v", err)
+			}
+			var updatedState catanv1.GameState
+			if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+				t.Fatalf("failed to parse updated state: %v", err)
+			}
+
+			updated := updatedState.Players[0].Resources
+			if updated == nil {
+				t.Fatalf("expected resources to be initialized")
+			}
+			got := resourceSnapshot{
+				Wood:  updated.Wood,
+				Brick: updated.Brick,
+				Sheep: updated.Sheep,
+				Wheat: updated.Wheat,
+				Ore:   updated.Ore,
+			}
+			if got != tt.want {
+				t.Fatalf("unexpected resources: got=%+v want=%+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandleSetGameState_UpdatesStatusAndPhase(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	handler := NewHandler(database, hub.NewHub())
+
+	tests := map[string]struct {
+		status     string
+		phase      string
+		wantStatus catanv1.GameStatus
+		wantPhase  catanv1.TurnPhase
+	}{
+		"updates status to finished": {
+			status:     "FINISHED",
+			wantStatus: catanv1.GameStatus_GAME_STATUS_FINISHED,
+			wantPhase:  catanv1.TurnPhase_TURN_PHASE_ROLL,
+		},
+		"updates phase to build": {
+			phase:      "BUILD",
+			wantStatus: catanv1.GameStatus_GAME_STATUS_PLAYING,
+			wantPhase:  catanv1.TurnPhase_TURN_PHASE_BUILD,
+		},
+	}
+
+	testIndex := 0
+	for name, tt := range tests {
+		testIndex++
+		index := testIndex
+		t.Run(name, func(t *testing.T) {
+			gameID := fmt.Sprintf("game-state-%d", index)
+			code := fmt.Sprintf("GS%03d", index)
+			playerID := "p1"
+			state := game.NewGameState(gameID, code, []string{"Alice"}, []string{playerID})
+			state.Status = game.GameStatusPlaying
+			state.TurnPhase = catanv1.TurnPhase_TURN_PHASE_ROLL
+
+			stateJSON, err := protojson.Marshal(state)
+			if err != nil {
+				t.Fatalf("failed to marshal state: %v", err)
+			}
+			if _, err := database.Exec(
+				"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+				gameID,
+				code,
+				string(stateJSON),
+				"playing",
+			); err != nil {
+				t.Fatalf("failed to insert game state: %v", err)
+			}
+
+			payload := map[string]string{
+				"gameCode": code,
+			}
+			if tt.status != "" {
+				payload["status"] = tt.status
+			}
+			if tt.phase != "" {
+				payload["phase"] = tt.phase
+			}
+			body, _ := json.Marshal(payload)
+			req := httptest.NewRequest(http.MethodPost, "/test/set-game-state", bytes.NewBuffer(body))
+			recorder := httptest.NewRecorder()
+
+			handler.HandleSetGameState(recorder, req)
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", recorder.Code)
+			}
+
+			var updatedStateJSON string
+			if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+				t.Fatalf("failed to load updated state: %v", err)
+			}
+			var updatedState catanv1.GameState
+			if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+				t.Fatalf("failed to parse updated state: %v", err)
+			}
+
+			if updatedState.Status != tt.wantStatus {
+				t.Fatalf("expected status %v, got %v", tt.wantStatus, updatedState.Status)
+			}
+			if updatedState.TurnPhase != tt.wantPhase {
+				t.Fatalf("expected phase %v, got %v", tt.wantPhase, updatedState.TurnPhase)
+			}
+		})
+	}
+}
+
 func setupTestDB(t *testing.T) (*sqlx.DB, func()) {
 	t.Helper()
 	dbPath := t.TempDir() + "/test.db"

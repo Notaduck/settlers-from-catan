@@ -105,28 +105,6 @@ test.describe("Victory flow", () => {
     // For now, let's just test that the game-over screen appears
     // when we manually trigger victory condition
 
-    // Roll dice to advance phase
-    await hostPage.locator("[data-cy='roll-dice-btn']").click();
-    await expect(hostPage.locator("[data-cy='dice-result']")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Build city on one of Alice's settlements
-    // First, get the first settlement vertex
-    const aliceSettlements = await hostPage
-      .locator("[data-cy^='vertex-'].vertex--settlement")
-      .all();
-
-    if (aliceSettlements.length > 0) {
-      // Click build city button
-      await hostPage.locator("[data-cy='build-city-btn']").click();
-      await hostPage.waitForTimeout(500);
-
-      // Click on the first settlement to upgrade
-      await aliceSettlements[0].click();
-      await hostPage.waitForTimeout(1000);
-    }
-
     // Since reaching 10 VP programmatically is complex, let's use the test endpoint
     // to set the game state to FINISHED and verify the UI
     const response = await request.post("http://localhost:8080/test/set-game-state", {

@@ -1,4 +1,5 @@
 import { BuildingType, GameOverPayload, GameState, PlayerState } from "@/types";
+import "./GameOver.css";
 
 interface GameOverProps {
   gameState: GameState;

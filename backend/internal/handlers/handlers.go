@@ -373,7 +373,81 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleGrantResources(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type resourceDelta struct {
+		Wood  int32 `json:"wood"`
+		Brick int32 `json:"brick"`
+		Sheep int32 `json:"sheep"`
+		Wheat int32 `json:"wheat"`
+		Ore   int32 `json:"ore"`
+	}
+	type apiRequest struct {
+		GameCode  string        `json:"gameCode"`
+		PlayerID  string        `json:"playerId"`
+		Resources resourceDelta `json:"resources"`
+	}
+
+	var req apiRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if req.GameCode == "" || req.PlayerID == "" {
+		http.Error(w, "missing gameCode or playerId", http.StatusBadRequest)
+		return
+	}
+	if req.Resources.Wood < 0 || req.Resources.Brick < 0 || req.Resources.Sheep < 0 || req.Resources.Wheat < 0 || req.Resources.Ore < 0 {
+		http.Error(w, "resource values must be non-negative", http.StatusBadRequest)
+		return
+	}
+
+	gameID, state, err := h.loadGameByCode(req.GameCode)
+	if err != nil || state == nil {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+
+	var target *catanv1.PlayerState
+	for _, player := range state.Players {
+		if player.Id == req.PlayerID {
+			target = player
+			break
+		}
+	}
+	if target == nil {
+		http.Error(w, "Player not found", http.StatusNotFound)
+		return
+	}
+	if target.Resources == nil {
+		target.Resources = &catanv1.ResourceCount{}
+	}
+	target.Resources.Wood += req.Resources.Wood
+	target.Resources.Brick += req.Resources.Brick
+	target.Resources.Sheep += req.Resources.Sheep
+	target.Resources.Wheat += req.Resources.Wheat
+	target.Resources.Ore += req.Resources.Ore
+
+	if err := h.saveGameState(gameID, state); err != nil {
+		http.Error(w, "failed to persist game state", http.StatusInternalServerError)
+		return
+	}
+	h.broadcastGameStatePersonalized(gameID, state)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"playerId": req.PlayerID,
+		"resources": map[string]int32{
+			"wood":  target.Resources.Wood,
+			"brick": target.Resources.Brick,
+			"sheep": target.Resources.Sheep,
+			"wheat": target.Resources.Wheat,
+			"ore":   target.Resources.Ore,
+		},
+	})
 }
 
 func (h *Handler) handleClientMessage(client *hub.Client, payload []byte) {
@@ -513,7 +587,106 @@ func (h *Handler) HandleForceDiceRoll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleSetGameState(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type apiRequest struct {
+		GameCode string `json:"gameCode"`
+		Status   string `json:"status"`
+		Phase    string `json:"phase"`
+	}
+
+	var req apiRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if req.GameCode == "" {
+		http.Error(w, "missing gameCode", http.StatusBadRequest)
+		return
+	}
+	if req.Status == "" && req.Phase == "" {
+		http.Error(w, "missing status or phase", http.StatusBadRequest)
+		return
+	}
+
+	gameID, state, err := h.loadGameByCode(req.GameCode)
+	if err != nil || state == nil {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+	prevStatus := state.Status
+
+	if req.Status != "" {
+		status, ok := parseGameStatus(req.Status)
+		if !ok {
+			http.Error(w, "invalid status", http.StatusBadRequest)
+			return
+		}
+		state.Status = status
+	}
+	if req.Phase != "" {
+		phase, ok := parseTurnPhase(req.Phase)
+		if !ok {
+			http.Error(w, "invalid phase", http.StatusBadRequest)
+			return
+		}
+		state.TurnPhase = phase
+	}
+
+	if err := h.saveGameState(gameID, state); err != nil {
+		http.Error(w, "failed to persist game state", http.StatusInternalServerError)
+		return
+	}
+	h.broadcastGameStatePersonalized(gameID, state)
+
+	if prevStatus != catanv1.GameStatus_GAME_STATUS_FINISHED && state.Status == catanv1.GameStatus_GAME_STATUS_FINISHED {
+		winnerID, ok := game.DetermineWinner(state)
+		if !ok {
+			winnerID = ""
+		}
+		h.broadcastGameOver(state, winnerID)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"status": state.Status.String(),
+		"phase":  state.TurnPhase.String(),
+	})
+}
+
+func parseGameStatus(value string) (catanv1.GameStatus, bool) {
+	normalized := strings.ToUpper(strings.TrimSpace(value))
+	switch normalized {
+	case "WAITING", "GAME_STATUS_WAITING":
+		return catanv1.GameStatus_GAME_STATUS_WAITING, true
+	case "SETUP", "GAME_STATUS_SETUP":
+		return catanv1.GameStatus_GAME_STATUS_SETUP, true
+	case "PLAYING", "GAME_STATUS_PLAYING":
+		return catanv1.GameStatus_GAME_STATUS_PLAYING, true
+	case "FINISHED", "GAME_STATUS_FINISHED":
+		return catanv1.GameStatus_GAME_STATUS_FINISHED, true
+	default:
+		return catanv1.GameStatus_GAME_STATUS_UNSPECIFIED, false
+	}
+}
+
+func parseTurnPhase(value string) (catanv1.TurnPhase, bool) {
+	normalized := strings.ToUpper(strings.TrimSpace(value))
+	switch normalized {
+	case "ROLL", "TURN_PHASE_ROLL":
+		return catanv1.TurnPhase_TURN_PHASE_ROLL, true
+	case "TRADE", "TURN_PHASE_TRADE":
+		return catanv1.TurnPhase_TURN_PHASE_TRADE, true
+	case "BUILD", "TURN_PHASE_BUILD":
+		return catanv1.TurnPhase_TURN_PHASE_BUILD, true
+	case "UNSPECIFIED", "TURN_PHASE_UNSPECIFIED":
+		return catanv1.TurnPhase_TURN_PHASE_UNSPECIFIED, true
+	default:
+		return catanv1.TurnPhase_TURN_PHASE_UNSPECIFIED, false
+	}
 }
 
 // handleMoveRobber processes a MoveRobberMessage from a client

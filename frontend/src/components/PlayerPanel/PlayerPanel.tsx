@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { BoardState, PlayerState } from "@/types";
-import { TurnPhase, PlayerColor } from "@/types";
+import { TurnPhase, PlayerColor, GameStatus } from "@/types";
 import { useGame } from "@/context";
 import "./PlayerPanel.css";
 
@@ -19,7 +19,7 @@ interface PlayerPanelProps {
   currentTurn: number;
   turnPhase: TurnPhase;
   dice: number[];
-  gameStatus?: string;
+  gameStatus?: GameStatus | string;
   isGameOver?: boolean;
   longestRoadPlayerId?: string | null;
   largestArmyPlayerId?: string | null;
@@ -173,7 +173,15 @@ export function PlayerPanel({
 
   const currentPlayer = players[currentTurn];
   const isMyTurn = currentPlayer?.id === currentPlayerId;
-  const isRollPhase = isTurnPhase(turnPhase, TurnPhase.ROLL, "TURN_PHASE_ROLL");
+  const isRollPhase =
+    turnPhase === undefined ||
+    isTurnPhase(turnPhase, TurnPhase.ROLL, "TURN_PHASE_ROLL") ||
+    isTurnPhase(turnPhase, TurnPhase.UNSPECIFIED, "TURN_PHASE_UNSPECIFIED");
+  const isPlayingStatus =
+    gameStatus === undefined ||
+    gameStatus === GameStatus.PLAYING ||
+    gameStatus === "PLAYING" ||
+    gameStatus === "GAME_STATUS_PLAYING";
   const myPlayer = players.find((p) => p.id === currentPlayerId);
   const roadLengths = useMemo(
     () => getLongestRoadLengths(board ?? null, players),
@@ -206,7 +214,7 @@ export function PlayerPanel({
             Total: {dice[0] + dice[1]}
           </div>
         )}
-         {isMyTurn && isRollPhase && !isGameOver && (gameStatus === undefined || gameStatus === "PLAYING" || gameStatus === "GAME_STATUS_PLAYING") && (
+         {isMyTurn && isRollPhase && !isGameOver && isPlayingStatus && (
           <button
             onClick={rollDice}
             className="btn btn-primary"

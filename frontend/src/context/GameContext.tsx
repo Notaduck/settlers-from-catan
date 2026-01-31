@@ -165,6 +165,12 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     currentPlayerId: playerId,
   });
 
+  useEffect(() => {
+    if (playerId && playerId !== state.currentPlayerId) {
+      dispatch({ type: "SET_PLAYER_ID", payload: playerId });
+    }
+  }, [playerId, state.currentPlayerId]);
+
    const handleMessage = useCallback((data: ServerMessage) => {
      console.log('[GameContext] Received WS message:', data);
      const msg = data.message;
