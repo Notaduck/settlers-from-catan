@@ -104,6 +104,9 @@ export function SetupPhasePanel() {
       >
         {instruction}
       </div>
+      <div className="placement-mode" data-cy="placement-mode">
+        {instruction}
+      </div>
       {showToast && resourceGain && (
          <div className="setup-resource-toast" data-cy="setup-resource-toast">
            You received: {resourceList(resourceCountToRecord(resourceGain.resources))}

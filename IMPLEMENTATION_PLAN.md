@@ -2,6 +2,11 @@
 
 ## Ralph Planning Notes (Jan 27, 2026)
 
+### Autonomous Iteration Log (Iteration 2)
+
+- Added setup placement mode indicator for Playwright selectors to track settlement/road step changes.
+- Validations: `make test-backend`, `make typecheck`, `make lint`, `make build`, `npx playwright test setup-phase.spec.ts --reporter=list`.
+
 ### Autonomous Iteration Log (Iteration 12)
 
 - Iteration 12: Full audit and gap analysis across all features and E2E specs.
@@ -72,6 +77,8 @@
 ### [2] Setup Phase UI [HIGH]
 - **Files:** `frontend/src/components/Game/Game.tsx`, `frontend/src/context/GameContext.tsx`, `frontend/tests/setup-phase.spec.ts`
 - **Action:** Confirm setup-phase banner, placement instructions, and E2E test validity. Address any UI/test gaps.
+
+Status: ✅ Completed (Iteration 2 - placement mode indicator + setup-phase spec passing)
 
 ### [3] Victory Flow [HIGH]
 - **Files:** `backend/internal/game/victory_test.go`, `frontend/tests/victory.spec.ts`, `frontend/src/components/Game/Game.tsx`
