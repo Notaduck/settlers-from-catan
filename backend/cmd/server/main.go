@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"settlers_from_catan/internal/db"
 	"settlers_from_catan/internal/handlers"
@@ -29,7 +30,14 @@ func main() {
 	http.HandleFunc("/health", handler.HandleHealth)
 	http.HandleFunc("/ws", handler.HandleWebSocket)
 	http.HandleFunc("/api/games", handler.HandleCreateGame)
-	http.HandleFunc("/api/games/", handler.HandleGameRoutes)
+	http.HandleFunc("/api/games/", func(w http.ResponseWriter, r *http.Request) {
+		// If path ends with /join and is POST, delegate to HandleJoinGame
+		if r.Method == "POST" && len(r.URL.Path) > len("/api/games/") && strings.HasSuffix(r.URL.Path, "/join") {
+			handler.HandleJoinGame(w, r)
+			return
+		}
+		handler.HandleGameRoutes(w, r)
+	})
 
 	// Test endpoints (only available when DEV_MODE=true)
 	if os.Getenv("DEV_MODE") == "true" {

@@ -129,6 +129,7 @@ interface GameContextValue extends GameContextState {
   clearResourceGain: () => void;
   placementMode: PlacementMode | null;
   placementState: PlacementState;
+  isMySetupTurn: boolean;
   // --- Robber UI ---
   isRobberDiscardRequired: boolean;
   robberDiscardAmount: number;
@@ -449,6 +450,14 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     [sendMessage]
   );
 
+    // Setup phase: is it my setup turn?
+  const isMySetupTurn = useMemo(() => {
+    if (!state.gameState || !state.currentPlayerId) return false;
+    if (!isStatus(state.gameState.status, GameStatus.SETUP, "GAME_STATUS_SETUP")) return false;
+    const currentTurn = state.gameState.currentTurn ?? 0;
+    return state.gameState.players && state.gameState.players[currentTurn]?.id === state.currentPlayerId;
+  }, [state.gameState, state.currentPlayerId]);
+
   const value: GameContextValue = {
     ...state,
     isConnected,
@@ -465,6 +474,7 @@ export function GameProvider({ children, playerId }: GameProviderProps) {
     clearResourceGain,
     placementMode,
     placementState,
+    isMySetupTurn,
     isRobberDiscardRequired,
     robberDiscardAmount,
     robberDiscardMax,

@@ -1,0 +1,25 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.57.0","options":{},"platform":"darwin","wallTime":1769805976686,"monotonicTime":98857.624,"sdkLanguage":"javascript","contextId":"request-context@9a307342b200707a6db9966aa288b1b8","title":"setup-phase.spec.ts:160 › Setup Phase UI › round 2 settlement grants resources toast"}
+{"type":"before","callId":"call@13","startTime":98859.654,"class":"APIRequestContext","method":"fetch","params":{"url":"http://localhost:8080/api/games","method":"POST","jsonData":"{\"playerName\":\"Host\"}","timeout":10000},"stepId":"pw:api@37","beforeSnapshot":"before@call@13"}
+{"type":"log","callId":"call@13","time":98865.282,"message":"→ POST http://localhost:8080/api/games"}
+{"type":"log","callId":"call@13","time":98865.302,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"}
+{"type":"log","callId":"call@13","time":98865.309,"message":"  accept: */*"}
+{"type":"log","callId":"call@13","time":98865.315,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@13","time":98865.346,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@13","time":98865.352,"message":"  content-length: 21"}
+{"type":"log","callId":"call@13","time":98873.119,"message":"← 200 OK"}
+{"type":"log","callId":"call@13","time":98873.127,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@13","time":98873.132,"message":"  date: Fri, 30 Jan 2026 20:46:16 GMT"}
+{"type":"log","callId":"call@13","time":98873.139,"message":"  content-length: 169"}
+{"type":"after","callId":"call@13","endTime":98873.228,"result":{"response":{"url":"http://localhost:8080/api/games","status":200,"statusText":"OK","headers":[{"name":"Content-Type","value":"application/json"},{"name":"Date","value":"Fri, 30 Jan 2026 20:46:16 GMT"},{"name":"Content-Length","value":"169"}],"fetchUid":"a1cab5d22db829e3060c752466bd546c"}},"afterSnapshot":"after@call@13"}
+{"type":"before","callId":"call@16","startTime":98876.656,"class":"APIRequestContext","method":"fetch","params":{"url":"http://localhost:8080/api/games/QFCBFV/join","method":"POST","jsonData":"{\"playerName\":\"Guest\"}","timeout":10000},"stepId":"pw:api@38","beforeSnapshot":"before@call@16"}
+{"type":"log","callId":"call@16","time":98877.295,"message":"→ POST http://localhost:8080/api/games/QFCBFV/join"}
+{"type":"log","callId":"call@16","time":98877.302,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"}
+{"type":"log","callId":"call@16","time":98877.305,"message":"  accept: */*"}
+{"type":"log","callId":"call@16","time":98877.309,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@16","time":98877.312,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":98877.315,"message":"  content-length: 22"}
+{"type":"log","callId":"call@16","time":98880.944,"message":"← 200 OK"}
+{"type":"log","callId":"call@16","time":98880.951,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@16","time":98880.954,"message":"  date: Fri, 30 Jan 2026 20:46:16 GMT"}
+{"type":"log","callId":"call@16","time":98880.957,"message":"  content-length: 341"}
+{"type":"after","callId":"call@16","endTime":98881.013,"result":{"response":{"url":"http://localhost:8080/api/games/QFCBFV/join","status":200,"statusText":"OK","headers":[{"name":"Content-Type","value":"application/json"},{"name":"Date","value":"Fri, 30 Jan 2026 20:46:16 GMT"},{"name":"Content-Length","value":"341"}],"fetchUid":"8cda564f460bd824d6c5e3efe2f06acf"}},"afterSnapshot":"after@call@16"}
