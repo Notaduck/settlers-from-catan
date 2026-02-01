@@ -583,7 +583,76 @@ func (h *Handler) HandleGrantDevCard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleForceDiceRoll(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type apiRequest struct {
+		GameCode  string `json:"gameCode"`
+		DiceValue int    `json:"diceValue"`
+	}
+
+	var req apiRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if req.GameCode == "" {
+		http.Error(w, "missing gameCode", http.StatusBadRequest)
+		return
+	}
+	if req.DiceValue < 2 || req.DiceValue > 12 {
+		http.Error(w, "diceValue must be between 2 and 12", http.StatusBadRequest)
+		return
+	}
+
+	gameID, state, err := h.loadGameByCode(req.GameCode)
+	if err != nil || state == nil {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+	if state.Status != catanv1.GameStatus_GAME_STATUS_PLAYING {
+		http.Error(w, "game not in playing status", http.StatusBadRequest)
+		return
+	}
+	if int(state.CurrentTurn) < 0 || int(state.CurrentTurn) >= len(state.Players) {
+		http.Error(w, "invalid current turn", http.StatusBadRequest)
+		return
+	}
+
+	die1 := req.DiceValue - 1
+	if die1 > 6 {
+		die1 = 6
+	}
+	die2 := req.DiceValue - die1
+	if die2 < 1 || die2 > 6 {
+		http.Error(w, "invalid dice value", http.StatusBadRequest)
+		return
+	}
+
+	state.TurnPhase = catanv1.TurnPhase_TURN_PHASE_ROLL
+	playerID := state.Players[state.CurrentTurn].Id
+	result, err := game.PerformDiceRollWithValues(state, playerID, die1, die2)
+	if err != nil {
+		http.Error(w, "failed to roll dice", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.saveGameState(gameID, state); err != nil {
+		http.Error(w, "failed to persist game state", http.StatusInternalServerError)
+		return
+	}
+	h.broadcastGameStatePersonalized(gameID, state)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"gameCode":        req.GameCode,
+		"diceValue":       req.DiceValue,
+		"die1":            result.Die1,
+		"die2":            result.Die2,
+		"robberActivated": result.RobberActivated,
+	})
 }
 
 func (h *Handler) HandleSetGameState(w http.ResponseWriter, r *http.Request) {

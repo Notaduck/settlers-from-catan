@@ -5,6 +5,8 @@ import { SetupPhasePanel } from "./SetupPhasePanel";
 import { DevCardPanel } from "../DevCardPanel";
 import { GameOver } from "./GameOver";
 import { PlayerPanel } from "../PlayerPanel/PlayerPanel";
+import { DiscardModal } from "./DiscardModal";
+import { StealModal } from "./StealModal";
 
 interface GameProps {
   gameCode: string;
@@ -35,6 +37,15 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     setReady,
     startGame,
     isConnected,
+    isRobberDiscardRequired,
+    robberDiscardAmount,
+    robberDiscardMax,
+    isRobberMoveRequired,
+    isRobberStealRequired,
+    sendRobberDiscard,
+    sendRobberMove,
+    sendRobberSteal,
+    robberStealCandidates,
   } = useGame();
 
   console.log(
@@ -179,15 +190,23 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
     gameState.players?.length
   ) {
     const board = gameState.board!;
+    const isRobberActionActive =
+      isRobberDiscardRequired || isRobberMoveRequired || isRobberStealRequired;
     const isGameOver = Boolean(gameOver);
     const onBuildSettlement =
-      placementMode === "build"
+      placementMode === "build" && !isRobberActionActive
         ? (vertexId: string) => build(StructureType.SETTLEMENT, vertexId)
         : undefined;
     const onBuildRoad =
-      placementMode === "build"
+      placementMode === "build" && !isRobberActionActive
         ? (edgeId: string) => build(StructureType.ROAD, edgeId)
         : undefined;
+    const onSelectRobberHex = (hex: { coord?: { q: number; r: number } }) => {
+      if (!hex?.coord) return;
+      sendRobberMove(hex.coord);
+    };
+    const discardMax =
+      robberDiscardMax ?? { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
     return (
       <>
         <div className="game-board-container">
@@ -198,6 +217,8 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
             validEdgeIds={placementState?.validEdgeIds}
             onBuildSettlement={onBuildSettlement}
             onBuildRoad={onBuildRoad}
+            isRobberMoveMode={isRobberMoveRequired}
+            onSelectRobberHex={isRobberMoveRequired ? onSelectRobberHex : undefined}
           />
           <div className="main-game-ui">
             <div data-cy="game-phase">PLAYING</div>
@@ -215,6 +236,19 @@ export function Game({ gameCode: _gameCode, onLeave: _onLeave }: GameProps) {
             <DevCardPanel />
           </div>
         </div>
+        {isRobberDiscardRequired && robberDiscardAmount > 0 && (
+          <DiscardModal
+            requiredCount={robberDiscardAmount}
+            maxAvailable={discardMax}
+            onDiscard={sendRobberDiscard}
+          />
+        )}
+        {isRobberStealRequired && robberStealCandidates.length > 0 && (
+          <StealModal
+            candidates={robberStealCandidates}
+            onSteal={sendRobberSteal}
+          />
+        )}
         {gameOverOverlay}
       </>
     );

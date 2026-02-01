@@ -1,139 +1,110 @@
 # IMPLEMENTATION_PLAN - Settlers from Catan (Ralph Planning Mode)
 
-Last updated: 2026-01-31 (Iteration 21 / full repo audit; plan updated for missing WS + UI integration)
+Last updated: 2026-02-01 (Iteration 22 / quick E2E audit + spec/code sync)
 
 ---
 
-## AUDIT NOTES (Iteration 21)
-- E2E audit command `cd frontend && npx playwright test --reporter=list | head -100` timed out after 10s; no fresh results captured.
-- Latest E2E status remains 2026-01-27 (Iteration 12): all suites failing, most blocked at lobby/board load.
-- Primary root cause: backend WebSocket endpoint + handlers are stubbed (`HandleWebSocket`, `handleClientMessage`, test endpoints). Frontend also expects protobuf JSON via `oneofKind`, but server uses no WS/proto at all.
-- Secondary root cause: Game UI missing lobby controls, placement indicators, and integration of existing UI panels (PlayerPanel, trade modals, robber modals, game over overlay).
-- Backend game logic for robber/trading/dev cards/ports/longest road/victory exists with unit tests; missing is wiring through handlers + WS broadcasts.
+## AUDIT NOTES (Iteration 22)
+- Reviewed specs, backend game/handlers, frontend context/board/game, and proto contracts.
+- Quick E2E audit run: `cd frontend && npx playwright test --reporter=list 2>&1 | head -100`. The pipe cut the run early; logs show WS initially closed then reconnected and game state reached SETUP with setupPhase updates.
+- `frontend/test-results/` now only contains one failure artifact: `development-cards-...-panel-during-playing-phase`. Snapshot shows the game stuck in **Setup Phase - Round 2** with `Place Road (2/2)` after `completeSetupPhase`, so setup completion -> PLAYING transition is still flaky or the UI/test sync is missing a wait.
+- UI gaps confirmed by code scan: missing `data-cy="placement-ready"` element; no build/trade phase buttons; no build action buttons (`build-road-btn`, etc.); trade modals not mounted; `/test/grant-dev-card` endpoint returns 501 (unimplemented).
 
 ---
 
 ## E2E STABILIZATION (Grouped by Spec + Root Cause)
 
-### game-flow.spec.ts
-- **Fix E2E: lobby/ready/start flow** — WS not implemented + Game lobby UI missing ready/start controls.
-  - Files: `backend/internal/handlers/handlers.go`, `backend/internal/hub/client.go`, `frontend/src/context/GameContext.tsx`, `frontend/src/hooks/useWebSocket.ts`, `frontend/src/components/Game/Game.tsx`
-  - Go tests: add `backend/internal/handlers/handlers_test.go` for WS auth + start/ready state persistence.
-  - Playwright: `frontend/tests/game-flow.spec.ts`
-
 ### interactive-board.spec.ts
-- **Fix E2E: placement indicators + board readiness** — placement mode/ready counters not rendered; WS state never arrives.
-  - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Board/Board.tsx`, `frontend/src/components/Board/placement.ts`
-  - Go tests: none (board logic already covered).
-  - Playwright: `frontend/tests/interactive-board.spec.ts`
+- **Root cause:** `data-cy="placement-ready"` missing (tests poll valid vertex/edge counts).
+- **Fix:** Add placement-ready element with `data-valid-vertices` / `data-valid-edges` derived from `placementState`.
 
 ### setup-phase.spec.ts
-- **Fix E2E: setup banner/instructions + resource toast** — UI exists but not wired into main Game flow; WS state missing.
-  - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/SetupPhasePanel.tsx`, `frontend/src/context/GameContext.tsx`
-  - Go tests: none (setup logic already covered).
-  - Playwright: `frontend/tests/setup-phase.spec.ts`
-
-### victory.spec.ts
-- **Fix E2E: game over broadcast + overlay** — server never emits game over, UI overlay not mounted.
-  - Files: `backend/internal/handlers/handlers.go`, `backend/internal/game/rules.go`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/GameOver.tsx`
-  - Go tests: add handler-level test for GameOver message emission.
-  - Playwright: `frontend/tests/victory.spec.ts`
-
-### robber.spec.ts
-- **Fix E2E: discard/move/steal flow** — server handlers + UI modals not wired; test endpoints missing.
-  - Files: `backend/internal/handlers/handlers.go`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/DiscardModal.tsx`, `frontend/src/components/Game/StealModal.tsx`, `frontend/src/components/Board/Board.tsx`
-  - Go tests: add handler test for robber move/steal + discard handling.
-  - Playwright: `frontend/tests/robber.spec.ts`
-
-### trading.spec.ts
-- **Fix E2E: trade phase + modals** — UI exists but not mounted; server trade handlers not wired; test endpoints missing.
-  - Files: `backend/internal/handlers/handlers.go`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/BankTradeModal.tsx`, `frontend/src/components/Game/ProposeTradeModal.tsx`, `frontend/src/components/Game/IncomingTradeModal.tsx`
-  - Go tests: add handler test for propose/respond/bank trade message flow.
-  - Playwright: `frontend/tests/trading.spec.ts`
+- **Root cause:** Setup completion to PLAYING appears flaky (dev-card test snapshot stuck in Round 2).
+- **Fix:** Verify `PlaceSetupRoad` advances setup to PLAYING; ensure client gets the final state; add explicit wait for `data-cy="game-phase"` -> PLAYING after `completeSetupPhase`.
 
 ### development-cards.spec.ts
-- **Fix E2E: dev card buy/play wiring** — WS handlers missing; DEV_MODE endpoints missing; UI panel present but depends on state updates.
-  - Files: `backend/internal/handlers/handlers.go`, `frontend/src/components/DevCardPanel.tsx`, `frontend/src/components/Game/Game.tsx`
-  - Go tests: add handler test for buy/play dev card messages.
-  - Playwright: `frontend/tests/development-cards.spec.ts`
+- **Root cause:** Dev cards panel unreachable because game remains in SETUP; DEV_MODE endpoint missing for `grant-dev-card`.
+- **Fix:** Implement `/test/grant-dev-card`; unblock PLAYING transition after setup.
+
+### trading.spec.ts
+- **Root cause:** Missing trade/build phase buttons and trade modals wiring.
+- **Fix:** Add phase toggles, mount BankTrade/Propose/Incoming modals, wire to GameContext actions.
 
 ### longest-road.spec.ts
-- **Fix E2E: longest road badge + lengths** — PlayerPanel not mounted; WS updates missing.
-  - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/PlayerPanel/PlayerPanel.tsx`
-  - Go tests: none (longest road already tested).
-  - Playwright: `frontend/tests/longest-road.spec.ts`
+- **Root cause:** Missing build action buttons (`build-road-btn`) and build phase toggle.
+- **Fix:** Add build controls; ensure road placement highlights drive valid edges.
+
+### robber.spec.ts
+- **Root cause:** Blocked by setup completion; robber UI wiring should be rechecked after PLAYING stability.
+- **Fix:** Ensure discard/move/steal UI gating matches `robberPhase` and board exposes `robber-hex-*` selectors.
 
 ### ports.spec.ts
-- **Fix E2E: port render + trade ratios** — Board ports render only when game board shows; bank trade modal not mounted.
-  - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/BankTradeModal.tsx`, `frontend/src/components/Board/Board.tsx`
-  - Go tests: none (ports already tested).
-  - Playwright: `frontend/tests/ports.spec.ts`
+- **Root cause:** Ports render but bank trade modal not mounted.
+- **Fix:** Mount BankTrade modal and surface port ratio UI; re-run E2E.
+
+### victory.spec.ts
+- **Root cause:** No current failure artifact; re-verify after setup/build flow stabilizes.
+
+### game-flow.spec.ts
+- **Root cause:** No current failure artifact; re-verify after setup/build flow stabilizes.
 
 ---
 
 ## PRIORITIZED IMPLEMENTATION PLAN (Atomic Tasks)
 
-1) **Implement WebSocket endpoint + protobuf JSON contract**
-   - Files: `backend/internal/handlers/handlers.go`, `backend/internal/hub/client.go`, `frontend/src/hooks/useWebSocket.ts`, `frontend/src/context/GameContext.tsx`
-   - Scope: Implement `HandleWebSocket` (token auth, load player/game from DB, register client, send initial `ServerMessage` game_state), implement `handleClientMessage` to protojson-decode `ClientMessage`, dispatch to game logic, persist state, broadcast `ServerMessage` updates. Update frontend to use protobuf-ts `toJsonString`/`fromJsonString` instead of raw JSON parse and remove dependency on `oneofKind` JSON shape.
-   - Go unit tests: add `backend/internal/handlers/handlers_test.go` for WS auth + message routing + state persistence.
-   - Playwright: unblock all suites (primary blocker).
-   - Status: **DONE (Iteration 1)** — WS endpoint + message routing/broadcasts implemented; kept `oneofKind` JSON envelope (frontend still expects it).
-
-2) **Add DEV_MODE test endpoints used by Playwright**
-   - Files: `backend/internal/handlers/handlers.go`
-   - Scope: Implement `/test/grant-resources`, `/test/grant-dev-card`, `/test/force-dice-roll`, `/test/set-game-state` with DB state updates + `game_state` broadcast.
-   - Go unit tests: add handler tests for each test endpoint payload and persistence.
-   - Playwright: `frontend/tests/robber.spec.ts`, `frontend/tests/trading.spec.ts`, `frontend/tests/development-cards.spec.ts`, `frontend/tests/ports.spec.ts`
-
-3) **Lobby UI + auto-connect + ready/start controls**
-   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/Game.css`, `frontend/src/context/GameContext.tsx`
-   - Scope: Show `data-cy="game-loading"` while awaiting state, render lobby list with `data-cy="game-code"`, `ready-btn`, `cancel-ready-btn`, `start-game-btn`, and player readiness. Call WS connect on mount.
-   - Go unit tests: none.
-   - Playwright: `frontend/tests/game-flow.spec.ts`
-   - Status: **DONE (Iteration 1)** — lobby UI rendered, auto-connect added, game-flow E2E passes.
-
-4) **Placement mode indicators and board readiness**
-   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/Game.css`
-   - Scope: Add `data-cy="placement-mode"` banner and `data-cy="placement-ready"` counts (valid vertices/edges) to support setup and build mode; wire to placementState.
+1) **Add placement-ready indicator + counts**
+   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/SetupPhasePanel.tsx`, `frontend/src/components/Game/Game.css`
+   - Scope: Render `data-cy="placement-ready"` with `data-valid-vertices` / `data-valid-edges` counts from `placementState` for setup/build.
    - Go unit tests: none.
    - Playwright: `frontend/tests/interactive-board.spec.ts`, `frontend/tests/setup-phase.spec.ts`
 
-5) **Integrate PlayerPanel and turn phase controls**
-   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/PlayerPanel/PlayerPanel.tsx`
-   - Scope: Render PlayerPanel during PLAYING, ensure `trade-phase-btn` / `build-phase-btn` toggles exist and call `setTurnPhase`; expose dice + end turn buttons; ensure resource panels render for tests.
-   - Go unit tests: none.
-   - Playwright: `frontend/tests/game-flow.spec.ts`, `frontend/tests/trading.spec.ts`, `frontend/tests/robber.spec.ts`, `frontend/tests/longest-road.spec.ts`
+2) **Make setup completion deterministic and wait for PLAYING**
+   - Files: `backend/internal/game/state_machine.go` (if setup advance bug found), `frontend/tests/helpers.ts`, `frontend/src/components/Game/Game.tsx`
+   - Scope: Confirm final setup road advances to PLAYING; add helper wait for `data-cy="game-phase"` -> PLAYING after `completeSetupPhase`.
+   - Go unit tests: add regression test if setup advance bug found.
+   - Playwright: `frontend/tests/development-cards.spec.ts`, `frontend/tests/trading.spec.ts`, `frontend/tests/robber.spec.ts`, `frontend/tests/longest-road.spec.ts`, `frontend/tests/ports.spec.ts`
 
-6) **Robber flow UI wiring**
-   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/DiscardModal.tsx`, `frontend/src/components/Game/StealModal.tsx`, `frontend/src/components/Board/Board.tsx`, `backend/internal/handlers/handlers.go`
-   - Scope: Show discard modal when required, enable robber move mode on board, show steal modal with candidates, send discard/move/steal messages; broadcast updated state after each step.
-   - Go unit tests: add handler test for discard/move/steal flow; core game tests already exist.
-   - Playwright: `frontend/tests/robber.spec.ts`
-
-7) **Trading flow wiring (bank + player)**
-   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/BankTradeModal.tsx`, `frontend/src/components/Game/ProposeTradeModal.tsx`, `frontend/src/components/Game/IncomingTradeModal.tsx`, `backend/internal/handlers/handlers.go`
-   - Scope: Mount trade modals, map pendingTrades to incoming offers, wire propose/respond/bank trade messages, broadcast updated state on accept/decline.
-   - Go unit tests: add handler tests for propose/respond/bank trade message handling.
-   - Playwright: `frontend/tests/trading.spec.ts`, `frontend/tests/ports.spec.ts`
-
-8) **Development cards flow wiring**
-   - Files: `backend/internal/handlers/handlers.go`, `frontend/src/components/DevCardPanel.tsx`, `frontend/src/components/Game/Game.tsx`
-   - Scope: Wire buy/play dev card messages, send dev_card_bought (private) and game_state updates; ensure play buttons follow timing rules.
-   - Go unit tests: add handler tests for buy/play dev card messages.
+3) **Implement DEV_MODE `/test/grant-dev-card`**
+   - Files: `backend/internal/handlers/handlers.go`, `backend/internal/handlers/handlers_test.go`
+   - Scope: Add handler to grant a specific dev card, persist state, broadcast updated game state.
+   - Go unit tests: add handler test cases for valid/invalid card types and missing player.
    - Playwright: `frontend/tests/development-cards.spec.ts`
 
-9) **Victory flow broadcast + overlay**
-   - Files: `backend/internal/handlers/handlers.go`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/GameOver.tsx`
-   - Scope: When state transitions to FINISHED, emit `game_over` payload and show overlay with data-cy selectors; disable further actions.
-   - Go unit tests: add handler test verifying `game_over` payload is broadcast on win.
-   - Playwright: `frontend/tests/victory.spec.ts`
+4) **Add build/trade phase controls + build action buttons**
+   - Files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`, `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Board/placement.ts`
+   - Scope: Add `data-cy="trade-phase-btn"` / `data-cy="build-phase-btn"` toggles; add `build-road-btn`, `build-settlement-btn`, `build-city-btn` to set placement intent; update placementState to respect selected build type.
+   - Go unit tests: none.
+   - Playwright: `frontend/tests/trading.spec.ts`, `frontend/tests/longest-road.spec.ts`
 
-10) **Longest road display + ports validation**
-   - Files: `frontend/src/components/PlayerPanel/PlayerPanel.tsx`, `frontend/src/components/Board/Board.tsx`
-   - Scope: Ensure longest-road holder badge and per-player road length are visible; verify ports are rendered and bank trade ratio reflects ports.
-   - Go unit tests: none (already covered).
-   - Playwright: `frontend/tests/longest-road.spec.ts`, `frontend/tests/ports.spec.ts`
+5) **Mount trading modals and wire GameContext actions**
+   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/BankTradeModal.tsx`, `frontend/src/components/Game/ProposeTradeModal.tsx`, `frontend/src/components/Game/IncomingTradeModal.tsx`
+   - Scope: Open/close modals from buttons; call `bankTrade`, `proposeTrade`, `respondTrade`; map `pendingTrades` to incoming trade UI.
+   - Go unit tests: none.
+   - Playwright: `frontend/tests/trading.spec.ts`, `frontend/tests/ports.spec.ts`
+
+6) **Robber flow UI verification after PLAYING stability**
+   - Files: `frontend/src/components/Game/Game.tsx`, `frontend/src/components/Game/DiscardModal.tsx`, `frontend/src/components/Game/StealModal.tsx`, `frontend/src/components/Board/Board.tsx`
+   - Scope: Validate discard modal count, robber move hex targets, and steal modal candidates; add any missing data-cy or gating.
+   - Go unit tests: none (core logic already tested).
+   - Playwright: `frontend/tests/robber.spec.ts`
+
+7) **Dev cards UX wiring after setup fix**
+   - Files: `frontend/src/components/DevCardPanel.tsx`, `frontend/src/components/Game/Game.tsx`
+   - Scope: Ensure dev card panel renders in PLAYING; validate play buttons and modals in E2E.
+   - Go unit tests: none (core logic already tested).
+   - Playwright: `frontend/tests/development-cards.spec.ts`
+
+8) **Ports + bank ratio display verification**
+   - Files: `frontend/src/components/Board/Board.tsx`, `frontend/src/components/Board/Port.tsx`, `frontend/src/components/Game/BankTradeModal.tsx`
+   - Scope: Confirm port rendering and ratio display matches port access.
+   - Go unit tests: none (ports already tested).
+   - Playwright: `frontend/tests/ports.spec.ts`
+
+9) **Victory + game-over overlay recheck**
+   - Files: `frontend/src/components/Game/GameOver.tsx`, `backend/internal/handlers/handlers.go`
+   - Scope: Ensure `game_over` payload broadcasts on win and overlay selectors match E2E.
+   - Go unit tests: add handler test if win broadcast regression found.
+   - Playwright: `frontend/tests/victory.spec.ts`
 
 ---
 

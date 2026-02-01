@@ -500,7 +500,9 @@ func TestHandleSetGameState_UpdatesStatusAndPhase(t *testing.T) {
 	database, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	handler := NewHandler(database, hub.NewHub())
+	h := hub.NewHub()
+	go h.Run()
+	handler := NewHandler(database, h)
 
 	tests := map[string]struct {
 		status     string
@@ -579,6 +581,95 @@ func TestHandleSetGameState_UpdatesStatusAndPhase(t *testing.T) {
 			}
 			if updatedState.TurnPhase != tt.wantPhase {
 				t.Fatalf("expected phase %v, got %v", tt.wantPhase, updatedState.TurnPhase)
+			}
+		})
+	}
+}
+
+func TestHandleForceDiceRoll_UpdatesState(t *testing.T) {
+	database, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	handler := NewHandler(database, hub.NewHub())
+
+	tests := map[string]struct {
+		diceValue  int
+		wantPhase  catanv1.TurnPhase
+		wantRobber bool
+	}{
+		"roll 7 triggers robber": {
+			diceValue:  7,
+			wantPhase:  catanv1.TurnPhase_TURN_PHASE_BUILD,
+			wantRobber: true,
+		},
+		"roll 6 advances to trade": {
+			diceValue:  6,
+			wantPhase:  catanv1.TurnPhase_TURN_PHASE_TRADE,
+			wantRobber: false,
+		},
+	}
+
+	testIndex := 0
+	for name, tt := range tests {
+		testIndex++
+		index := testIndex
+		t.Run(name, func(t *testing.T) {
+			gameID := fmt.Sprintf("game-dice-%d", index)
+			code := fmt.Sprintf("GD%03d", index)
+			playerID := "p1"
+			state := game.NewGameState(gameID, code, []string{"Alice"}, []string{playerID})
+			state.Status = game.GameStatusPlaying
+			state.TurnPhase = catanv1.TurnPhase_TURN_PHASE_ROLL
+
+			stateJSON, err := protojson.Marshal(state)
+			if err != nil {
+				t.Fatalf("failed to marshal state: %v", err)
+			}
+			if _, err := database.Exec(
+				"INSERT INTO games (id, code, state, status) VALUES (?, ?, ?, ?)",
+				gameID,
+				code,
+				string(stateJSON),
+				"playing",
+			); err != nil {
+				t.Fatalf("failed to insert game state: %v", err)
+			}
+
+			payload := map[string]any{
+				"gameCode":  code,
+				"diceValue": tt.diceValue,
+			}
+			body, _ := json.Marshal(payload)
+			req := httptest.NewRequest(http.MethodPost, "/test/force-dice-roll", bytes.NewBuffer(body))
+			recorder := httptest.NewRecorder()
+
+			handler.HandleForceDiceRoll(recorder, req)
+
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", recorder.Code)
+			}
+
+			var updatedStateJSON string
+			if err := database.Get(&updatedStateJSON, "SELECT state FROM games WHERE id = ?", gameID); err != nil {
+				t.Fatalf("failed to load updated state: %v", err)
+			}
+			var updatedState catanv1.GameState
+			if err := protojson.Unmarshal([]byte(updatedStateJSON), &updatedState); err != nil {
+				t.Fatalf("failed to parse updated state: %v", err)
+			}
+
+			if len(updatedState.Dice) != 2 {
+				t.Fatalf("expected 2 dice values, got %d", len(updatedState.Dice))
+			}
+			diceTotal := int(updatedState.Dice[0] + updatedState.Dice[1])
+			if diceTotal != tt.diceValue {
+				t.Fatalf("expected dice total %d, got %d", tt.diceValue, diceTotal)
+			}
+			if updatedState.TurnPhase != tt.wantPhase {
+				t.Fatalf("expected phase %v, got %v", tt.wantPhase, updatedState.TurnPhase)
+			}
+			if (updatedState.RobberPhase != nil) != tt.wantRobber {
+				t.Fatalf("expected robber phase %v, got %v", tt.wantRobber, updatedState.RobberPhase != nil)
 			}
 		})
 	}

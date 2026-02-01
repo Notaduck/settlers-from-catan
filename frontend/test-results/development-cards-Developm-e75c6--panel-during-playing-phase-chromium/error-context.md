@@ -1,0 +1,83 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Settlers from Catan" [level=1] [ref=e5]
+  - main [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: SETUP
+      - generic [ref=e9]:
+        - generic [ref=e10]: Setup Phase - Round 2
+        - generic [ref=e11]: "Turn: Host(Your Turn)"
+        - generic [ref=e12]: Place Road (2/2)
+        - generic [ref=e13]: Place Road (2/2)
+        - generic [ref=e14]:
+          - text: "You received: 1 Wood, 2 Sheeps"
+          - button "×" [ref=e15] [cursor=pointer]
+      - img [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e21]: Sheep
+            - generic [ref=e23]: "10"
+            - generic [ref=e24]: •••
+          - generic [ref=e25]:
+            - generic [ref=e27]: Brick
+            - generic [ref=e29]: "12"
+            - generic [ref=e30]: •
+          - generic [ref=e31]:
+            - generic [ref=e33]: Wood
+            - generic [ref=e35]: "6"
+            - generic [ref=e36]: •••••
+          - generic [ref=e37]:
+            - generic [ref=e39]: Sheep
+            - generic [ref=e41]: "5"
+            - generic [ref=e42]: ••••
+          - generic [ref=e43]:
+            - generic [ref=e45]: Wood
+            - generic [ref=e47]: "6"
+            - generic [ref=e48]: •••••
+          - generic [ref=e49]:
+            - generic [ref=e51]: Wood
+            - generic [ref=e53]: "11"
+            - generic [ref=e54]: ••
+          - generic [ref=e55]:
+            - generic [ref=e57]: Ore
+            - generic [ref=e59]: "8"
+            - generic [ref=e60]: •••••
+          - generic [ref=e61]:
+            - generic [ref=e63]: Wheat
+            - generic [ref=e65]: "5"
+            - generic [ref=e66]: ••••
+          - generic [ref=e67]:
+            - generic [ref=e69]: Wheat
+            - generic [ref=e71]: "10"
+            - generic [ref=e72]: •••
+          - generic [ref=e73]:
+            - generic [ref=e75]: Brick
+            - generic [ref=e77]: "3"
+            - generic [ref=e78]: ••
+          - generic [ref=e331]:
+            - generic: 3:1
+          - generic [ref=e332]:
+            - generic: 3:1
+          - generic [ref=e333]:
+            - generic: 2:1
+            - generic: Wh
+          - generic [ref=e334]:
+            - generic: 2:1
+            - generic: B
+          - generic [ref=e335]:
+            - generic: 3:1
+          - generic [ref=e336]:
+            - generic: 2:1
+            - generic: W
+          - generic [ref=e337]:
+            - generic: 3:1
+          - generic [ref=e338]:
+            - generic: 2:1
+            - generic: S
+          - generic [ref=e339]:
+            - generic: 2:1
+            - generic: O
+```
